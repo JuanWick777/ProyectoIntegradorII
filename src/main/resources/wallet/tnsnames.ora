@@ -1,0 +1,12 @@
+chiao123_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g6a04427ce1a8e2_chiao123_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+chiao123_medium = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g6a04427ce1a8e2_chiao123_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+chiao123_low = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g6a04427ce1a8e2_chiao123_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+chiao123_tp = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g6a04427ce1a8e2_chiao123_tp.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+chiao123_tpurgent = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g6a04427ce1a8e2_chiao123_tpurgent.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+
+
