@@ -3,14 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import MeseroLogin from '../components/mesero/MeseroLogin';
 import WaiterDashboard from '../components/mesero/WaiterDashboard';
 
-/**
- * MeseroPage.jsx — Orquestador del módulo mesero.
- *
- * Si no hay sesión activa → muestra MeseroLogin.
- * Si hay sesión → muestra WaiterDashboard.
- *
- * URL: http://localhost:5173/?mesero=true
- */
+
 const MeseroPage = () => {
     const { usuario, fetchCurrentUser, logoutLocal } = useAppStore();
 

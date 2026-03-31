@@ -1,17 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-// ── URL base de la API PHP ────────────────────────────────────────────────────
-// En desarrollo: http://localhost/api  (XAMPP sirviendo la carpeta api/)
-// En producción: cambia a tu dominio real
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost/api';
 
-/**
- * Helper para llamadas fetch a la API Spring Boot.
- * - Lanza Error si el servidor responde con status >= 400.
- * - Si recibe 401 o 403, dispara el evento global 'session-expired'
- *   para que los dashboards de staff redirijan al login.
- */
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8080/api`;
+
 async function apiFetch(endpoint, options = {}) {
     const res = await fetch(`${API_URL}${endpoint}`, {
         headers: { 'Content-Type': 'application/json' },
@@ -22,7 +14,6 @@ async function apiFetch(endpoint, options = {}) {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-        // Sesión vencida → notificar a los componentes de staff
         if (res.status === 401 || res.status === 403) {
             window.dispatchEvent(new CustomEvent('session-expired'));
         }
@@ -34,36 +25,28 @@ async function apiFetch(endpoint, options = {}) {
     return data;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 export const useAppStore = create(
     persist(
         (set, get) => ({
-            // ── Estado global ─────────────────────────────────────────────
             numeroMesa: null,
             carrito: [],
             products: [],
             loadingProducts: true,
-            orders: [],          // historial de órdenes del rol logueado
-            ordenActual: null,        // orden activa del cliente (para polling)
-            usuario: null,        // usuario de sesión (mesero/chef/admin)
-            pollingInterval: null,        // ref al setInterval del tracker
-
-            // ── Setters básicos ───────────────────────────────────────────
+            orders: [],
+            ordenActual: null,
+            usuario: null,
+            pollingInterval: null,
             setNumeroMesa: (numero) => set({ numeroMesa: numero }),
 
             // ── VALIDAR MESA (Cliente) ────────────────────────────────────
-            /**
-             * Consulta GET /api/mesas/{numero}
-             * Retorna: { id, numero, estado } o lanza Error si está ocupada (409)
-             */
+
             validarMesa: async (numero) => {
                 return await apiFetch(`/mesas/${numero}`);
             },
 
             // ── PRODUCTOS (Menú público) ──────────────────────────────────
-            /**
-             * Carga los productos desde la API PHP y los guarda en el store.
-             */
+
             fetchProducts: async () => {
                 set({ loadingProducts: true });
                 try {
@@ -117,7 +100,7 @@ export const useAppStore = create(
             limpiarCarrito: () => set({ carrito: [] }),
 
             // ─────────────────────────────────────────────────────────────
-            // ENVIAR ORDEN (Cliente → API PHP)
+            // ENVIAR ORDEN (Cliente → API)
             // ─────────────────────────────────────────────────────────────
             addOrder: async () => {
                 const { carrito, numeroMesa } = get();
@@ -137,7 +120,6 @@ export const useAppStore = create(
                     body: JSON.stringify(payload),
                 });
 
-                // Guardamos la orden activa para el tracker
                 set({ ordenActual: data });
                 return data;
             },
@@ -244,24 +226,19 @@ export const useAppStore = create(
                 return data;
             },
 
-            // Cierre de sesión COMPLETO (invalida la cookie en el servidor también)
-            // CUIDADO: afectará todas las pestañas/roles abiertas en el mismo navegador.
+
             logout: async () => {
                 await apiFetch('/auth/logout', { method: 'POST' });
                 set({ usuario: null, ordenActual: null, carrito: [] });
             },
 
-            // Cierre de sesión LOCAL — solo limpia el estado de esta pestaña.
-            // Úsalo en los botones "Salir" de mesero, cocina y admin para que
-            // NO afecte otras pestañas con distintos roles.
+
             logoutLocal: () => {
                 set({ usuario: null });
             },
 
             fetchCurrentUser: async () => {
-                // Usamos fetch directo (sin apiFetch) para que un 401 NO genere
-                // error rojo en la consola — es comportamiento esperado cuando
-                // no hay sesión activa, no un error real.
+
                 try {
                     const res = await fetch(`${API_URL}/auth/me`, {
                         credentials: 'include',
@@ -272,11 +249,11 @@ export const useAppStore = create(
                         set({ usuario: data });
                         return data;
                     }
-                    // 401/403 esperado → sin sesión activa, no error
+
                     set({ usuario: null });
                     return null;
                 } catch {
-                    // Error de red real
+
                     set({ usuario: null });
                     return null;
                 }
@@ -333,10 +310,35 @@ export const useAppStore = create(
             deleteUsuario: async (id) => {
                 await apiFetch(`/admin/usuarios/${id}`, { method: 'DELETE' });
             },
+
+            // ─────────────────────────────────────────────────────────────
+            // ADMIN — CRUD Brigadas
+            // ─────────────────────────────────────────────────────────────
+            fetchBrigadas: async () => {
+                return await apiFetch('/admin/brigadas');
+            },
+
+            createBrigada: async (data) => {
+                return await apiFetch('/admin/brigadas', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                });
+            },
+
+            updateBrigada: async (id, data) => {
+                return await apiFetch(`/admin/brigadas/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                });
+            },
+
+            deleteBrigada: async (id) => {
+                await apiFetch(`/admin/brigadas/${id}`, { method: 'DELETE' });
+            },
         }),
         {
             name: 'restaurant-storage-v2',
-            // Solo persistimos estado local — nunca datos de sesión del servidor
+
             partialize: (state) => ({
                 numeroMesa: state.numeroMesa,
                 carrito: state.carrito,

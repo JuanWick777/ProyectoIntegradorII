@@ -49,9 +49,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/historial").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/cocina/**").hasAnyRole("CHEF", "PARRILLERO", "BARISTA", "REPOSTERO", "ADMIN")
+                        .requestMatchers("/api/cocina/**").hasAnyRole("COCINERO", "CHEF", "PARRILLERO", "BARISTA", "REPOSTERO", "ADMIN")
                         .requestMatchers("/api/mesero/**").hasAnyRole("MESERO", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/ordenes/**").hasAnyRole("MESERO", "CHEF", "PARRILLERO", "BARISTA", "REPOSTERO", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/ordenes/**").hasAnyRole("MESERO", "COCINERO", "CHEF", "PARRILLERO", "BARISTA", "REPOSTERO", "ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable);

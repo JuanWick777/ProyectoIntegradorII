@@ -10,28 +10,46 @@ const CATEGORIAS = [
     { id: 5, nombre: 'Ensaladas' },
 ];
 const COCINAS = [
-    { id: 1, nombre: 'Parrilla' },
-    { id: 2, nombre: 'Bebidas' },
-    { id: 3, nombre: 'Repostería' },
+    { id: 1, nombre: 'Cocina Caliente' },
+    { id: 2, nombre: 'Parrilla' },
+    { id: 3, nombre: 'Bebidas' },
+    { id: 4, nombre: 'Repostería' },
 ];
 const MESAS_OPCIONES = Array.from({ length: 20 }, (_, i) => ({ id: i + 1, nombre: `Mesa ${i + 1}` }));
 
 const ROL_BADGE = {
-    admin: { color: '#6f42c1', label: '🛡️ Admin' },
-    chef: { color: '#fd7e14', label: '👨‍🍳 Chef' },
-    mesero: { color: '#0d6efd', label: '🧑‍🍽️ Mesero' },
+    admin:    { color: '#6f42c1', label: '🛡️ Admin' },
+    cocinero: { color: '#fd7e14', label: '👨‍🍳 Cocinero' },
+    chef:     { color: '#fd7e14', label: '👨‍🍳 Chef' },
+    mesero:   { color: '#0d6efd', label: '🧑‍🍽️ Mesero' },
 };
 
 // ─── Modal de usuario (crear / editar) ───────────────────────────────────────
-const EMPTY_USER = { nombre: '', email: '', password: '', rol: 'mesero', kitchen_id: '', mesa_id: '' };
+const EMPTY_USER = { nombre: '', email: '', password: '', rol: 'mesero', especialidad: '', brigadaId: null, mesaId: null };
+const EMPTY_NEW  = { nombre: '', precio: '', descripcion: '', imagen_url: '', categoria_id: 1, kitchen_id: 1, stock_disponible: 10 };
 
-const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
+
+const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
     const isNew = !usuario?.id;
     const [form, setForm] = useState(usuario ? {
         nombre: usuario.nombre, email: usuario.email, password: '',
-        rol: usuario.rol, kitchen_id: usuario.kitchen_id || '', mesa_id: usuario.mesa_id || ''
+        rol: usuario.rol, especialidad: usuario.especialidad || '',
+        brigadaId: usuario.brigadaId ?? usuario.brigada_id ?? null,
+        mesaId:    usuario.mesaId    ?? usuario.mesa_id    ?? null,
     } : EMPTY_USER);
     const set = (f, v) => setForm(prev => ({ ...prev, [f]: v }));
+
+    const esCocinero = ['cocinero', 'chef'].includes(form.rol);
+    const esMesero   = form.rol === 'mesero';
+
+    // Para meseros: inferir brigada automáticamente según la mesa elegida
+    const brigadaInferida = esMesero && form.mesaId
+        ? brigadas.find(b => {
+              const desde = Number(b.mesaDesde ?? b.mesa_desde ?? 0);
+              const hasta = Number(b.mesaHasta ?? b.mesa_hasta ?? 0);
+              return Number(form.mesaId) >= desde && Number(form.mesaId) <= hasta;
+          })
+        : null;
 
     return (
         <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
@@ -62,34 +80,71 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
                                 onChange={e => set('password', e.target.value)}
                                 placeholder={isNew ? 'Mínimo 6 caracteres' : '••••••'} />
                         </div>
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold small">Rol *</label>
-                            <select className="form-select" value={form.rol}
-                                onChange={e => set('rol', e.target.value)}>
-                                <option value="mesero">🧑‍🍽️ Mesero</option>
-                                <option value="chef">👨‍🍳 Chef</option>
-                                <option value="admin">🛡️ Administrador</option>
-                            </select>
+                        <div className="row g-3 mb-3">
+                            <div className="col-6">
+                                <label className="form-label fw-semibold small">Rol *</label>
+                                <select className="form-select" value={form.rol}
+                                    onChange={e => set('rol', e.target.value)}>
+                                    <option value="mesero">🧑‍🍽️ Mesero</option>
+                                    <option value="cocinero">👨‍🍳 Cocinero</option>
+                                    <option value="chef">👨‍🍳 Chef</option>
+                                    <option value="admin">🛡️ Administrador</option>
+                                </select>
+                            </div>
+                            {esCocinero && (
+                                <div className="col-6">
+                                    <label className="form-label fw-semibold small">Especialidad</label>
+                                    <select className="form-select" value={form.especialidad}
+                                        onChange={e => set('especialidad', e.target.value)}>
+                                        <option value="">— Sin especialidad —</option>
+                                        <option value="parrillero">🔥 Parrillero</option>
+                                        <option value="barista">☕ Barista</option>
+                                        <option value="repostero">🍰 Repostero</option>
+                                    </select>
+                                </div>
+                            )}
                         </div>
-                        {/* Asignación según rol */}
-                        {form.rol === 'chef' && (
+
+                        {/* Brigada editable: solo cocineros */}
+                        {esCocinero && (
                             <div className="mb-3">
-                                <label className="form-label fw-semibold small">🍳 Cocina asignada</label>
-                                <select className="form-select" value={form.kitchen_id}
-                                    onChange={e => set('kitchen_id', Number(e.target.value))}>
-                                    <option value="">— Sin asignar —</option>
-                                    {COCINAS.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                <label className="form-label fw-semibold small">🚒 Brigada asignada</label>
+                                <select className="form-select" value={form.brigadaId || ''}
+                                    onChange={e => set('brigadaId', e.target.value ? Number(e.target.value) : null)}>
+                                    <option value="">— Sin brigada —</option>
+                                    {brigadas.map(b => (
+                                        <option key={b.id} value={b.id}>{b.nombre} (Mesas {b.mesaDesde}–{b.mesaHasta})</option>
+                                    ))}
                                 </select>
                             </div>
                         )}
-                        {form.rol === 'mesero' && (
+
+                        {/* Mesa: solo meseros */}
+                        {esMesero && (
                             <div className="mb-3">
                                 <label className="form-label fw-semibold small">🪑 Mesa asignada</label>
-                                <select className="form-select" value={form.mesa_id}
-                                    onChange={e => set('mesa_id', Number(e.target.value))}>
-                                    <option value="">— Sin asignar —</option>
-                                    {MESAS_OPCIONES.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+                                <select className="form-select" value={form.mesaId || ''}
+                                    onChange={e => set('mesaId', e.target.value ? Number(e.target.value) : null)}>
+                                    <option value="">— Sin mesa —</option>
+                                    {MESAS_OPCIONES.map(m => (
+                                        <option key={m.id} value={m.id}>{m.nombre}</option>
+                                    ))}
                                 </select>
+                            </div>
+                        )}
+
+                        {/* Brigada automática (solo lectura) para meseros */}
+                        {esMesero && (
+                            <div className="mb-3">
+                                <label className="form-label fw-semibold small">🚒 Brigada (automática)</label>
+                                <input
+                                    className="form-control"
+                                    style={{ background: '#f0f0f0', color: '#6c757d', cursor: 'not-allowed' }}
+                                    readOnly
+                                    value={brigadaInferida
+                                        ? brigadaInferida.nombre
+                                        : form.mesaId ? 'Mesa fuera de rango de brigadas' : 'Selecciona una mesa primero'}
+                                />
                             </div>
                         )}
                     </div>
@@ -114,16 +169,21 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
 
 // ─── Vista Personal ───────────────────────────────────────────────────────────
 const PersonalAdmin = ({ mostrarToast }) => {
-    const { fetchUsuarios, createUsuario, updateUsuario, deleteUsuario } = useAppStore();
+    const { fetchUsuarios, createUsuario, updateUsuario, deleteUsuario, fetchBrigadas } = useAppStore();
     const [usuarios, setUsuarios] = useState([]);
+    const [brigadas, setBrigadas] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [modal, setModal] = useState(null);   // null | {} | {id,...}
+    const [modal, setModal] = useState(null);
     const [saving, setSaving] = useState(false);
     const [confirmDel, setConfirmDel] = useState(null);
 
     const cargar = async () => {
         setLoading(true);
-        try { setUsuarios(await fetchUsuarios()); } finally { setLoading(false); }
+        try {
+            const [uList, bList] = await Promise.all([fetchUsuarios(), fetchBrigadas()]);
+            setUsuarios(uList);
+            setBrigadas(bList);
+        } finally { setLoading(false); }
     };
 
     useEffect(() => { cargar(); }, []);
@@ -131,12 +191,25 @@ const PersonalAdmin = ({ mostrarToast }) => {
     const handleSave = async (form) => {
         setSaving(true);
         try {
+            // Para meseros: inferir brigadaId automáticamente según la mesa
+            let brigadaId = form.brigadaId;
+            if (form.rol === 'mesero' && form.mesaId && !brigadaId) {
+                const brigada = brigadas.find(b => {
+                    const desde = Number(b.mesaDesde ?? b.mesa_desde ?? 0);
+                    const hasta  = Number(b.mesaHasta  ?? b.mesa_hasta  ?? 0);
+                    return Number(form.mesaId) >= desde && Number(form.mesaId) <= hasta;
+                });
+                brigadaId = brigada?.id || null;
+            }
+
             const payload = {
-                nombre: form.nombre, email: form.email,
+                nombre: form.nombre,
+                email: form.email,
                 password: form.password || undefined,
                 rol: form.rol,
-                kitchen_id: form.rol === 'chef' ? (form.kitchen_id || null) : null,
-                mesa_id: form.rol === 'mesero' ? (form.mesa_id || null) : null,
+                especialidad: form.especialidad || null,
+                brigadaId: brigadaId || null,
+                mesaId: form.mesaId || null,
             };
             if (modal?.id) await updateUsuario(modal.id, payload);
             else await createUsuario(payload);
@@ -201,9 +274,24 @@ const PersonalAdmin = ({ mostrarToast }) => {
                                             </span>
                                         </td>
                                         <td className="text-muted small">
-                                            {u.rol === 'chef' && u.kitchen_id && <>🍳 {getNombreCocina(u.kitchen_id)}</>}
-                                            {u.rol === 'mesero' && u.mesa_id && <>🪑 Mesa {u.mesa_id}</>}
-                                            {(!u.kitchen_id && !u.mesa_id) && <em>Sin asignar</em>}
+                                            {/* Cocineros: especialidad + brigada */}
+                                            {['cocinero','chef'].includes(u.rol) && (
+                                                <div>
+                                                    {u.especialidad && <span>🔪 {u.especialidad.charAt(0).toUpperCase() + u.especialidad.slice(1)}</span>}
+                                                    {(u.brigadaNombre ?? u.brigada_nombre) && <span className="ms-2">· 🚒 {u.brigadaNombre ?? u.brigada_nombre}</span>}
+                                                    {!u.especialidad && !(u.brigadaNombre ?? u.brigada_nombre) && <em>Sin asignar</em>}
+                                                </div>
+                                            )}
+                                            {/* Meseros: mesa + brigada */}
+                                            {u.rol === 'mesero' && (
+                                                <div>
+                                                    {(u.mesaId ?? u.mesa_id) && <span>🪑 Mesa {u.mesaId ?? u.mesa_id}</span>}
+                                                    {(u.brigadaNombre ?? u.brigada_nombre) && <span className={(u.mesaId ?? u.mesa_id) ? 'ms-2' : ''}>· 🚒 {u.brigadaNombre ?? u.brigada_nombre}</span>}
+                                                    {!(u.mesaId ?? u.mesa_id) && !(u.brigadaNombre ?? u.brigada_nombre) && <em>Sin asignar</em>}
+                                                </div>
+                                            )}
+                                            {/* Admin: sin asignación */}
+                                            {u.rol === 'admin' && <em>—</em>}
                                         </td>
                                         <td>
                                             <span className={`badge ${u.activo ? 'bg-success' : 'bg-secondary'}`}>
@@ -235,6 +323,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
 
             {modal !== null && (
                 <UsuarioModal usuario={modal?.id ? modal : null}
+                    brigadas={brigadas}
                     onSave={handleSave} onClose={() => setModal(null)} saving={saving} />
             )}
 

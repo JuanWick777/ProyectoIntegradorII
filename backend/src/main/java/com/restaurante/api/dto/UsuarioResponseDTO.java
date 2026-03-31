@@ -15,8 +15,10 @@ public class UsuarioResponseDTO {
     private String nombre;
     private String email;
     private String rol;
-    private Long kitchenId;
-    private Long mesaId;
+    private String especialidad;
+    private Long brigadaId;
+    private String brigadaNombre;
+    private Integer mesaId;
     private Boolean activo;
     private LocalDateTime createdAt;
 
@@ -26,7 +28,9 @@ public class UsuarioResponseDTO {
                 .nombre(u.getNombre())
                 .email(u.getEmail())
                 .rol(u.getRol().name())
-                .kitchenId(u.getKitchenId())
+                .especialidad(u.getEspecialidad())
+                .brigadaId(u.getBrigada() != null ? u.getBrigada().getId() : null)
+                .brigadaNombre(u.getBrigada() != null ? u.getBrigada().getNombre() : null)
                 .mesaId(u.getMesaId())
                 .activo(u.getActivo())
                 .createdAt(u.getCreatedAt())

@@ -6,21 +6,16 @@ import MenuCliente from '../components/cliente/MenuCliente';
 import Carrito from '../components/cliente/Carrito';
 import OrderTracker from '../components/cliente/OrderTracker';
 
-/**
- * ClientePage.jsx — Orquestador del flujo completo del cliente
- *
- * Máquina de estados (vista):
- *   'ingreso'   → validar número de mesa
- *   'fidelidad' → modal de puntos (se abre automáticamente al ingresar)
- *   'menu'      → catálogo de platillos
- *   'carrito'   → resumen + IVA + notas
- *   'tracker'   → estado de la orden en tiempo real (polling)
- */
 const ClientePage = () => {
     const { numeroMesa, ordenActual, fetchProducts } = useAppStore();
 
+    // Leemos la URL al iniciar para saber si venimos de un QR (Bypass)
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const mesaParam = params.get('mesa');
+    const mesaActiva = numeroMesa || (mesaParam ? parseInt(mesaParam, 10) : null);
+
     const [vista, setVista] = useState(() => {
-        return numeroMesa ? 'menu' : 'ingreso';
+        return mesaActiva ? 'menu' : 'ingreso';
     });
 
     const [ordenId, setOrdenId] = useState(ordenActual?.orden_id || null);
@@ -45,13 +40,13 @@ const ClientePage = () => {
         case 'fidelidad':
             return (
                 <>
-                    <MenuCliente numeroMesa={numeroMesa} onVerCarrito={handleVerCarrito} />
+                    <MenuCliente numeroMesa={mesaActiva} onVerCarrito={handleVerCarrito} />
                     <FidelidadModal onContinue={handleContinuarMenu} />
                 </>
             );
 
         case 'menu':
-            return <MenuCliente numeroMesa={numeroMesa} onVerCarrito={handleVerCarrito} />;
+            return <MenuCliente numeroMesa={mesaActiva} onVerCarrito={handleVerCarrito} />;
 
         case 'carrito':
             return <Carrito onBack={handleVolverMenu} onPedidoEnviado={handlePedidoEnviado} />;

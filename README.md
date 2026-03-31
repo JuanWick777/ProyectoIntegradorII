@@ -92,4 +92,3 @@ npm install
 ## 📝 Notas
 
 - Al **reiniciar el backend**, todos los usuarios de Staff deben volver a iniciar sesión (las sesiones se guardan en memoria).
-- Para **cerrar el sistema**, usa el script **`Cerrar Sistema.bat`** o detén los procesos manualmente en los puertos `8080` y `5173`.

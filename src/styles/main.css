@@ -1,9 +1,3 @@
-/* =================================================================
-   main.css — Estilos globales del restaurante
-   Bootstrap 5 se carga por separado en main.jsx
-================================================================= */
-
-/* ── Colores primarios (sobrescribir Bootstrap 5.2+ CSS vars) ─── */
 :root {
     --bs-primary: #FF7A00;
     --bs-primary-rgb: 255, 122, 0;

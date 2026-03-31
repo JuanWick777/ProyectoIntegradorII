@@ -6,8 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 /**
- * Tabla usuarios: id, nombre, email, password_hash, rol, kitchen_id, activo,
- * created_at
+ * Tabla usuarios: id, nombre, email, password_hash, rol, especialidad,
+ * brigada_id, activo, created_at
  */
 @Entity
 @Table(name = "usuarios")
@@ -34,13 +34,26 @@ public class Usuario {
     @Column(nullable = false)
     private Rol rol;
 
-    /** Solo para chefs — FK a cocinas */
-    @Column(name = "kitchen_id")
-    private Long kitchenId;
+    /**
+     * Especialidad del cocinero: parrillero, barista, repostero, chef, etc.
+     * Solo aplica cuando rol = cocinero. Texto libre para flexibilidad.
+     */
+    @Column(length = 80)
+    private String especialidad;
 
-    /** Solo para meseros — mesa asignada */
+    /**
+     * Brigada a la que pertenece este usuario (principalmente cocineros).
+     * Define qué rango de mesas atiende.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "brigada_id")
+    private Brigada brigada;
+
+    /**
+     * Mesa asignada al mesero (solo aplica cuando rol = mesero).
+     */
     @Column(name = "mesa_id")
-    private Long mesaId;
+    private Integer mesaId;
 
     @Column(nullable = false)
     private Boolean activo = true;
@@ -50,6 +63,6 @@ public class Usuario {
     private LocalDateTime createdAt;
 
     public enum Rol {
-        admin, mesero, chef
+        admin, mesero, cocinero, chef, barista
     }
 }

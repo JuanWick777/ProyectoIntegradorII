@@ -9,16 +9,6 @@ import QRCodeGenerator from './components/QRCodeGenerator';
 import MenuAdmin from './components/MenuAdmin';
 import AdminLogin from './components/AdminLogin';
 
-/**
- * App.jsx — Router principal basado en URL params
- *
- * ?mesa=N        → Módulo cliente (entra DIRECTO al catálogo)
- * ?mesero=true   → Módulo mesero (login + dashboard)
- * ?cocina=true   → Módulo cocina (KDS)
- * ?admin=menu    → Panel admin menú (requiere login admin)
- * ?admin=qr      → Generador de QRs
- * (sin params)   → Login de Administrador
- */
 function App() {
   const { setNumeroMesa, fetchCurrentUser, usuario } = useAppStore();
 

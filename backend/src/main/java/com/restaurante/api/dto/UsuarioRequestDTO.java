@@ -11,8 +11,9 @@ import lombok.*;
 public class UsuarioRequestDTO {
     private String nombre;
     private String email;
-    private String password; // Opcional en edición
-    private String rol; // "admin" | "mesero" | "chef"
-    private Long kitchenId; // Chef → cocina asignada
-    private Long mesaId; // Mesero → mesa asignada
+    private String password;
+    private String rol;
+    private String especialidad;
+    private Long brigadaId;
+    private Integer mesaId;
 }
