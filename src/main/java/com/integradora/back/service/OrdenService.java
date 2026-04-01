@@ -1,10 +1,14 @@
 package com.integradora.back.service;
 
+import com.integradora.back.controller.detalleorden.dto.DetalleOrdenDTO;
+import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
 import com.integradora.back.model.*;
 import com.integradora.back.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,6 +19,8 @@ public class OrdenService {
     private final OrdenRepository ordenRepository;
     private final UsuarioRepository usuarioRepository;
     private final MesaRepository mesaRepository;
+    private final PlatilloRepository platilloRepository;
+    private final DetalleOrdenRepository detalleRepository;
 
     public Orden crear(Long clienteId, Long mesaId) {
 
@@ -53,5 +59,46 @@ public class OrdenService {
         }
 
         return ordenRepository.save(orden);
+    }
+
+    @Transactional
+    public Orden crearOrdenCompleta(OrdenRequestDTO request) {
+
+        Usuario cliente = usuarioRepository.findById(request.getClienteId())
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+
+        Mesa mesa = mesaRepository.findById(request.getMesaId())
+                .orElseThrow(() -> new RuntimeException("Mesa no encontrada"));
+
+        Orden orden = Orden.builder()
+                .cliente(cliente)
+                .mesa(mesa)
+                .estadoPreparacion("Pendiente")
+                .fechaCreacion(LocalDateTime.now())
+                .build();
+
+        orden = ordenRepository.save(orden);
+
+        for (DetalleOrdenDTO det : request.getDetalles()) {
+
+            Platillo platillo = platilloRepository.findById(det.getPlatilloId())
+                    .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
+
+            BigDecimal precio = platillo.getPrecio();
+            BigDecimal subtotal = precio.multiply(BigDecimal.valueOf(det.getCantidad()));
+
+            DetalleOrden detalle = DetalleOrden.builder()
+                    .orden(orden)
+                    .platillo(platillo)
+                    .cantidad(det.getCantidad())
+                    .precioUnitario(precio)
+                    .subtotal(subtotal)
+                    .notaCliente(det.getNota())
+                    .build();
+
+            detalleRepository.save(detalle);
+        }
+
+        return orden;
     }
 }

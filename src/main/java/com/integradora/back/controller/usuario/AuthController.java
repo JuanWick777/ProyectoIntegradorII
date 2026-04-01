@@ -1,7 +1,7 @@
-package com.integradora.back.controller;
+package com.integradora.back.controller.usuario;
 
-import com.integradora.back.controller.dto.LoginRequest;
-import com.integradora.back.controller.dto.RegisterRequest;
+import com.integradora.back.controller.usuario.dto.LoginRequest;
+import com.integradora.back.controller.usuario.dto.RegisterRequest;
 import com.integradora.back.model.Usuario;
 import com.integradora.back.service.AuthService;
 import lombok.RequiredArgsConstructor;

@@ -1,8 +1,10 @@
-package com.integradora.back.controller;
+package com.integradora.back.controller.orden;
 
+import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
 import com.integradora.back.model.Orden;
 import com.integradora.back.service.OrdenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,5 +40,11 @@ public class OrdenController {
             @RequestParam String estado
     ) {
         return service.actualizarEstado(id, estado);
+    }
+
+    @Transactional
+    @PostMapping("/completa")
+    public Orden crearCompleta(@RequestBody OrdenRequestDTO request) {
+        return service.crearOrdenCompleta(request);
     }
 }

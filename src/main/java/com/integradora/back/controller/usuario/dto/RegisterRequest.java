@@ -1,4 +1,4 @@
-package com.integradora.back.controller.dto;
+package com.integradora.back.controller.usuario.dto;
 
 import lombok.Data;
 

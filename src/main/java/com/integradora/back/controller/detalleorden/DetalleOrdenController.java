@@ -1,4 +1,4 @@
-package com.integradora.back.controller;
+package com.integradora.back.controller.detalleorden;
 
 import com.integradora.back.model.DetalleOrden;
 import com.integradora.back.service.DetalleOrdenService;
