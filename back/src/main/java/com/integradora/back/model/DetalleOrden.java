@@ -1,0 +1,41 @@
+package com.integradora.back.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "DETALLES_ORDENES")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DetalleOrden {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_detalles")
+    private Long id;
+
+    // ORDEN
+    @ManyToOne
+    @JoinColumn(name = "id_orden")
+    private Orden orden;
+
+    // PLATILLO
+    @ManyToOne
+    @JoinColumn(name = "platillo_id")
+    private Platillo platillo;
+
+    @Column(name = "cantidad", nullable = false)
+    private Integer cantidad;
+
+    @Column(name = "precio_unitario", nullable = false)
+    private BigDecimal precioUnitario;
+
+    @Column(name = "subtotal", nullable = false)
+    private BigDecimal subtotal;
+
+    @Column(name = "nota_cliente")
+    private String notaCliente;
+}
