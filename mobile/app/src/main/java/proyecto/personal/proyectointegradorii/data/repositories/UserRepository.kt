@@ -1,9 +1,8 @@
 package proyecto.personal.proyectointegradorii.data.repositories
 
-import kotlinx.coroutines.delay
-import proyecto.personal.proyectointegradorii.data.model.Usuario
-import proyecto.personal.proyectointegradorii.data.remote.dto.LoginRequest
-import proyecto.personal.proyectointegradorii.data.remote.dto.RegisterRequest
+import proyecto.personal.proyectointegradorii.data.model.usuario.Usuario
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.RegisterRequest
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 
 class UserRepository {

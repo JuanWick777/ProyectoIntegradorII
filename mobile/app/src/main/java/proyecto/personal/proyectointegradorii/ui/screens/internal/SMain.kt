@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -20,12 +21,15 @@ import proyecto.personal.proyectointegradorii.ui.screens.internal.home.SHome
 import proyecto.personal.proyectointegradorii.ui.screens.internal.offers.SOffers
 import proyecto.personal.proyectointegradorii.ui.screens.internal.points.SPoints
 import proyecto.personal.proyectointegradorii.ui.screens.internal.scan.SScan
+import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
 
 @Composable
 fun SMain(rootNavController: NavHostController) {
 
     val navController = rememberNavController()
     var showCategories by remember { mutableStateOf(false) }
+
+    val cartViewModel: CartViewModel = remember { CartViewModel() }
 
     Scaffold(
         bottomBar = {
@@ -37,8 +41,12 @@ fun SMain(rootNavController: NavHostController) {
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { SHome(navController, rootNavController) }
-            composable("cart") { SCart() }
+            composable("home") {
+                SHome(navController, rootNavController, cartViewModel)
+            }
+            composable("cart") {
+                SCart(cartViewModel)
+            }
             composable("scan") { SScan() }
             composable("offers") { SOffers() }
             composable("points") { SPoints() }

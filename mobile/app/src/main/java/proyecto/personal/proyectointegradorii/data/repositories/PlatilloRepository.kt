@@ -1,6 +1,6 @@
 package proyecto.personal.proyectointegradorii.data.repositories
 
-import proyecto.personal.proyectointegradorii.data.remote.dto.PlatilloDto
+import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 
 class PlatilloRepository {

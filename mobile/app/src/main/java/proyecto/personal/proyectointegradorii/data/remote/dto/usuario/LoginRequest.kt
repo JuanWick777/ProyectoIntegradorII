@@ -1,4 +1,4 @@
-package proyecto.personal.proyectointegradorii.data.remote.dto
+package proyecto.personal.proyectointegradorii.data.remote.dto.usuario
 
 data class LoginRequest(
     val correo: String,

@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import proyecto.personal.proyectointegradorii.data.model.AppDatabase
+import proyecto.personal.proyectointegradorii.data.model.usuario.AppDatabase
 import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {

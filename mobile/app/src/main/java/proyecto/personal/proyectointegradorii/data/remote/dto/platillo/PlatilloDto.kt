@@ -1,4 +1,4 @@
-package proyecto.personal.proyectointegradorii.data.remote.dto
+package proyecto.personal.proyectointegradorii.data.remote.dto.platillo
 
 data class PlatilloDto(
     val id: Long,

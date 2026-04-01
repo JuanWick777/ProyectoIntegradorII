@@ -24,6 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,15 +34,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import proyecto.personal.proyectointegradorii.data.remote.dto.PlatilloDto
+import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
 import proyecto.personal.proyectointegradorii.ui.components.cards.PlatilloCard
+import proyecto.personal.proyectointegradorii.ui.components.modals.PlatilloModal
+import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
 import proyecto.personal.proyectointegradorii.viewmodels.home.HomeViewModel
 
 @Composable
-fun SHome(navController: NavController, rootNavController: NavHostController, viewModel: HomeViewModel = viewModel()) {
+fun SHome(
+    navController: NavController,
+    rootNavController: NavHostController,
+    cartViewModel: CartViewModel,
+    viewModel: HomeViewModel = viewModel()
+) {
 
     val platillos by viewModel.platillos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+
+    var selectedPlatillo by remember { mutableStateOf<PlatilloDto?>(null) }
+    var showModal by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -64,9 +77,27 @@ fun SHome(navController: NavController, rootNavController: NavHostController, vi
                         nombre = platillo.nombre,
                         descripcion = platillo.descripcion ?: "",
                         precio = platillo.precio,
-                        imagenUrl = platillo.urlImagen ?: ""
+                        imagenUrl = platillo.urlImagen ?: "",
+                        onClickCard = {
+                            selectedPlatillo = platillo
+                            showModal = true
+                        },
+                        onClickAdd = {
+                            selectedPlatillo = platillo
+                            showModal = true
+                        }
                     )
                 }
+            }
+
+            if (showModal && selectedPlatillo != null) {
+                PlatilloModal(
+                    platillo = selectedPlatillo!!,
+                    onDismiss = { showModal = false },
+                    onAddToCart = { platillo, cantidad, nota ->
+                        cartViewModel.addToCart(platillo, cantidad, nota)
+                    }
+                )
             }
         }
     }

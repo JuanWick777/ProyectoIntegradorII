@@ -1,4 +1,4 @@
-package proyecto.personal.proyectointegradorii.data.model
+package proyecto.personal.proyectointegradorii.data.model.usuario
 
 import androidx.room.Dao
 import androidx.room.Insert

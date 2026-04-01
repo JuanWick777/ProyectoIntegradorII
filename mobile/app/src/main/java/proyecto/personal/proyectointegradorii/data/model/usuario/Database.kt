@@ -1,4 +1,4 @@
-package proyecto.personal.proyectointegradorii.data.model
+package proyecto.personal.proyectointegradorii.data.model.usuario
 
 import android.content.Context
 import androidx.room.Database

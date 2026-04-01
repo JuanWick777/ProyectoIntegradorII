@@ -1,6 +1,7 @@
 package proyecto.personal.proyectointegradorii.ui.components.cards
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,13 +37,15 @@ fun PlatilloCard(
     descripcion: String,
     precio: Double,
     imagenUrl: String,
+    onClickCard: () -> Unit = {},
     onClickAdd: () -> Unit = {}
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable { onClickCard() },
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Row(
