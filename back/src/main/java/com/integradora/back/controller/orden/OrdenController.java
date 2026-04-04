@@ -12,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/ordenes")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class OrdenController {
 
     private final OrdenService service;
