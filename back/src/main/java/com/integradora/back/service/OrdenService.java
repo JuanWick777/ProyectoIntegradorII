@@ -2,7 +2,13 @@ package com.integradora.back.service;
 
 import com.integradora.back.controller.detalleorden.dto.DetalleOrdenDTO;
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
-import com.integradora.back.model.*;
+import com.integradora.back.model.detalleorden.DetalleOrden;
+import com.integradora.back.model.detalleorden.EstadoDetalle;
+import com.integradora.back.model.mesa.Mesa;
+import com.integradora.back.model.orden.EstadoOrden;
+import com.integradora.back.model.orden.Orden;
+import com.integradora.back.model.platillo.Platillo;
+import com.integradora.back.model.usuario.Usuario;
 import com.integradora.back.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,7 +39,7 @@ public class OrdenService {
         Orden orden = Orden.builder()
                 .cliente(cliente)
                 .mesa(mesa)
-                .estadoPreparacion("Pendiente")
+                .estadoPreparacion(EstadoOrden.PENDIENTE_CONFIRMACION)
                 .fechaCreacion(LocalDateTime.now())
                 .build();
 
@@ -52,7 +58,12 @@ public class OrdenService {
         Orden orden = ordenRepository.findById(ordenId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
 
-        orden.setEstadoPreparacion(estado);
+        try {
+            EstadoOrden nuevoEstado = EstadoOrden.valueOf(estado.toUpperCase());
+            orden.setEstadoPreparacion(nuevoEstado);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Estado inválido: " + estado);
+        }
 
         if (estado.equals("Finalizado")) {
             orden.setFechaFinalizacion(LocalDateTime.now());
@@ -73,7 +84,7 @@ public class OrdenService {
         Orden orden = Orden.builder()
                 .cliente(cliente)
                 .mesa(mesa)
-                .estadoPreparacion("Pendiente")
+                .estadoPreparacion(EstadoOrden.PENDIENTE_CONFIRMACION)
                 .fechaCreacion(LocalDateTime.now())
                 .build();
 
@@ -94,11 +105,30 @@ public class OrdenService {
                     .precioUnitario(precio)
                     .subtotal(subtotal)
                     .notaCliente(det.getNota())
+                    .estadoPreparacion(EstadoDetalle.PENDIENTE)
                     .build();
 
             detalleRepository.save(detalle);
         }
 
         return orden;
+    }
+
+    public List<Orden> obtenerActivas() {
+        return ordenRepository.findByEstadoPreparacionNotIn(
+                List.of(
+                        EstadoOrden.ENTREGADA,
+                        EstadoOrden.CANCELADA
+                )
+        );
+    }
+
+    public List<Orden> historial() {
+        return ordenRepository.findTop50ByEstadoPreparacionInOrderByIdDesc(
+                List.of(
+                        EstadoOrden.ENTREGADA,
+                        EstadoOrden.CANCELADA
+                )
+        );
     }
 }

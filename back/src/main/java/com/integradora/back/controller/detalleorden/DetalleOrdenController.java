@@ -1,6 +1,6 @@
 package com.integradora.back.controller.detalleorden;
 
-import com.integradora.back.model.DetalleOrden;
+import com.integradora.back.model.detalleorden.DetalleOrden;
 import com.integradora.back.service.DetalleOrdenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/detalles")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class DetalleOrdenController {
 
     private final DetalleOrdenService service;
@@ -27,5 +28,18 @@ public class DetalleOrdenController {
     @GetMapping("/orden/{ordenId}")
     public List<DetalleOrden> obtenerPorOrden(@PathVariable Long ordenId) {
         return service.obtenerPorOrden(ordenId);
+    }
+
+    @GetMapping("/pendientes")
+    public List<DetalleOrden> obtenerPendientes() {
+        return service.obtenerPendientes();
+    }
+
+    @PutMapping("/{id}/estado")
+    public DetalleOrden cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam String estado
+    ) {
+        return service.cambiarEstado(id, estado);
     }
 }

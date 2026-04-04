@@ -2,7 +2,7 @@ package com.integradora.back.service;
 
 import com.integradora.back.controller.usuario.dto.LoginRequest;
 import com.integradora.back.controller.usuario.dto.RegisterRequest;
-import com.integradora.back.model.Usuario;
+import com.integradora.back.model.usuario.Usuario;
 import com.integradora.back.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.integradora.back.controller.categoria;
 
-import com.integradora.back.model.Categoria;
+import com.integradora.back.model.categoria.Categoria;
 import com.integradora.back.service.CategoriaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

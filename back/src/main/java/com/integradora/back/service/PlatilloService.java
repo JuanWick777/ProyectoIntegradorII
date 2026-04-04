@@ -1,7 +1,7 @@
 package com.integradora.back.service;
 
-import com.integradora.back.model.Categoria;
-import com.integradora.back.model.Platillo;
+import com.integradora.back.model.categoria.Categoria;
+import com.integradora.back.model.platillo.Platillo;
 import com.integradora.back.repository.CategoriaRepository;
 import com.integradora.back.repository.PlatilloRepository;
 import lombok.RequiredArgsConstructor;
