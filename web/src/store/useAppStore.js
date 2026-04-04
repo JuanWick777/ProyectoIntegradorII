@@ -220,7 +220,7 @@ export const useAppStore = create(
             login: async (email, password) => {
                 const data = await apiFetch('/auth/login', {
                     method: 'POST',
-                    body: JSON.stringify({ email, password }),
+                    body: JSON.stringify({ correo: email, contrasena: password }),
                 });
                 set({ usuario: data });
                 return data;
