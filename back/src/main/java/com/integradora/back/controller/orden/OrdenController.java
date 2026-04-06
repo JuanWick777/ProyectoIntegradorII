@@ -1,6 +1,7 @@
 package com.integradora.back.controller.orden;
 
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
+import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
 import com.integradora.back.model.orden.Orden;
 import com.integradora.back.service.OrdenService;
 import lombok.RequiredArgsConstructor;
@@ -45,9 +46,8 @@ public class OrdenController {
     }
 
     @PostMapping("/completa")
-    public ResponseEntity<Orden> crearCompleta(@RequestBody OrdenRequestDTO request) {
-        Orden orden = service.crearOrdenCompleta(request);
-        return ResponseEntity.ok(orden);
+    public OrdenResponseDTO crearCompleta(@RequestBody OrdenRequestDTO request) {
+        return service.crearOrdenCompleta(request);
     }
 
     @GetMapping("/activas")

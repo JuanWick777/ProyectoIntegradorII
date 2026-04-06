@@ -1,7 +1,10 @@
 package com.integradora.back.service;
 
 import com.integradora.back.controller.detalleorden.dto.DetalleOrdenDTO;
+import com.integradora.back.controller.detalleorden.dto.DetalleOrdenRequestDTO;
+import com.integradora.back.controller.orden.OrdenMapper;
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
+import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
 import com.integradora.back.model.detalleorden.DetalleOrden;
 import com.integradora.back.model.detalleorden.EstadoDetalle;
 import com.integradora.back.model.mesa.Mesa;
@@ -58,14 +61,16 @@ public class OrdenService {
         Orden orden = ordenRepository.findById(ordenId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
 
+        EstadoOrden nuevoEstado;
         try {
-            EstadoOrden nuevoEstado = EstadoOrden.valueOf(estado.toUpperCase());
-            orden.setEstadoPreparacion(nuevoEstado);
+            nuevoEstado = EstadoOrden.valueOf(estado.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Estado inválido: " + estado);
         }
 
-        if (estado.equals("Finalizado")) {
+        orden.setEstadoPreparacion(nuevoEstado);
+
+        if (nuevoEstado == EstadoOrden.ENTREGADA || nuevoEstado == EstadoOrden.CANCELADA) {
             orden.setFechaFinalizacion(LocalDateTime.now());
         }
 
@@ -73,7 +78,7 @@ public class OrdenService {
     }
 
     @Transactional
-    public Orden crearOrdenCompleta(OrdenRequestDTO request) {
+    public OrdenResponseDTO crearOrdenCompleta(OrdenRequestDTO request) {
 
         Usuario cliente = usuarioRepository.findById(request.getClienteId())
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
@@ -90,7 +95,7 @@ public class OrdenService {
 
         orden = ordenRepository.save(orden);
 
-        for (DetalleOrdenDTO det : request.getDetalles()) {
+        for (DetalleOrdenRequestDTO det : request.getDetalles()) {
 
             Platillo platillo = platilloRepository.findById(det.getPlatilloId())
                     .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
@@ -111,7 +116,9 @@ public class OrdenService {
             detalleRepository.save(detalle);
         }
 
-        return orden;
+        List<DetalleOrden> detalles = detalleRepository.findByOrdenId(orden.getId());
+
+        return OrdenMapper.toDTO(orden, detalles);
     }
 
     public List<Orden> obtenerActivas() {

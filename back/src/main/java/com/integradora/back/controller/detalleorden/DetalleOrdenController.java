@@ -1,6 +1,7 @@
 package com.integradora.back.controller.detalleorden;
 
 import com.integradora.back.model.detalleorden.DetalleOrden;
+import com.integradora.back.repository.DetalleOrdenRepository;
 import com.integradora.back.service.DetalleOrdenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
