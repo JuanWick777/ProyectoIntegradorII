@@ -1,14 +1,36 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8080/api`;
+const STORAGE_KEY = 'restaurant-storage-v2';
+
+function getStoredToken() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed?.state?.token || null;
+    } catch {
+        return null;
+    }
+}
 
 async function apiFetch(endpoint, options = {}) {
+    const token = options.token || getStoredToken();
+
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+    };
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${API_URL}${endpoint}`, {
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         ...options,
+        headers,
+        credentials: 'include',
     });
 
     const data = await res.json().catch(() => ({}));
@@ -22,9 +44,26 @@ async function apiFetch(endpoint, options = {}) {
         err.data = data;
         throw err;
     }
+
     return data;
 }
 
+async function apiFetchWithFallback(endpoints, options = {}) {
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
+        try {
+            return await apiFetch(endpoint, options);
+        } catch (err) {
+            lastError = err;
+            if (err.status !== 404) {
+                throw err;
+            }
+        }
+    }
+
+    throw lastError || new Error('Not Found');
+}
 
 export const useAppStore = create(
     persist(
@@ -36,21 +75,19 @@ export const useAppStore = create(
             orders: [],
             ordenActual: null,
             usuario: null,
+            token: null,
             pollingInterval: null,
-            setNumeroMesa: (numero) => set({ numeroMesa: numero }),
 
-            // ── VALIDAR MESA (Cliente) ────────────────────────────────────
+            setNumeroMesa: (numero) => set({ numeroMesa: numero }),
 
             validarMesa: async (numero) => {
                 return await apiFetch(`/mesas/${numero}`);
             },
 
-            // ── PRODUCTOS (Menú público) ──────────────────────────────────
-
             fetchProducts: async () => {
                 set({ loadingProducts: true });
                 try {
-                    const data = await apiFetch('/productos');
+                    const data = await apiFetchWithFallback(['/platillos', '/productos']);
                     set({ products: data, loadingProducts: false });
                 } catch (e) {
                     console.error('Error cargando productos:', e);
@@ -58,9 +95,9 @@ export const useAppStore = create(
                 }
             },
 
-            // ── CARRITO ───────────────────────────────────────────────────
             agregarAlCarrito: (producto) => set((state) => {
                 const existe = state.carrito.find((item) => item.id === producto.id);
+
                 if (existe) {
                     return {
                         carrito: state.carrito.map((item) =>
@@ -70,7 +107,10 @@ export const useAppStore = create(
                         ),
                     };
                 }
-                return { carrito: [...state.carrito, { ...producto, cantidad: 1, notas: '' }] };
+
+                return {
+                    carrito: [...state.carrito, { ...producto, cantidad: 1, notas: '' }],
+                };
             }),
 
             eliminarDelCarrito: (productoId) => set((state) => ({
@@ -99,23 +139,22 @@ export const useAppStore = create(
 
             limpiarCarrito: () => set({ carrito: [] }),
 
-            // ─────────────────────────────────────────────────────────────
-            // ENVIAR ORDEN (Cliente → API)
-            // ─────────────────────────────────────────────────────────────
             addOrder: async () => {
-                const { carrito, numeroMesa } = get();
+                const { carrito, numeroMesa, usuario } = get();
+
                 if (carrito.length === 0 || !numeroMesa) return;
 
                 const payload = {
-                    mesa_numero: numeroMesa,
-                    items: carrito.map((item) => ({
-                        producto_id: item.id,
+                    clienteId: usuario?.id || 1,
+                    mesaId: numeroMesa,
+                    detalles: carrito.map((item) => ({
+                        platilloId: item.id,
                         cantidad: item.cantidad,
-                        nota_cliente: item.notas || '',
+                        nota: item.notas || '',
                     })),
                 };
 
-                const data = await apiFetch('/ordenes', {
+                const data = await apiFetch('/ordenes/completa', {
                     method: 'POST',
                     body: JSON.stringify(payload),
                 });
@@ -124,15 +163,7 @@ export const useAppStore = create(
                 return data;
             },
 
-            // ─────────────────────────────────────────────────────────────
-            // POLLING — Estado de orden del cliente
-            // ─────────────────────────────────────────────────────────────
-            /**
-             * Inicia polling cada 5 segundos consultando GET /api/ordenes/{id}
-             * Actualiza ordenActual con el estado más reciente.
-             */
             startOrderPolling: (ordenId) => {
-                // Limpiar polling anterior si existía
                 const { pollingInterval } = get();
                 if (pollingInterval) clearInterval(pollingInterval);
 
@@ -141,8 +172,7 @@ export const useAppStore = create(
                         const data = await apiFetch(`/ordenes/${ordenId}`);
                         set({ ordenActual: data });
 
-                        // Detener si la orden ya fue cerrada/cancelada
-                        if (['cerrada', 'cancelada', 'entregada'].includes(data.estado)) {
+                        if (['cerrada', 'cancelada', 'entregada'].includes((data.estado || '').toLowerCase())) {
                             clearInterval(interval);
                             set({ pollingInterval: null });
                         }
@@ -162,9 +192,6 @@ export const useAppStore = create(
                 }
             },
 
-            // ─────────────────────────────────────────────────────────────
-            // ÓRDENES — Acciones del Mesero
-            // ─────────────────────────────────────────────────────────────
             fetchMeseroOrdenes: async () => {
                 const data = await apiFetch('/mesero/ordenes');
                 set({ orders: data });
@@ -178,7 +205,6 @@ export const useAppStore = create(
                 });
             },
 
-            // Retrocompatibilidad (KDS y otros)
             fetchOrders: async () => {
                 try {
                     const data = await apiFetch('/mesero/ordenes');
@@ -195,9 +221,6 @@ export const useAppStore = create(
                 });
             },
 
-            // ─────────────────────────────────────────────────────────────
-            // KDS — Acciones del Chef
-            // ─────────────────────────────────────────────────────────────
             fetchKitchenTickets: async () => {
                 try {
                     const data = await apiFetch('/cocina/tickets');
@@ -214,108 +237,116 @@ export const useAppStore = create(
                 });
             },
 
-            // ─────────────────────────────────────────────────────────────
-            // AUTH — Login / Logout
-            // ─────────────────────────────────────────────────────────────
             login: async (email, password) => {
                 const data = await apiFetch('/auth/login', {
                     method: 'POST',
                     body: JSON.stringify({ correo: email, contrasena: password }),
                 });
-                set({ usuario: data });
-                return data;
-            },
 
+                const usuarioNormalizado = {
+                    ...data,
+                    rol: (data?.rol || '').toUpperCase(),
+                };
+
+                console.log('USUARIO LOGUEADO:', usuarioNormalizado);
+
+                set({
+                    usuario: usuarioNormalizado,
+                    token: data.token || null,
+                });
+
+                return usuarioNormalizado;
+            },
 
             logout: async () => {
-                await apiFetch('/auth/logout', { method: 'POST' });
-                set({ usuario: null, ordenActual: null, carrito: [] });
+                try {
+                    await apiFetch('/auth/logout', { method: 'POST' });
+                } catch {
+                    // si no existe logout en backend, no pasa nada
+                }
+
+                set({ usuario: null, token: null, ordenActual: null, carrito: [] });
             },
 
-
             logoutLocal: () => {
-                set({ usuario: null });
+                set({ usuario: null, token: null, ordenActual: null, carrito: [] });
             },
 
             fetchCurrentUser: async () => {
-
-                try {
-                    const res = await fetch(`${API_URL}/auth/me`, {
-                        credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' },
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        set({ usuario: data });
-                        return data;
-                    }
-
-                    set({ usuario: null });
-                    return null;
-                } catch {
-
+                const { token } = get();
+                if (!token) {
                     set({ usuario: null });
                     return null;
                 }
+
+                const data = await apiFetch('/auth/me', { token });
+                const usuarioNormalizado = {
+                    ...data,
+                    rol: (data?.rol || '').toUpperCase(),
+                };
+
+                set({ usuario: usuarioNormalizado });
+                return usuarioNormalizado;
             },
 
-            // ─────────────────────────────────────────────────────────────
-            // ADMIN — CRUD Productos
-            // ─────────────────────────────────────────────────────────────
             fetchAdminProducts: async () => {
-                const data = await apiFetch('/admin/productos');
+                const { token } = get();
+                const data = await apiFetchWithFallback(['/admin/platillos', '/admin/productos'], { token });
                 set({ products: data });
                 return data;
             },
 
             updateProduct: async (id, productData) => {
-                await apiFetch(`/admin/productos/${id}`, {
+                await apiFetchWithFallback([`/admin/platillos/${id}`, `/admin/productos/${id}`], {
                     method: 'PUT',
                     body: JSON.stringify(productData),
                 });
             },
 
             createProduct: async (productData) => {
-                await apiFetch('/admin/productos', {
+                await apiFetchWithFallback(['/admin/platillos', '/admin/productos'], {
                     method: 'POST',
                     body: JSON.stringify(productData),
                 });
             },
 
             deleteProduct: async (id) => {
-                await apiFetch(`/admin/productos/${id}`, { method: 'DELETE' });
+                await apiFetchWithFallback([`/admin/platillos/${id}`, `/admin/productos/${id}`], {
+                    method: 'DELETE',
+                });
             },
 
-            // ─────────────────────────────────────────────────────────────
-            // ADMIN — CRUD Personal (usuarios)
-            // ─────────────────────────────────────────────────────────────
             fetchUsuarios: async () => {
-                return await apiFetch('/admin/usuarios');
+                const { token } = get();
+                return await apiFetch('/admin/usuarios', { token });
             },
 
             createUsuario: async (data) => {
+                const { token } = get();
                 return await apiFetch('/admin/usuarios', {
                     method: 'POST',
                     body: JSON.stringify(data),
+                    token,
                 });
             },
 
             updateUsuario: async (id, data) => {
+                const { token } = get();
                 return await apiFetch(`/admin/usuarios/${id}`, {
                     method: 'PUT',
                     body: JSON.stringify(data),
+                    token,
                 });
             },
 
             deleteUsuario: async (id) => {
-                await apiFetch(`/admin/usuarios/${id}`, { method: 'DELETE' });
+                const { token } = get();
+                return await apiFetch(`/admin/usuarios/${id}`, { method: 'DELETE', token });
             },
 
-            // ─────────────────────────────────────────────────────────────
-            // ADMIN — CRUD Brigadas
-            // ─────────────────────────────────────────────────────────────
             fetchBrigadas: async () => {
-                return await apiFetch('/admin/brigadas');
+                const { token } = get();
+                return await apiFetch('/admin/brigadas', { token });
             },
 
             createBrigada: async (data) => {
@@ -338,11 +369,12 @@ export const useAppStore = create(
         }),
         {
             name: 'restaurant-storage-v2',
-
             partialize: (state) => ({
                 numeroMesa: state.numeroMesa,
                 carrito: state.carrito,
                 ordenActual: state.ordenActual,
+                usuario: state.usuario,
+                token: state.token,
             }),
         }
     )

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 
-// ─── Categorías disponibles (puedes ajustar IDs según tu BD) ─────────────────
 const CATEGORIAS = [
     { id: 1, nombre: 'Hamburguesas' },
     { id: 2, nombre: 'Pizzas' },
@@ -9,42 +8,90 @@ const CATEGORIAS = [
     { id: 4, nombre: 'Postres' },
     { id: 5, nombre: 'Ensaladas' },
 ];
+
 const COCINAS = [
     { id: 1, nombre: 'Cocina Caliente' },
     { id: 2, nombre: 'Parrilla' },
     { id: 3, nombre: 'Bebidas' },
     { id: 4, nombre: 'Repostería' },
 ];
-const MESAS_OPCIONES = Array.from({ length: 20 }, (_, i) => ({ id: i + 1, nombre: `Mesa ${i + 1}` }));
+
+const MESAS_OPCIONES = Array.from({ length: 20 }, (_, i) => ({
+    id: i + 1,
+    nombre: `Mesa ${i + 1}`,
+}));
+
+const normalizeRole = (rol) => (rol || '').toString().trim().toLowerCase();
+
+const getUserEmail = (u) => u?.email ?? u?.correo ?? '';
+const getUserRole = (u) => normalizeRole(u?.rol ?? u?.tipoUsuario);
+
+const getProductName = (p) => p?.nombre ?? '';
+const getProductDesc = (p) => p?.descripcion ?? '';
+const getProductPrice = (p) => p?.precio ?? 0;
+const getProductStock = (p) => p?.stock_disponible ?? p?.stockDisponible ?? null;
+const getProductCategoryName = (p) => {
+    const cat = p?.categoria;
+    if (typeof cat === 'string') return cat;
+    if (cat?.nombre) return cat.nombre;
+    return p?.categoria_nombre ?? p?.categoriaNombre ?? 'Otros';
+};
+const getProductImage = (p) =>
+    p?.imagen_url ?? p?.urlImagen ?? p?.imagenUrl ?? '';
 
 const ROL_BADGE = {
-    admin:    { color: '#6f42c1', label: '🛡️ Admin' },
+    admin: { color: '#6f42c1', label: '🛡️ Admin' },
     cocinero: { color: '#fd7e14', label: '👨‍🍳 Cocinero' },
-    chef:     { color: '#fd7e14', label: '👨‍🍳 Chef' },
-    mesero:   { color: '#0d6efd', label: '🧑‍🍽️ Mesero' },
+    chef: { color: '#fd7e14', label: '👨‍🍳 Chef' },
+    mesero: { color: '#0d6efd', label: '🧑‍🍽️ Mesero' },
+    cliente: { color: '#198754', label: '👤 Cliente' },
 };
 
-// ─── Modal de usuario (crear / editar) ───────────────────────────────────────
-const EMPTY_USER = { nombre: '', email: '', password: '', rol: 'mesero', especialidad: '', brigadaId: null, mesaId: null };
-const EMPTY_NEW  = { nombre: '', precio: '', descripcion: '', imagen_url: '', categoria_id: 1, kitchen_id: 1, stock_disponible: 10 };
+const EMPTY_USER = {
+    nombre: '',
+    email: '',
+    password: '',
+    rol: 'mesero',
+    especialidad: '',
+    brigadaId: null,
+    mesaId: null,
+};
 
+const EMPTY_NEW = {
+    nombre: '',
+    precio: '',
+    descripcion: '',
+    imagen_url: '',
+    categoria_id: 1,
+    kitchen_id: 1,
+    stock_disponible: 10,
+};
 
 const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
     const isNew = !usuario?.id;
-    const [form, setForm] = useState(usuario ? {
-        nombre: usuario.nombre, email: usuario.email, password: '',
-        rol: usuario.rol, especialidad: usuario.especialidad || '',
-        brigadaId: usuario.brigadaId ?? usuario.brigada_id ?? null,
-        mesaId:    usuario.mesaId    ?? usuario.mesa_id    ?? null,
-    } : EMPTY_USER);
-    const set = (f, v) => setForm(prev => ({ ...prev, [f]: v }));
 
-    const esCocinero = ['cocinero', 'chef'].includes(form.rol);
-    const esMesero   = form.rol === 'mesero';
+    const [form, setForm] = useState(
+        usuario
+            ? {
+                  nombre: usuario.nombre || '',
+                  email: getUserEmail(usuario),
+                  password: '',
+                  rol: getUserRole(usuario) || 'mesero',
+                  especialidad: usuario.especialidad || '',
+                  brigadaId: usuario.brigadaId ?? usuario.brigada_id ?? null,
+                  mesaId: usuario.mesaId ?? usuario.mesa_id ?? null,
+              }
+            : EMPTY_USER
+    );
 
-    // Para meseros: inferir brigada automáticamente según la mesa elegida
+    const set = (f, v) => setForm((prev) => ({ ...prev, [f]: v }));
+
+    const rolForm = normalizeRole(form.rol);
+    const esCocinero = ['cocinero', 'chef'].includes(rolForm);
+    const esMesero = rolForm === 'mesero';
+
     const brigadaInferida = esMesero && form.mesaId
-        ? brigadas.find(b => {
+        ? brigadas.find((b) => {
               const desde = Number(b.mesaDesde ?? b.mesa_desde ?? 0);
               const hasta = Number(b.mesaHasta ?? b.mesa_hasta ?? 0);
               return Number(form.mesaId) >= desde && Number(form.mesaId) <= hasta;
@@ -53,7 +100,7 @@ const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
 
     return (
         <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
-            <div className="modal-dialog modal-dialog-centered" onClick={e => e.stopPropagation()}>
+            <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.25rem' }}>
                     <div className="modal-header border-0 pb-0">
                         <h5 className="modal-title fw-bold">
@@ -61,41 +108,65 @@ const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
                         </h5>
                         <button type="button" className="btn-close" onClick={onClose} />
                     </div>
+
                     <div className="modal-body">
                         <div className="mb-3">
                             <label className="form-label fw-semibold small">Nombre completo *</label>
-                            <input className="form-control" value={form.nombre}
-                                onChange={e => set('nombre', e.target.value)} placeholder="Ej. Juan Pérez" />
+                            <input
+                                className="form-control"
+                                value={form.nombre}
+                                onChange={(e) => set('nombre', e.target.value)}
+                                placeholder="Ej. Juan Pérez"
+                            />
                         </div>
+
                         <div className="mb-3">
                             <label className="form-label fw-semibold small">Correo electrónico *</label>
-                            <input className="form-control" type="email" value={form.email}
-                                onChange={e => set('email', e.target.value)} placeholder="empleado@rest.com" />
+                            <input
+                                className="form-control"
+                                type="email"
+                                value={form.email}
+                                onChange={(e) => set('email', e.target.value)}
+                                placeholder="empleado@rest.com"
+                            />
                         </div>
+
                         <div className="mb-3">
                             <label className="form-label fw-semibold small">
                                 Contraseña {!isNew && <span className="text-muted">(dejar vacío para no cambiar)</span>}
                             </label>
-                            <input className="form-control" type="password" value={form.password}
-                                onChange={e => set('password', e.target.value)}
-                                placeholder={isNew ? 'Mínimo 6 caracteres' : '••••••'} />
+                            <input
+                                className="form-control"
+                                type="password"
+                                value={form.password}
+                                onChange={(e) => set('password', e.target.value)}
+                                placeholder={isNew ? 'Mínimo 6 caracteres' : '••••••'}
+                            />
                         </div>
+
                         <div className="row g-3 mb-3">
                             <div className="col-6">
                                 <label className="form-label fw-semibold small">Rol *</label>
-                                <select className="form-select" value={form.rol}
-                                    onChange={e => set('rol', e.target.value)}>
+                                <select
+                                    className="form-select"
+                                    value={rolForm}
+                                    onChange={(e) => set('rol', e.target.value)}
+                                >
                                     <option value="mesero">🧑‍🍽️ Mesero</option>
                                     <option value="cocinero">👨‍🍳 Cocinero</option>
                                     <option value="chef">👨‍🍳 Chef</option>
                                     <option value="admin">🛡️ Administrador</option>
                                 </select>
                             </div>
+
                             {esCocinero && (
                                 <div className="col-6">
                                     <label className="form-label fw-semibold small">Especialidad</label>
-                                    <select className="form-select" value={form.especialidad}
-                                        onChange={e => set('especialidad', e.target.value)}>
+                                    <select
+                                        className="form-select"
+                                        value={form.especialidad}
+                                        onChange={(e) => set('especialidad', e.target.value)}
+                                    >
                                         <option value="">— Sin especialidad —</option>
                                         <option value="parrillero">🔥 Parrillero</option>
                                         <option value="barista">☕ Barista</option>
@@ -105,35 +176,42 @@ const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
                             )}
                         </div>
 
-                        {/* Brigada editable: solo cocineros */}
                         {esCocinero && (
                             <div className="mb-3">
                                 <label className="form-label fw-semibold small">🚒 Brigada asignada</label>
-                                <select className="form-select" value={form.brigadaId || ''}
-                                    onChange={e => set('brigadaId', e.target.value ? Number(e.target.value) : null)}>
+                                <select
+                                    className="form-select"
+                                    value={form.brigadaId || ''}
+                                    onChange={(e) => set('brigadaId', e.target.value ? Number(e.target.value) : null)}
+                                >
                                     <option value="">— Sin brigada —</option>
-                                    {brigadas.map(b => (
-                                        <option key={b.id} value={b.id}>{b.nombre} (Mesas {b.mesaDesde}–{b.mesaHasta})</option>
+                                    {brigadas.map((b) => (
+                                        <option key={b.id} value={b.id}>
+                                            {b.nombre} (Mesas {b.mesaDesde}–{b.mesaHasta})
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                         )}
 
-                        {/* Mesa: solo meseros */}
                         {esMesero && (
                             <div className="mb-3">
                                 <label className="form-label fw-semibold small">🪑 Mesa asignada</label>
-                                <select className="form-select" value={form.mesaId || ''}
-                                    onChange={e => set('mesaId', e.target.value ? Number(e.target.value) : null)}>
+                                <select
+                                    className="form-select"
+                                    value={form.mesaId || ''}
+                                    onChange={(e) => set('mesaId', e.target.value ? Number(e.target.value) : null)}
+                                >
                                     <option value="">— Sin mesa —</option>
-                                    {MESAS_OPCIONES.map(m => (
-                                        <option key={m.id} value={m.id}>{m.nombre}</option>
+                                    {MESAS_OPCIONES.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.nombre}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                         )}
 
-                        {/* Brigada automática (solo lectura) para meseros */}
                         {esMesero && (
                             <div className="mb-3">
                                 <label className="form-label fw-semibold small">🚒 Brigada (automática)</label>
@@ -141,24 +219,34 @@ const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
                                     className="form-control"
                                     style={{ background: '#f0f0f0', color: '#6c757d', cursor: 'not-allowed' }}
                                     readOnly
-                                    value={brigadaInferida
-                                        ? brigadaInferida.nombre
-                                        : form.mesaId ? 'Mesa fuera de rango de brigadas' : 'Selecciona una mesa primero'}
+                                    value={
+                                        brigadaInferida
+                                            ? brigadaInferida.nombre
+                                            : form.mesaId
+                                            ? 'Mesa fuera de rango de brigadas'
+                                            : 'Selecciona una mesa primero'
+                                    }
                                 />
                             </div>
                         )}
                     </div>
+
                     <div className="modal-footer border-0 pt-0">
-                        <button className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
+                        <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
+                            Cancelar
+                        </button>
                         <button
                             className="btn btn-primary fw-bold px-4"
                             style={{ borderRadius: '0.75rem' }}
                             onClick={() => onSave(form)}
                             disabled={saving || !form.nombre || !form.email}
                         >
-                            {saving
-                                ? <><span className="spinner-border spinner-border-sm me-2" />Guardando...</>
-                                : isNew ? '➕ Crear' : '💾 Guardar'}
+                            {saving ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm me-2" />
+                                    Guardando...
+                                </>
+                            ) : isNew ? '➕ Crear' : '💾 Guardar'}
                         </button>
                     </div>
                 </div>
@@ -167,7 +255,6 @@ const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
     );
 };
 
-// ─── Vista Personal ───────────────────────────────────────────────────────────
 const PersonalAdmin = ({ mostrarToast }) => {
     const { fetchUsuarios, createUsuario, updateUsuario, deleteUsuario, fetchBrigadas } = useAppStore();
     const [usuarios, setUsuarios] = useState([]);
@@ -183,20 +270,25 @@ const PersonalAdmin = ({ mostrarToast }) => {
             const [uList, bList] = await Promise.all([fetchUsuarios(), fetchBrigadas()]);
             setUsuarios(uList);
             setBrigadas(bList);
-        } finally { setLoading(false); }
+        } finally {
+            setLoading(false);
+        }
     };
 
-    useEffect(() => { cargar(); }, []);
+    useEffect(() => {
+        cargar();
+    }, []);
 
     const handleSave = async (form) => {
         setSaving(true);
         try {
-            // Para meseros: inferir brigadaId automáticamente según la mesa
             let brigadaId = form.brigadaId;
-            if (form.rol === 'mesero' && form.mesaId && !brigadaId) {
-                const brigada = brigadas.find(b => {
+
+            const rol = normalizeRole(form.rol);
+            if (rol === 'mesero' && form.mesaId && !brigadaId) {
+                const brigada = brigadas.find((b) => {
                     const desde = Number(b.mesaDesde ?? b.mesa_desde ?? 0);
-                    const hasta  = Number(b.mesaHasta  ?? b.mesa_hasta  ?? 0);
+                    const hasta = Number(b.mesaHasta ?? b.mesa_hasta ?? 0);
                     return Number(form.mesaId) >= desde && Number(form.mesaId) <= hasta;
                 });
                 brigadaId = brigada?.id || null;
@@ -206,19 +298,23 @@ const PersonalAdmin = ({ mostrarToast }) => {
                 nombre: form.nombre,
                 email: form.email,
                 password: form.password || undefined,
-                rol: form.rol,
+                rol,
                 especialidad: form.especialidad || null,
                 brigadaId: brigadaId || null,
                 mesaId: form.mesaId || null,
             };
+
             if (modal?.id) await updateUsuario(modal.id, payload);
             else await createUsuario(payload);
+
             mostrarToast(modal?.id ? '✅ Empleado actualizado' : '✅ Empleado creado');
             await cargar();
             setModal(null);
         } catch (e) {
             mostrarToast('❌ ' + (e.message || 'Error al guardar'));
-        } finally { setSaving(false); }
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleDelete = async (id) => {
@@ -226,11 +322,11 @@ const PersonalAdmin = ({ mostrarToast }) => {
             await deleteUsuario(id);
             mostrarToast('🗑️ Empleado eliminado');
             await cargar();
-        } catch { mostrarToast('❌ No se pudo eliminar'); }
+        } catch {
+            mostrarToast('❌ No se pudo eliminar');
+        }
         setConfirmDel(null);
     };
-
-    const getNombreCocina = (id) => COCINAS.find(c => c.id === id)?.nombre || `Cocina ${id}`;
 
     return (
         <div>
@@ -238,14 +334,19 @@ const PersonalAdmin = ({ mostrarToast }) => {
                 <h2 className="fw-bold mb-0">
                     Personal <span className="badge bg-secondary ms-2">{usuarios.length}</span>
                 </h2>
-                <button className="btn btn-primary fw-bold" style={{ borderRadius: '2rem' }}
-                    onClick={() => setModal({})}>
+                <button
+                    className="btn btn-primary fw-bold"
+                    style={{ borderRadius: '2rem' }}
+                    onClick={() => setModal({})}
+                >
                     ➕ Nuevo Empleado
                 </button>
             </div>
 
             {loading ? (
-                <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
+                <div className="text-center py-5">
+                    <div className="spinner-border text-primary" />
+                </div>
             ) : (
                 <div className="card border-0 shadow-sm" style={{ borderRadius: '1rem', overflow: 'hidden' }}>
                     <table className="table table-hover mb-0">
@@ -259,62 +360,99 @@ const PersonalAdmin = ({ mostrarToast }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {usuarios.map(u => {
-                                const badge = ROL_BADGE[u.rol] || { color: '#aaa', label: u.rol };
+                            {usuarios.map((u) => {
+                                const rol = getUserRole(u);
+                                const badge = ROL_BADGE[rol] || { color: '#aaa', label: rol || '—' };
+                                const email = getUserEmail(u);
+
                                 return (
                                     <tr key={u.id}>
                                         <td className="ps-4">
                                             <div className="fw-semibold">{u.nombre}</div>
-                                            <div className="text-muted small">{u.email}</div>
+                                            <div className="text-muted small">{email}</div>
                                         </td>
+
                                         <td>
-                                            <span className="badge fw-semibold"
-                                                style={{ background: badge.color, borderRadius: '2rem', fontSize: '0.8rem' }}>
+                                            <span
+                                                className="badge fw-semibold"
+                                                style={{ background: badge.color, borderRadius: '2rem', fontSize: '0.8rem' }}
+                                            >
                                                 {badge.label}
                                             </span>
                                         </td>
+
                                         <td className="text-muted small">
-                                            {/* Cocineros: especialidad + brigada */}
-                                            {['cocinero','chef'].includes(u.rol) && (
+                                            {['cocinero', 'chef'].includes(rol) && (
                                                 <div>
-                                                    {u.especialidad && <span>🔪 {u.especialidad.charAt(0).toUpperCase() + u.especialidad.slice(1)}</span>}
-                                                    {(u.brigadaNombre ?? u.brigada_nombre) && <span className="ms-2">· 🚒 {u.brigadaNombre ?? u.brigada_nombre}</span>}
-                                                    {!u.especialidad && !(u.brigadaNombre ?? u.brigada_nombre) && <em>Sin asignar</em>}
+                                                    {u.especialidad && (
+                                                        <span>
+                                                            🔪{' '}
+                                                            {u.especialidad.charAt(0).toUpperCase() +
+                                                                u.especialidad.slice(1)}
+                                                        </span>
+                                                    )}
+                                                    {(u.brigadaNombre ?? u.brigada_nombre) && (
+                                                        <span className="ms-2">
+                                                            · 🚒 {u.brigadaNombre ?? u.brigada_nombre}
+                                                        </span>
+                                                    )}
+                                                    {!u.especialidad && !(u.brigadaNombre ?? u.brigada_nombre) && (
+                                                        <em>Sin asignar</em>
+                                                    )}
                                                 </div>
                                             )}
-                                            {/* Meseros: mesa + brigada */}
-                                            {u.rol === 'mesero' && (
+
+                                            {rol === 'mesero' && (
                                                 <div>
-                                                    {(u.mesaId ?? u.mesa_id) && <span>🪑 Mesa {u.mesaId ?? u.mesa_id}</span>}
-                                                    {(u.brigadaNombre ?? u.brigada_nombre) && <span className={(u.mesaId ?? u.mesa_id) ? 'ms-2' : ''}>· 🚒 {u.brigadaNombre ?? u.brigada_nombre}</span>}
-                                                    {!(u.mesaId ?? u.mesa_id) && !(u.brigadaNombre ?? u.brigada_nombre) && <em>Sin asignar</em>}
+                                                    {(u.mesaId ?? u.mesa_id) && (
+                                                        <span>🪑 Mesa {u.mesaId ?? u.mesa_id}</span>
+                                                    )}
+                                                    {(u.brigadaNombre ?? u.brigada_nombre) && (
+                                                        <span className={(u.mesaId ?? u.mesa_id) ? 'ms-2' : ''}>
+                                                            · 🚒 {u.brigadaNombre ?? u.brigada_nombre}
+                                                        </span>
+                                                    )}
+                                                    {!(u.mesaId ?? u.mesa_id) && !(u.brigadaNombre ?? u.brigada_nombre) && (
+                                                        <em>Sin asignar</em>
+                                                    )}
                                                 </div>
                                             )}
-                                            {/* Admin: sin asignación */}
-                                            {u.rol === 'admin' && <em>—</em>}
+
+                                            {rol === 'admin' && <em>—</em>}
                                         </td>
+
                                         <td>
                                             <span className={`badge ${u.activo ? 'bg-success' : 'bg-secondary'}`}>
                                                 {u.activo ? 'Activo' : 'Inactivo'}
                                             </span>
                                         </td>
+
                                         <td className="text-end pe-4">
-                                            <button className="btn btn-sm btn-outline-primary me-2"
+                                            <button
+                                                className="btn btn-sm btn-outline-primary me-2"
                                                 style={{ borderRadius: '0.5rem' }}
-                                                onClick={() => setModal(u)}>
+                                                onClick={() => setModal(u)}
+                                            >
                                                 ✏️ Editar
                                             </button>
-                                            <button className="btn btn-sm btn-outline-danger"
+                                            <button
+                                                className="btn btn-sm btn-outline-danger"
                                                 style={{ borderRadius: '0.5rem' }}
-                                                onClick={() => setConfirmDel(u)}>
+                                                onClick={() => setConfirmDel(u)}
+                                            >
                                                 🗑️
                                             </button>
                                         </td>
                                     </tr>
                                 );
                             })}
+
                             {usuarios.length === 0 && (
-                                <tr><td colSpan="5" className="text-center py-5 text-muted">Sin empleados registrados</td></tr>
+                                <tr>
+                                    <td colSpan="5" className="text-center py-5 text-muted">
+                                        Sin empleados registrados
+                                    </td>
+                                </tr>
                             )}
                         </tbody>
                     </table>
@@ -322,12 +460,15 @@ const PersonalAdmin = ({ mostrarToast }) => {
             )}
 
             {modal !== null && (
-                <UsuarioModal usuario={modal?.id ? modal : null}
+                <UsuarioModal
+                    usuario={modal?.id ? modal : null}
                     brigadas={brigadas}
-                    onSave={handleSave} onClose={() => setModal(null)} saving={saving} />
+                    onSave={handleSave}
+                    onClose={() => setModal(null)}
+                    saving={saving}
+                />
             )}
 
-            {/* Confirmación de eliminación */}
             {confirmDel && (
                 <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }}>
                     <div className="modal-dialog modal-dialog-centered modal-sm">
@@ -336,7 +477,9 @@ const PersonalAdmin = ({ mostrarToast }) => {
                             <h5 className="fw-bold">¿Eliminar empleado?</h5>
                             <p className="text-muted small mb-3">{confirmDel.nombre}</p>
                             <div className="d-flex gap-2 justify-content-center">
-                                <button className="btn btn-secondary" onClick={() => setConfirmDel(null)}>Cancelar</button>
+                                <button className="btn btn-secondary" onClick={() => setConfirmDel(null)}>
+                                    Cancelar
+                                </button>
                                 <button className="btn btn-danger fw-bold" onClick={() => handleDelete(confirmDel.id)}>
                                     Sí, eliminar
                                 </button>
@@ -349,35 +492,56 @@ const PersonalAdmin = ({ mostrarToast }) => {
     );
 };
 
-// ─── Componente tarjeta de producto ──────────────────────────────────────────
 const ProductCard = ({ product, onEdit }) => {
-    const stockBajo = product.stock_disponible != null && product.stock_disponible <= 3;
+    const stock = getProductStock(product);
+    const stockBajo = stock != null && stock <= 3;
+    const imagen = getProductImage(product);
+    const nombre = getProductName(product);
+    const descripcion = getProductDesc(product);
+    const precio = getProductPrice(product);
+
     return (
         <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '1rem', overflow: 'hidden' }}>
-            {/* Imagen */}
             <div style={{ height: 140, background: '#f0f0f0', overflow: 'hidden', position: 'relative' }}>
-                {product.imagen_url
-                    ? <img src={product.imagen_url} alt={product.nombre}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <div className="d-flex align-items-center justify-content-center h-100 text-muted" style={{ fontSize: 48 }}>🍽️</div>
-                }
+                {imagen ? (
+                    <img
+                        src={imagen}
+                        alt={nombre}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                ) : (
+                    <div className="d-flex align-items-center justify-content-center h-100 text-muted" style={{ fontSize: 48 }}>
+                        🍽️
+                    </div>
+                )}
                 {stockBajo && (
-                    <span className="badge bg-danger position-absolute top-0 end-0 m-2">⚠️ Stock bajo</span>
+                    <span className="badge bg-danger position-absolute top-0 end-0 m-2">
+                        ⚠️ Stock bajo
+                    </span>
                 )}
             </div>
-            {/* Info */}
+
             <div className="card-body d-flex flex-column p-3">
-                <h6 className="fw-bold mb-1" style={{ fontSize: '0.95rem' }}>{product.nombre}</h6>
-                <p className="text-muted small mb-2" style={{
-                    overflow: 'hidden', display: '-webkit-box',
-                    WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'
-                }}>
-                    {product.descripcion || <em>Sin descripción</em>}
+                <h6 className="fw-bold mb-1" style={{ fontSize: '0.95rem' }}>
+                    {nombre}
+                </h6>
+                <p
+                    className="text-muted small mb-2"
+                    style={{
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                    }}
+                >
+                    {descripcion || <em>Sin descripción</em>}
                 </p>
+
                 <div className="mt-auto d-flex justify-content-between align-items-center">
-                    <span className="fw-bold text-success fs-5">${Number(product.precio).toFixed(2)}</span>
-                    <span className="text-muted small">Stock: {product.stock_disponible ?? '—'}</span>
+                    <span className="fw-bold text-success fs-5">${Number(precio).toFixed(2)}</span>
+                    <span className="text-muted small">Stock: {stock ?? '—'}</span>
                 </div>
+
                 <button
                     className="btn btn-outline-primary btn-sm mt-2 w-100 fw-semibold"
                     style={{ borderRadius: '0.6rem' }}
@@ -390,15 +554,26 @@ const ProductCard = ({ product, onEdit }) => {
     );
 };
 
-// ─── Modal de edición / creación ─────────────────────────────────────────────
 const ProductModal = ({ product, onSave, onClose, saving }) => {
     const isNew = !product?.id;
-    const [form, setForm] = useState(product || EMPTY_NEW);
-    const set = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
+    const [form, setForm] = useState(
+        product
+            ? {
+                  ...EMPTY_NEW,
+                  ...product,
+                  imagen_url: getProductImage(product),
+                  stock_disponible: getProductStock(product) ?? 10,
+                  categoria_id: product.categoria_id ?? product.categoriaId ?? 1,
+                  kitchen_id: product.kitchen_id ?? product.kitchenId ?? 1,
+              }
+            : EMPTY_NEW
+    );
+
+    const set = (field, val) => setForm((prev) => ({ ...prev, [field]: val }));
 
     return (
         <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
-            <div className="modal-dialog modal-dialog-centered" onClick={e => e.stopPropagation()}>
+            <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.25rem' }}>
                     <div className="modal-header border-0 pb-0">
                         <h5 className="modal-title fw-bold">
@@ -406,65 +581,110 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                         </h5>
                         <button type="button" className="btn-close" onClick={onClose} />
                     </div>
+
                     <div className="modal-body pt-2">
                         <div className="mb-3">
                             <label className="form-label fw-semibold small">Nombre *</label>
-                            <input className="form-control" value={form.nombre}
-                                onChange={e => set('nombre', e.target.value)}
-                                placeholder="Ej. Hamburguesa Doble" />
+                            <input
+                                className="form-control"
+                                value={form.nombre}
+                                onChange={(e) => set('nombre', e.target.value)}
+                                placeholder="Ej. Hamburguesa Doble"
+                            />
                         </div>
+
                         <div className="row g-3 mb-3">
                             <div className="col-6">
                                 <label className="form-label fw-semibold small">Precio ($) *</label>
-                                <input className="form-control" type="number" step="0.01" value={form.precio}
-                                    onChange={e => set('precio', e.target.value)} placeholder="0.00" />
+                                <input
+                                    className="form-control"
+                                    type="number"
+                                    step="0.01"
+                                    value={form.precio}
+                                    onChange={(e) => set('precio', e.target.value)}
+                                    placeholder="0.00"
+                                />
                             </div>
                             <div className="col-6">
                                 <label className="form-label fw-semibold small">Stock disponible</label>
-                                <input className="form-control" type="number" value={form.stock_disponible}
-                                    onChange={e => set('stock_disponible', e.target.value)} />
+                                <input
+                                    className="form-control"
+                                    type="number"
+                                    value={form.stock_disponible}
+                                    onChange={(e) => set('stock_disponible', e.target.value)}
+                                />
                             </div>
                         </div>
+
                         <div className="row g-3 mb-3">
                             <div className="col-6">
                                 <label className="form-label fw-semibold small">Categoría</label>
-                                <select className="form-select" value={form.categoria_id}
-                                    onChange={e => set('categoria_id', Number(e.target.value))}>
-                                    {CATEGORIAS.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                <select
+                                    className="form-select"
+                                    value={form.categoria_id}
+                                    onChange={(e) => set('categoria_id', Number(e.target.value))}
+                                >
+                                    {CATEGORIAS.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.nombre}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="col-6">
                                 <label className="form-label fw-semibold small">Cocina</label>
-                                <select className="form-select" value={form.kitchen_id}
-                                    onChange={e => set('kitchen_id', Number(e.target.value))}>
-                                    {COCINAS.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                <select
+                                    className="form-select"
+                                    value={form.kitchen_id}
+                                    onChange={(e) => set('kitchen_id', Number(e.target.value))}
+                                >
+                                    {COCINAS.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.nombre}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
+
                         <div className="mb-3">
                             <label className="form-label fw-semibold small">Descripción</label>
-                            <textarea className="form-control" rows="2" value={form.descripcion}
-                                onChange={e => set('descripcion', e.target.value)}
-                                placeholder="Ingredientes, detalles..." />
+                            <textarea
+                                className="form-control"
+                                rows="2"
+                                value={form.descripcion}
+                                onChange={(e) => set('descripcion', e.target.value)}
+                                placeholder="Ingredientes, detalles..."
+                            />
                         </div>
+
                         <div className="mb-1">
                             <label className="form-label fw-semibold small">URL Imagen</label>
-                            <input className="form-control form-control-sm" value={form.imagen_url || ''}
-                                onChange={e => set('imagen_url', e.target.value)}
-                                placeholder="https://..." />
+                            <input
+                                className="form-control form-control-sm"
+                                value={form.imagen_url || ''}
+                                onChange={(e) => set('imagen_url', e.target.value)}
+                                placeholder="https://..."
+                            />
                         </div>
                     </div>
+
                     <div className="modal-footer border-0 pt-0">
-                        <button className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
+                        <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
+                            Cancelar
+                        </button>
                         <button
                             className="btn btn-primary fw-bold px-4"
                             style={{ borderRadius: '0.75rem' }}
                             onClick={() => onSave(form)}
                             disabled={saving || !form.nombre || !form.precio}
                         >
-                            {saving
-                                ? <><span className="spinner-border spinner-border-sm me-2" />Guardando...</>
-                                : isNew ? '➕ Crear' : '💾 Guardar'}
+                            {saving ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm me-2" />
+                                    Guardando...
+                                </>
+                            ) : isNew ? '➕ Crear' : '💾 Guardar'}
                         </button>
                     </div>
                 </div>
@@ -473,18 +693,18 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
     );
 };
 
-// ─── Panel principal Admin ────────────────────────────────────────────────────
 const MenuAdmin = () => {
     const { products, updateProduct, createProduct, fetchAdminProducts } = useAppStore();
-    const [modalProduct, setModalProduct] = useState(null);   // null=cerrado, {}=nuevo, {...}=editar
+    const [modalProduct, setModalProduct] = useState(null);
     const [saving, setSaving] = useState(false);
     const [busqueda, setBusqueda] = useState('');
     const [filtroCategoria, setFiltroCategoria] = useState('Todos');
     const [toast, setToast] = useState('');
-    const [vistaActual, setVistaActual] = useState('menu'); // 'menu' | 'personal' | 'qr'
+    const [vistaActual, setVistaActual] = useState('menu');
 
-
-    useEffect(() => { fetchAdminProducts(); }, []);
+    useEffect(() => {
+        fetchAdminProducts();
+    }, [fetchAdminProducts]);
 
     const mostrarToast = (msg) => {
         setToast(msg);
@@ -494,23 +714,26 @@ const MenuAdmin = () => {
     const handleSave = async (form) => {
         setSaving(true);
         try {
+            const payloadBase = {
+                nombre: form.nombre,
+                precio: parseFloat(form.precio),
+                descripcion: form.descripcion,
+                stock_disponible: parseInt(form.stock_disponible, 10) || 0,
+            };
+
             if (form.id) {
-                await updateProduct(form.id, {
-                    nombre: form.nombre, precio: parseFloat(form.precio),
-                    descripcion: form.descripcion,
-                    stock_disponible: parseInt(form.stock_disponible, 10),
-                });
+                await updateProduct(form.id, payloadBase);
                 mostrarToast('✅ Producto actualizado');
             } else {
                 await createProduct({
-                    nombre: form.nombre, precio: parseFloat(form.precio),
-                    descripcion: form.descripcion,
-                    categoria_id: form.categoria_id, kitchen_id: form.kitchen_id,
-                    stock_disponible: parseInt(form.stock_disponible, 10) || 0,
+                    ...payloadBase,
+                    categoria_id: form.categoria_id,
+                    kitchen_id: form.kitchen_id,
                     imagen_url: form.imagen_url || null,
                 });
                 mostrarToast('✅ Producto creado');
             }
+
             await fetchAdminProducts();
             setModalProduct(null);
         } catch (e) {
@@ -520,40 +743,65 @@ const MenuAdmin = () => {
         }
     };
 
-    // Filtros
-    const categorias = ['Todos', ...new Set(products.map(p => p.categoria || 'Otros'))];
-    const productsFiltrados = products.filter(p => {
-        const coincideCat = filtroCategoria === 'Todos' || (p.categoria || 'Otros') === filtroCategoria;
-        const coincideBusqueda = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
+    const productsNormalizados = (products || []).map((p) => ({
+        ...p,
+        categoriaTexto: getProductCategoryName(p),
+    }));
+
+    const categorias = ['Todos', ...new Set(productsNormalizados.map((p) => p.categoriaTexto || 'Otros'))];
+
+    const productsFiltrados = productsNormalizados.filter((p) => {
+        const coincideCat =
+            filtroCategoria === 'Todos' || (p.categoriaTexto || 'Otros') === filtroCategoria;
+        const coincideBusqueda = getProductName(p).toLowerCase().includes(busqueda.toLowerCase());
         return coincideCat && coincideBusqueda;
     });
 
     return (
         <div className="min-vh-100" style={{ background: '#f4f6fb' }}>
-
-            {/* ── Sidebar / Topbar ──────────────────────────────── */}
-            <nav className="navbar sticky-top shadow-sm px-3 py-2"
-                style={{ background: 'linear-gradient(90deg,#1a1a2e,#0f3460)', borderBottom: '3px solid #e67e22' }}>
+            <nav
+                className="navbar sticky-top shadow-sm px-3 py-2"
+                style={{
+                    background: 'linear-gradient(90deg,#1a1a2e,#0f3460)',
+                    borderBottom: '3px solid #e67e22',
+                }}
+            >
                 <div className="d-flex align-items-center gap-3 me-auto">
                     <span style={{ fontSize: 26 }}>🍴</span>
                     <span className="fw-bold text-white fs-5">Panel Administrador</span>
                 </div>
+
                 <div className="d-flex gap-2">
                     <button
-                        className={`btn btn-sm ${vistaActual === 'menu' ? 'btn-warning text-dark' : 'btn-outline-light'} fw-semibold`}
+                        className={`btn btn-sm ${
+                            vistaActual === 'menu' ? 'btn-warning text-dark' : 'btn-outline-light'
+                        } fw-semibold`}
                         style={{ borderRadius: '2rem' }}
                         onClick={() => setVistaActual('menu')}
-                    >🍽️ Menú</button>
+                    >
+                        🍽️ Menú
+                    </button>
                     <button
-                        className={`btn btn-sm ${vistaActual === 'personal' ? 'btn-warning text-dark' : 'btn-outline-light'} fw-semibold`}
+                        className={`btn btn-sm ${
+                            vistaActual === 'personal' ? 'btn-warning text-dark' : 'btn-outline-light'
+                        } fw-semibold`}
                         style={{ borderRadius: '2rem' }}
                         onClick={() => setVistaActual('personal')}
-                    >👥 Personal</button>
+                    >
+                        👥 Personal
+                    </button>
                     <button
-                        className={`btn btn-sm ${vistaActual === 'qr' ? 'btn-warning text-dark' : 'btn-outline-light'} fw-semibold`}
+                        className={`btn btn-sm ${
+                            vistaActual === 'qr' ? 'btn-warning text-dark' : 'btn-outline-light'
+                        } fw-semibold`}
                         style={{ borderRadius: '2rem' }}
-                        onClick={() => { setVistaActual('qr'); window.open('?admin=qr', '_blank'); }}
-                    >🖨️ QRs</button>
+                        onClick={() => {
+                            setVistaActual('qr');
+                            window.open('?admin=qr', '_blank');
+                        }}
+                    >
+                        🖨️ QRs
+                    </button>
                 </div>
             </nav>
 
@@ -562,19 +810,22 @@ const MenuAdmin = () => {
                     <PersonalAdmin mostrarToast={mostrarToast} />
                 ) : (
                     <>
-                        {/* ── Barra de herramientas ──────────────────────── */}
                         <div className="d-flex flex-wrap gap-3 align-items-center mb-4">
                             <h2 className="fw-bold mb-0 me-auto">
                                 Gestión del Menú
-                                <span className="badge bg-secondary ms-2 fs-6">{products.length} productos</span>
+                                <span className="badge bg-secondary ms-2 fs-6">
+                                    {products.length} productos
+                                </span>
                             </h2>
+
                             <input
                                 className="form-control form-control-sm"
                                 style={{ maxWidth: 220, borderRadius: '2rem' }}
                                 placeholder="🔍 Buscar platillo..."
                                 value={busqueda}
-                                onChange={e => setBusqueda(e.target.value)}
+                                onChange={(e) => setBusqueda(e.target.value)}
                             />
+
                             <button
                                 className="btn btn-primary fw-bold"
                                 style={{ borderRadius: '2rem' }}
@@ -584,11 +835,13 @@ const MenuAdmin = () => {
                             </button>
                         </div>
 
-                        {/* ── Filtros de categoría ───────────────────────── */}
                         <div className="d-flex gap-2 flex-wrap mb-4">
-                            {categorias.map(cat => (
-                                <button key={cat}
-                                    className={`btn btn-sm ${filtroCategoria === cat ? 'btn-dark' : 'btn-outline-secondary'}`}
+                            {categorias.map((cat) => (
+                                <button
+                                    key={cat}
+                                    className={`btn btn-sm ${
+                                        filtroCategoria === cat ? 'btn-dark' : 'btn-outline-secondary'
+                                    }`}
                                     style={{ borderRadius: '2rem' }}
                                     onClick={() => setFiltroCategoria(cat)}
                                 >
@@ -597,7 +850,6 @@ const MenuAdmin = () => {
                             ))}
                         </div>
 
-                        {/* ── Grid de productos ──────────────────────────── */}
                         {productsFiltrados.length === 0 ? (
                             <div className="text-center py-5 text-muted">
                                 <p style={{ fontSize: 48 }}>🍽️</p>
@@ -605,7 +857,7 @@ const MenuAdmin = () => {
                             </div>
                         ) : (
                             <div className="row g-3">
-                                {productsFiltrados.map(p => (
+                                {productsFiltrados.map((p) => (
                                     <div key={p.id} className="col-6 col-md-4 col-lg-3 col-xl-2">
                                         <ProductCard product={p} onEdit={setModalProduct} />
                                     </div>
@@ -616,7 +868,6 @@ const MenuAdmin = () => {
                 )}
             </div>
 
-            {/* ── Modal ─────────────────────────────────────────── */}
             {modalProduct !== null && (
                 <ProductModal
                     product={modalProduct?.id ? modalProduct : null}
@@ -626,7 +877,6 @@ const MenuAdmin = () => {
                 />
             )}
 
-            {/* ── Toast de confirmación ─────────────────────────── */}
             {toast && (
                 <div
                     className="position-fixed bottom-0 end-0 m-4 alert alert-dark shadow-lg fw-semibold"
