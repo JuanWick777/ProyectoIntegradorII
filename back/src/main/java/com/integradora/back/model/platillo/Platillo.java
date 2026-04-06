@@ -1,5 +1,6 @@
-package com.integradora.back.model;
+package com.integradora.back.model.platillo;
 
+import com.integradora.back.model.categoria.Categoria;
 import jakarta.persistence.*;
 import lombok.*;
 

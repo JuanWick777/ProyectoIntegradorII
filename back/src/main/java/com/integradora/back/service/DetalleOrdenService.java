@@ -1,6 +1,9 @@
 package com.integradora.back.service;
 
-import com.integradora.back.model.*;
+import com.integradora.back.model.detalleorden.DetalleOrden;
+import com.integradora.back.model.detalleorden.EstadoDetalle;
+import com.integradora.back.model.orden.Orden;
+import com.integradora.back.model.platillo.Platillo;
 import com.integradora.back.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,7 @@ public class DetalleOrdenService {
                 .precioUnitario(precio)
                 .subtotal(subtotal)
                 .notaCliente(nota)
+                .estadoPreparacion(EstadoDetalle.PENDIENTE)
                 .build();
 
         return detalleRepository.save(detalle);
@@ -46,5 +50,29 @@ public class DetalleOrdenService {
 
     public List<DetalleOrden> obtenerPorOrden(Long ordenId) {
         return detalleRepository.findByOrdenId(ordenId);
+    }
+
+    public List<DetalleOrden> obtenerPendientes() {
+        return detalleRepository.findByEstadoPreparacionIn(
+                List.of(
+                        EstadoDetalle.PENDIENTE,
+                        EstadoDetalle.EN_PREPARACION
+                )
+        );
+    }
+
+    public DetalleOrden cambiarEstado(Long id, String estado) {
+
+        DetalleOrden detalle = detalleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Detalle no encontrado"));
+
+        try {
+            EstadoDetalle nuevoEstado = EstadoDetalle.valueOf(estado.toUpperCase());
+            detalle.setEstadoPreparacion(nuevoEstado);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Estado inválido: " + estado);
+        }
+
+        return detalleRepository.save(detalle);
     }
 }

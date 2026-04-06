@@ -1,6 +1,6 @@
 package com.integradora.back.repository;
 
-import com.integradora.back.model.Platillo;
+import com.integradora.back.model.platillo.Platillo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

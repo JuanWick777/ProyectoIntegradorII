@@ -1,5 +1,7 @@
-package com.integradora.back.model;
+package com.integradora.back.model.orden;
 
+import com.integradora.back.model.mesa.Mesa;
+import com.integradora.back.model.usuario.Usuario;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -36,8 +38,9 @@ public class Orden {
     @JoinColumn(name = "id_mesa")
     private Mesa mesa;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado_preparacion")
-    private String estadoPreparacion;
+    private EstadoOrden estadoPreparacion;
 
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
