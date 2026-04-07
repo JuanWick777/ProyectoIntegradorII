@@ -33,7 +33,12 @@ async function apiFetch(endpoint, options = {}) {
         credentials: 'include',
     });
 
-    const data = await res.json().catch(() => ({}));
+    let data = {};
+    try {
+        data = await res.json();
+    } catch {
+        data = {};
+    }
 
     if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
@@ -140,7 +145,7 @@ export const useAppStore = create(
             limpiarCarrito: () => set({ carrito: [] }),
 
             addOrder: async () => {
-                const { carrito, numeroMesa, usuario } = get();
+                const { carrito, numeroMesa, usuario, token } = get();
 
                 if (carrito.length === 0 || !numeroMesa) return;
 
@@ -157,6 +162,7 @@ export const useAppStore = create(
                 const data = await apiFetch('/ordenes/completa', {
                     method: 'POST',
                     body: JSON.stringify(payload),
+                    token,
                 });
 
                 set({ ordenActual: data });
@@ -164,15 +170,16 @@ export const useAppStore = create(
             },
 
             startOrderPolling: (ordenId) => {
-                const { pollingInterval } = get();
+                const { pollingInterval, token } = get();
                 if (pollingInterval) clearInterval(pollingInterval);
 
                 const interval = setInterval(async () => {
                     try {
-                        const data = await apiFetch(`/ordenes/${ordenId}`);
+                        const data = await apiFetch(`/ordenes/${ordenId}`, { token });
                         set({ ordenActual: data });
 
-                        if (['cerrada', 'cancelada', 'entregada'].includes((data.estado || '').toLowerCase())) {
+                        const estado = (data.estado || data.estadoPreparacion || '').toLowerCase();
+                        if (['cerrada', 'cancelada', 'entregada'].includes(estado)) {
                             clearInterval(interval);
                             set({ pollingInterval: null });
                         }
@@ -193,21 +200,25 @@ export const useAppStore = create(
             },
 
             fetchMeseroOrdenes: async () => {
-                const data = await apiFetch('/mesero/ordenes');
+                const { token } = get();
+                const data = await apiFetch('/mesero/ordenes', { token });
                 set({ orders: data });
                 return data;
             },
 
             cambiarEstadoOrden: async (ordenId, nuevoEstado) => {
+                const { token } = get();
                 await apiFetch(`/ordenes/${ordenId}/estado`, {
                     method: 'PUT',
                     body: JSON.stringify({ estado: nuevoEstado }),
+                    token,
                 });
             },
 
             fetchOrders: async () => {
+                const { token } = get();
                 try {
-                    const data = await apiFetch('/mesero/ordenes');
+                    const data = await apiFetch('/mesero/ordenes', { token });
                     set({ orders: data });
                 } catch (e) {
                     console.error('Error cargando órdenes:', e);
@@ -215,15 +226,18 @@ export const useAppStore = create(
             },
 
             updateOrderStatus: async (ordenId, nuevoEstado) => {
+                const { token } = get();
                 await apiFetch(`/ordenes/${ordenId}/estado`, {
                     method: 'PUT',
                     body: JSON.stringify({ estado: nuevoEstado }),
+                    token,
                 });
             },
 
             fetchKitchenTickets: async () => {
+                const { token } = get();
                 try {
-                    const data = await apiFetch('/cocina/tickets');
+                    const data = await apiFetch('/cocina/tickets', { token });
                     set({ orders: data });
                 } catch (e) {
                     console.error('Error cargando tickets de cocina:', e);
@@ -231,9 +245,11 @@ export const useAppStore = create(
             },
 
             updateDetalleEstado: async (detalleId, nuevoEstado) => {
+                const { token } = get();
                 await apiFetch(`/detalles/${detalleId}/estado`, {
                     method: 'PUT',
                     body: JSON.stringify({ estado: nuevoEstado }),
+                    token,
                 });
             },
 
@@ -259,12 +275,6 @@ export const useAppStore = create(
             },
 
             logout: async () => {
-                try {
-                    await apiFetch('/auth/logout', { method: 'POST' });
-                } catch {
-                    // si no existe logout en backend, no pasa nada
-                }
-
                 set({ usuario: null, token: null, ordenActual: null, carrito: [] });
             },
 
@@ -297,22 +307,28 @@ export const useAppStore = create(
             },
 
             updateProduct: async (id, productData) => {
+                const { token } = get();
                 await apiFetchWithFallback([`/admin/platillos/${id}`, `/admin/productos/${id}`], {
                     method: 'PUT',
                     body: JSON.stringify(productData),
+                    token,
                 });
             },
 
             createProduct: async (productData) => {
+                const { token } = get();
                 await apiFetchWithFallback(['/admin/platillos', '/admin/productos'], {
                     method: 'POST',
                     body: JSON.stringify(productData),
+                    token,
                 });
             },
 
             deleteProduct: async (id) => {
+                const { token } = get();
                 await apiFetchWithFallback([`/admin/platillos/${id}`, `/admin/productos/${id}`], {
                     method: 'DELETE',
+                    token,
                 });
             },
 
@@ -341,7 +357,10 @@ export const useAppStore = create(
 
             deleteUsuario: async (id) => {
                 const { token } = get();
-                return await apiFetch(`/admin/usuarios/${id}`, { method: 'DELETE', token });
+                return await apiFetch(`/admin/usuarios/${id}`, {
+                    method: 'DELETE',
+                    token,
+                });
             },
 
             fetchBrigadas: async () => {
@@ -350,21 +369,29 @@ export const useAppStore = create(
             },
 
             createBrigada: async (data) => {
+                const { token } = get();
                 return await apiFetch('/admin/brigadas', {
                     method: 'POST',
                     body: JSON.stringify(data),
+                    token,
                 });
             },
 
             updateBrigada: async (id, data) => {
+                const { token } = get();
                 return await apiFetch(`/admin/brigadas/${id}`, {
                     method: 'PUT',
                     body: JSON.stringify(data),
+                    token,
                 });
             },
 
             deleteBrigada: async (id) => {
-                await apiFetch(`/admin/brigadas/${id}`, { method: 'DELETE' });
+                const { token } = get();
+                await apiFetch(`/admin/brigadas/${id}`, {
+                    method: 'DELETE',
+                    token,
+                });
             },
         }),
         {

@@ -9,11 +9,12 @@ import java.util.List;
 
 public interface DetalleOrdenRepository extends JpaRepository<DetalleOrden, Long> {
 
+
     List<DetalleOrden> findByOrdenId(Long ordenId);
 
-    List<DetalleOrden> findByEstadoPreparacionIn(
-            List<EstadoDetalle> estados
-    );
+    List<DetalleOrden> findByEstadoPreparacionIn(List<EstadoDetalle> estados);
+
+    List<DetalleOrden> findByCocinaIdAndEstadoPreparacionIn(Long cocinaId, List<EstadoDetalle> estados);
 
     @Query("""
         SELECT d FROM DetalleOrden d

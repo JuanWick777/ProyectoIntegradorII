@@ -1,6 +1,7 @@
 package com.integradora.back.model.platillo;
 
 import com.integradora.back.model.categoria.Categoria;
+import com.integradora.back.model.cocina.Cocina;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,16 +25,25 @@ public class Platillo {
     @Column(name = "descripcion")
     private String descripcion;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_categoria")
     private Categoria categoria;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kitchen_id")
+    private Cocina cocina;
 
     @Column(name = "precio", precision = 10, scale = 2)
     private BigDecimal precio;
 
+    @Builder.Default
+    @Column(name = "stock")
+    private Integer stock = 0;
+
     @Column(name = "url_imagen")
     private String urlImagen;
 
+    @Builder.Default
     @Column(name = "estado")
-    private String estado;
+    private String estado = "ACTIVO";
 }

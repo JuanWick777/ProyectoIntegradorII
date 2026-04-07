@@ -100,12 +100,17 @@ public class OrdenService {
             Platillo platillo = platilloRepository.findById(det.getPlatilloId())
                     .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
 
+            if (platillo.getStock() != null && platillo.getStock() < det.getCantidad()) {
+                throw new RuntimeException("Stock insuficiente para el platillo: " + platillo.getNombre());
+            }
+
             BigDecimal precio = platillo.getPrecio();
             BigDecimal subtotal = precio.multiply(BigDecimal.valueOf(det.getCantidad()));
 
             DetalleOrden detalle = DetalleOrden.builder()
                     .orden(orden)
                     .platillo(platillo)
+                    .cocina(platillo.getCocina())
                     .cantidad(det.getCantidad())
                     .precioUnitario(precio)
                     .subtotal(subtotal)
@@ -114,9 +119,21 @@ public class OrdenService {
                     .build();
 
             detalleRepository.save(detalle);
+
+            if (platillo.getStock() != null) {
+                platillo.setStock(platillo.getStock() - det.getCantidad());
+                platilloRepository.save(platillo);
+            }
         }
 
         List<DetalleOrden> detalles = detalleRepository.findByOrdenId(orden.getId());
+        BigDecimal subtotalTotal = detalles.stream()
+                .map(DetalleOrden::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        orden.setSubtotal(subtotalTotal);
+        orden.setTotal(subtotalTotal);
+        orden = ordenRepository.save(orden);
 
         return OrdenMapper.toDTO(orden, detalles);
     }
