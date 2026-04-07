@@ -5,8 +5,7 @@ const AdminLogin = ({ onLoginExitoso }) => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
-    
-    // Asumiendo que existe un login en el store 
+
     const { login } = useAppStore();
 
     const handleChange = (e) => {
@@ -19,9 +18,18 @@ const AdminLogin = ({ onLoginExitoso }) => {
         setLoading(true);
 
         try {
-            await login(credentials.email, credentials.password);
-            if (onLoginExitoso) onLoginExitoso();
+            const user = await login(credentials.email, credentials.password);
+            const rol = (user?.rol || '').toUpperCase();
+
+            if (rol !== 'ADMIN') {
+                throw new Error('No tienes permisos de administrador');
+            }
+
+            if (onLoginExitoso) {
+                onLoginExitoso();
+            }
         } catch (err) {
+            console.error('ERROR LOGIN:', err);
             setError(err.message || 'Error al iniciar sesión');
         } finally {
             setLoading(false);
@@ -33,13 +41,13 @@ const AdminLogin = ({ onLoginExitoso }) => {
             <div className="card shadow-sm" style={{ width: '400px' }}>
                 <div className="card-body p-5">
                     <h2 className="text-center mb-4">Acceso Administrativo</h2>
-                    
+
                     {error && (
                         <div className="alert alert-danger" role="alert">
                             {error}
                         </div>
                     )}
-                    
+
                     <form onSubmit={handleSubmit}>
                         <div className="mb-3">
                             <label className="form-label text-muted fw-bold">Correo Electrónico</label>
@@ -53,6 +61,7 @@ const AdminLogin = ({ onLoginExitoso }) => {
                                 required
                             />
                         </div>
+
                         <div className="mb-4">
                             <label className="form-label text-muted fw-bold">Contraseña</label>
                             <input
@@ -65,8 +74,9 @@ const AdminLogin = ({ onLoginExitoso }) => {
                                 required
                             />
                         </div>
-                        <button 
-                            type="submit" 
+
+                        <button
+                            type="submit"
                             className="btn btn-dark w-100 py-3 fw-bold"
                             disabled={loading}
                         >

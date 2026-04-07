@@ -1,5 +1,7 @@
-package com.integradora.back.model;
+package com.integradora.back.model.detalleorden;
 
+import com.integradora.back.model.orden.Orden;
+import com.integradora.back.model.platillo.Platillo;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -38,4 +40,8 @@ public class DetalleOrden {
 
     @Column(name = "nota_cliente")
     private String notaCliente;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_preparacion")
+    private EstadoDetalle estadoPreparacion;
 }

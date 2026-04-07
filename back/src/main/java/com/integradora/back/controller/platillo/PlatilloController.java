@@ -1,6 +1,6 @@
 package com.integradora.back.controller.platillo;
 
-import com.integradora.back.model.Platillo;
+import com.integradora.back.model.platillo.Platillo;
 import com.integradora.back.service.PlatilloService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/platillos")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class PlatilloController {
 
     private final PlatilloService service;

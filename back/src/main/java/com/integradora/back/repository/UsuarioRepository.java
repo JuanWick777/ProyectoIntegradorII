@@ -1,6 +1,6 @@
 package com.integradora.back.repository;
 
-import com.integradora.back.model.Usuario;
+import com.integradora.back.model.usuario.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

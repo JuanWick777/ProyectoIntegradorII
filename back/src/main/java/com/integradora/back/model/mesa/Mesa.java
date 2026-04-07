@@ -1,4 +1,4 @@
-package com.integradora.back.model;
+package com.integradora.back.model.mesa;
 
 import jakarta.persistence.*;
 import lombok.*;
