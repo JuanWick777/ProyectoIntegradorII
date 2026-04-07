@@ -61,7 +61,7 @@ fun SHome(
         // TOP BAR
         TopBarFake(
             onProfileClick = {
-                rootNavController.navigate("Account")
+                navController.navigate("account")
             }
         )
 

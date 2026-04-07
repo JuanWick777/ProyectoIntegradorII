@@ -67,9 +67,9 @@ fun PasswordInput(
                 Icon(
                     imageVector = icon,
                     contentDescription = if (passwordVisible)
-                    "Mostrar Contraseña"
+                        "Mostrar Contraseña"
                     else
-                    "Ocultar Contraseña"
+                        "Ocultar Contraseña"
                 )
             }
         },
