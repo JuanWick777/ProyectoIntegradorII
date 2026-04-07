@@ -1,9 +1,11 @@
 package com.integradora.back.model.detalleorden;
 
+import com.integradora.back.model.cocina.Cocina;
 import com.integradora.back.model.orden.Orden;
 import com.integradora.back.model.platillo.Platillo;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 
 @Entity
@@ -19,15 +21,17 @@ public class DetalleOrden {
     @Column(name = "id_detalles")
     private Long id;
 
-    // ORDEN
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_orden")
     private Orden orden;
 
-    // PLATILLO
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "platillo_id")
     private Platillo platillo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kitchen_id")
+    private Cocina cocina;
 
     @Column(name = "cantidad", nullable = false)
     private Integer cantidad;

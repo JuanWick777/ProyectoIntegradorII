@@ -1,4 +1,4 @@
-package com.integradora.back.controller.platillo;
+package com.integradora.back.controller.admin;
 
 import com.integradora.back.model.platillo.Platillo;
 import com.integradora.back.repository.PlatilloRepository;

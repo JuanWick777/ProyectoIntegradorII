@@ -32,18 +32,28 @@ public class DetalleOrdenService {
         Platillo platillo = platilloRepository.findById(platilloId)
                 .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
 
+        if (platillo.getStock() != null && platillo.getStock() < cantidad) {
+            throw new RuntimeException("Stock insuficiente para el platillo: " + platillo.getNombre());
+        }
+
         BigDecimal precio = platillo.getPrecio();
         BigDecimal subtotal = precio.multiply(BigDecimal.valueOf(cantidad));
 
         DetalleOrden detalle = DetalleOrden.builder()
                 .orden(orden)
                 .platillo(platillo)
+                .cocina(platillo.getCocina())
                 .cantidad(cantidad)
                 .precioUnitario(precio)
                 .subtotal(subtotal)
                 .notaCliente(nota)
                 .estadoPreparacion(EstadoDetalle.PENDIENTE)
                 .build();
+
+        if (platillo.getStock() != null) {
+            platillo.setStock(platillo.getStock() - cantidad);
+            platilloRepository.save(platillo);
+        }
 
         return detalleRepository.save(detalle);
     }
