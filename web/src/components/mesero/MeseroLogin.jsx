@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 
-
-/**
- * MeseroLogin.jsx — Formulario de login para staff (mesero/admin).
- * POST /api/auth/login → guarda sesión en el store.
- */
-const MeseroLogin = ({ onLoginExitoso, titulo = 'Portal de Mesero', icono = '🧑‍🍽️', demoEmail = 'mesero@rest.com' }) => {
+const MeseroLogin = ({
+    onLoginExitoso,
+    titulo = 'Portal de Personal',
+    icono = '🧑‍🍽️',
+    demoEmail = 'mesero@rest.com',
+    rolesPermitidos = ['MESERO', 'COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO']
+}) => {
     const { login } = useAppStore();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,11 +18,20 @@ const MeseroLogin = ({ onLoginExitoso, titulo = 'Portal de Mesero', icono = '�
         e.preventDefault();
         setError('');
         setLoading(true);
+
         try {
-            await login(email, password);
-            onLoginExitoso();
+            const user = await login(email, password);
+            const rol = (user?.rol || '').toUpperCase();
+
+            if (!rolesPermitidos.includes(rol)) {
+                throw new Error('No tienes permisos para acceder a este portal');
+            }
+
+            if (onLoginExitoso) {
+                onLoginExitoso();
+            }
         } catch (err) {
-            setError('Credenciales incorrectas. Verifica tu email y contraseña.');
+            setError(err.message || 'Credenciales incorrectas. Verifica tu email y contraseña.');
         } finally {
             setLoading(false);
         }
@@ -33,7 +43,6 @@ const MeseroLogin = ({ onLoginExitoso, titulo = 'Portal de Mesero', icono = '�
             style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%)' }}
         >
             <div className="card border-0 shadow-lg p-4" style={{ width: '100%', maxWidth: 400, borderRadius: '1.25rem' }}>
-                {/* Logo / header */}
                 <div className="text-center mb-4">
                     <div
                         className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
@@ -59,6 +68,7 @@ const MeseroLogin = ({ onLoginExitoso, titulo = 'Portal de Mesero', icono = '�
                             autoFocus
                         />
                     </div>
+
                     <div className="mb-3">
                         <label className="form-label fw-semibold small">Contraseña</label>
                         <input

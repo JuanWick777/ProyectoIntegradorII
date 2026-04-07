@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from './store/useAppStore';
 
 // Páginas por rol
@@ -10,7 +10,17 @@ import MenuAdmin from './components/MenuAdmin';
 import AdminLogin from './components/AdminLogin';
 
 function App() {
-  const { setNumeroMesa, fetchCurrentUser, usuario } = useAppStore();
+  const { setNumeroMesa, fetchCurrentUser, usuario, token } = useAppStore();
+
+  const [hydrated, setHydrated] = useState(false);
+
+  /*useEffect(() => {
+    setHydrated(useAppStore.persist?.hasHydrated?.() ?? true);
+    const unsub = useAppStore.persist?.onFinishHydration?.(() => setHydrated(true));
+    return () => unsub?.();
+  }, []);
+
+  if (!hydrated) return null;*/
 
   const params = new URLSearchParams(window.location.search);
   const esCocina = Boolean(params.get('cocina'));
@@ -18,34 +28,44 @@ function App() {
   const adminView = params.get('admin');
   const mesaParam = params.get('mesa');
 
+  const rol = (usuario?.rol || '').toUpperCase();
+  const esAdmin = rol === 'ADMIN';
+
   useEffect(() => {
     if (mesaParam && !esCocina) {
       setNumeroMesa(parseInt(mesaParam, 10));
     }
-    const esStaff = esCocina || esMesero || Boolean(adminView) || (!mesaParam && !esCocina && !esMesero);
-    if (esStaff) {
-      fetchCurrentUser().catch(() => { });
-    }
-  }, [mesaParam, esCocina, esMesero, adminView, setNumeroMesa, fetchCurrentUser]);
 
-  // ── Routing ──────────────────────────────────────────────────────────────
+    const esStaff =
+      esCocina ||
+      esMesero ||
+      Boolean(adminView) ||
+      (!mesaParam && !esCocina && !esMesero);
+
+    if (esStaff && token) {
+      fetchCurrentUser().catch(() => {});
+    }
+  }, [mesaParam, esCocina, esMesero, adminView, setNumeroMesa, fetchCurrentUser, token]);
+
   if (esMesero) return <MeseroPage />;
   if (esCocina) return <KitchenDashboard />;
 
-  // Admin: requiere sesión activa con rol admin
-  if (adminView === 'qr') return <QRCodeGenerator />;
+  if (adminView === 'qr') {
+    if (!esAdmin) return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
+    return <QRCodeGenerator />;
+  }
+
   if (adminView === 'menu') {
-    if (!usuario) return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
+    if (!esAdmin) return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
     return <MenuAdmin />;
   }
 
-  // URL con mesa → Cliente va directo al catálogo
   if (mesaParam) return <ClientePage />;
 
-  // Raíz / sin parámetros → Login de Administrador
-  if (!usuario || usuario.rol !== 'admin') {
+  if (!esAdmin) {
     return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
   }
+
   return <MenuAdmin />;
 }
 
