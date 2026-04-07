@@ -94,7 +94,7 @@ public class AuthService {
         String especifico = usuario.getRolEspecifico() == null ? "" : usuario.getRolEspecifico().trim().toUpperCase();
 
         if (tipo.contains("ADMIN")) return "ADMIN";
-        if (tipo.contains("CLIENT")) return "CLIENTE";
+        if (tipo.contains("CLIENTE")) return "CLIENTE";
 
         if (especifico.contains("SUPERUSER")) return "ADMIN";
         if (especifico.contains("MESERO")) return "MESERO";
@@ -103,7 +103,7 @@ public class AuthService {
         if (especifico.contains("BARISTA")) return "BARISTA";
         if (especifico.contains("REPOST")) return "REPOSTERO";
 
-        if (tipo.contains("EMPLE")) return "EMPLEADO";
+        if (tipo.contains("EMPLEADO")) return "EMPLEADO";
 
         return "CLIENTE";
     }

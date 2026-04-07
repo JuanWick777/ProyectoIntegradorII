@@ -4,6 +4,8 @@ import com.integradora.back.model.mesa.Mesa;
 import com.integradora.back.model.usuario.Usuario;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,29 +20,31 @@ public class Orden {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // CLIENTE
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_cliente")
     private Usuario cliente;
 
-    // MESERO
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_mesero")
     private Usuario mesero;
 
-    // COCINERO
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_cocinero")
     private Usuario cocinero;
 
-    // MESA
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_mesa")
     private Mesa mesa;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_preparacion")
     private EstadoOrden estadoPreparacion;
+
+    @Column(name = "subtotal", precision = 10, scale = 2)
+    private BigDecimal subtotal;
+
+    @Column(name = "total", precision = 10, scale = 2)
+    private BigDecimal total;
 
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
