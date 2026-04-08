@@ -56,7 +56,8 @@ fun ChangePasswordScreen(
         HeaderCBack(
             tittle = "Cambiar Contraseña",
             sizetittle = 28,
-            navController = navController
+            navController = navController,
+            backgroundColor = BackgroundColor
         )
 
         // Contenedor principal para darle padding a los elementos de adentro
@@ -196,6 +197,7 @@ fun ChangePasswordScreen(
                     colortext = Color.White,
                     onClick = {
                         // Aquí irá la lógica para actualizar la contraseña
+                        navController.navigate("personaldates")
                     }
                 )
             }
