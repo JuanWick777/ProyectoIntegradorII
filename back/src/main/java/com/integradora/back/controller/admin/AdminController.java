@@ -39,7 +39,7 @@ public class AdminController {
         usuario.setCorreo(req.getEmail());
         usuario.setContrasena(passwordEncoder.encode(req.getPassword()));
         usuario.setTipoUsuario("Empleado");
-        usuario.setRolEspecifico(req.getRol());
+        usuario.setRolEspecifico(req.getRol().toUpperCase());
         usuario.setAreaAsignada(req.getEspecialidad());
         usuario.setEstado("ACTIVO");
         usuario.setPuntosLealtad(0);

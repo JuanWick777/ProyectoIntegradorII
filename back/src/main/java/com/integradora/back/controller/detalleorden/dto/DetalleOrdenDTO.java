@@ -15,4 +15,5 @@ public class DetalleOrdenDTO {
     private Integer cantidad;
     private BigDecimal precio;
     private String nota;
+    private String estadoPreparacion;
 }

@@ -18,7 +18,8 @@ public class OrdenMapper {
                         det.getPlatillo().getNombre(),
                         det.getCantidad(),
                         det.getPrecioUnitario(),
-                        det.getNotaCliente()
+                        det.getNotaCliente(),
+                        det.getEstadoPreparacion().name()
                 )
         ).collect(Collectors.toList());
 
