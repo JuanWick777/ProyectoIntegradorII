@@ -175,7 +175,7 @@ const KitchenDashboard = () => {
     }, [fetchKitchenTickets]);
 
     useEffect(() => {
-        fetchCurrentUser().catch(() => {});
+        fetchCurrentUser().catch(() => { });
     }, [fetchCurrentUser]);
 
     useEffect(() => {
