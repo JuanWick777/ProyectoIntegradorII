@@ -277,7 +277,7 @@ const KitchenDashboard = () => {
                 ) : (
                     <div className="row g-3">
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#fff5f5', border: '1px solid #f5b7b1' }}>
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#fff5f5', border: '1px solid #f5b7b1', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
                                 <h5 className="fw-bold mb-3" style={{ color: '#c0392b' }}>
                                     🔴 Pendiente ({pendientes.length})
                                 </h5>
@@ -300,7 +300,7 @@ const KitchenDashboard = () => {
                         </div>
 
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#fffbea', border: '1px solid #f9e79f' }}>
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#fffbea', border: '1px solid #f9e79f', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
                                 <h5 className="fw-bold mb-3" style={{ color: '#b9770e' }}>
                                     🟡 En preparación ({enPreparacion.length})
                                 </h5>
@@ -323,7 +323,7 @@ const KitchenDashboard = () => {
                         </div>
 
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#f0fff4', border: '1px solid #abebc6' }}>
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#f0fff4', border: '1px solid #abebc6', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
                                 <h5 className="fw-bold mb-3" style={{ color: '#1e8449' }}>
                                     🟢 Listo ({listos.length})
                                 </h5>

@@ -5,26 +5,32 @@ import PromocionesAdmin from './PromocionesAdmin';
 import QRCodeGenerator from './QRCodeGenerator';
 
 const CATEGORIAS = [
-    { id: 1, nombre: 'Entradas' },
-    { id: 2, nombre: 'Platos Fuertes' },
-    { id: 3, nombre: 'Bebidas' },
-    { id: 4, nombre: 'Postres' },
-    { id: 5, nombre: 'Ensaladas' },
+    { id: 21, nombre: 'Entradas y Snacks' },
+    { id: 24, nombre: 'Platos Fuertes' },
+    { id: 27, nombre: 'Coctelería' },
+    { id: 23, nombre: 'Postres Gourmet' },
+    { id: 2, nombre: 'Bebidas Frías' },
+    { id: 22, nombre: 'Pizzas Artesanales' },
+    { id: 25, nombre: 'Ensaladas y Bowls' },
+    { id: 26, nombre: 'Mariscos y Pescados' },
 ];
 
 const COCINAS = [
-    { id: 1, nombre: 'Cocina Fría' },
+    { id: 1, nombre: 'Cocina Caliente' },
     { id: 2, nombre: 'Parrilla' },
     { id: 3, nombre: 'Bebidas' },
     { id: 4, nombre: 'Repostería' },
 ];
 
 const MAPA_COCINAS_POR_CATEGORIA = {
-    1: [1, 2], // Entradas: Cocina Fría, Parrilla
-    2: [1, 2], // Platos Fuertes: Cocina Fría, Parrilla
-    3: [3],    // Bebidas: Bebidas
-    4: [4],    // Postres: Repostería
-    5: [1],    // Ensaladas: Cocina Fría
+    21: [1, 2], // Entradas
+    24: [1, 2], // Platos Fuertes
+    27: [3],    // Cocteleria
+    23: [4],    // Postres
+    2: [3],     // Bebidas
+    22: [1, 2], // Pizzas
+    25: [1],    // Ensaladas
+    26: [1, 2], // Mariscos
 };
 
 const MESAS_OPCIONES = Array.from({ length: 20 }, (_, i) => ({
