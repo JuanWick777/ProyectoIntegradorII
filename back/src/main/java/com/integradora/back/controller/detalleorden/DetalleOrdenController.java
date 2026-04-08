@@ -9,9 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/detalles")
+@RequestMapping("/api/detalle-orden")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class DetalleOrdenController {
 
     private final DetalleOrdenService service;

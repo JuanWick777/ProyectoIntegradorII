@@ -12,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PromocionController {
 
     private final PromocionService promocionService;
@@ -50,12 +49,10 @@ public class PromocionController {
     @PostMapping("/api/mesero/ordenes/{ordenId}/promocion")
     public ResponseEntity<?> aplicar(
             @PathVariable Long ordenId,
-            @RequestBody Map<String, String> body
-    ) {
+            @RequestBody Map<String, String> body) {
         try {
             return ResponseEntity.ok(
-                    promocionService.aplicarPromocion(ordenId, body.get("codigoPromo"))
-            );
+                    promocionService.aplicarPromocion(ordenId, body.get("codigoPromo")));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));

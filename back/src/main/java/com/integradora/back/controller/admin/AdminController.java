@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AdminController {
 
     private final UsuarioRepository usuarioRepository;

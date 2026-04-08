@@ -22,9 +22,17 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
         fetchPromociones().then(data => setPromos(data || [])).catch(() => {});
     }, []);
 
+    // Obtener string de categoría de forma segura
+    const getCategoriaNombre = (p) => {
+        if (!p) return 'Otros';
+        if (typeof p.categoria === 'string') return p.categoria;
+        if (p.categoria?.nombre) return p.categoria.nombre;
+        return 'Otros';
+    };
+
     // Derivar categorías únicas de los productos
     const categorias = useMemo(() => {
-        const cats = [...new Set(products.map(p => p.categoria))].sort();
+        const cats = [...new Set(products.map(getCategoriaNombre))].sort();
         return ['todos', ...cats];
     }, [products]);
 
@@ -32,12 +40,12 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
     const productosFiltrados = useMemo(() => {
         let lista = products;
         if (categoriaActiva !== 'todos') {
-            lista = lista.filter(p => p.categoria === categoriaActiva);
+            lista = lista.filter(p => getCategoriaNombre(p) === categoriaActiva);
         }
         if (busqueda.trim()) {
             const q = busqueda.toLowerCase();
             lista = lista.filter(p =>
-                p.nombre.toLowerCase().includes(q) ||
+                p.nombre?.toLowerCase().includes(q) ||
                 p.descripcion?.toLowerCase().includes(q)
             );
         }

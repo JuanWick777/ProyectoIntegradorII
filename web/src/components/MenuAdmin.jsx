@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import HamburgerMenu from './shared/HamburgerMenu';
 import PromocionesAdmin from './PromocionesAdmin';
+import QRCodeGenerator from './QRCodeGenerator';
 
 const CATEGORIAS = [
-    { id: 1, nombre: 'Hamburguesas' },
-    { id: 2, nombre: 'Pizzas' },
+    { id: 1, nombre: 'Entradas' },
+    { id: 2, nombre: 'Platos Fuertes' },
     { id: 3, nombre: 'Bebidas' },
     { id: 4, nombre: 'Postres' },
     { id: 5, nombre: 'Ensaladas' },
 ];
 
 const COCINAS = [
-    { id: 1, nombre: 'Cocina Caliente' },
+    { id: 1, nombre: 'Cocina Fría' },
     { id: 2, nombre: 'Parrilla' },
     { id: 3, nombre: 'Bebidas' },
     { id: 4, nombre: 'Repostería' },
@@ -75,14 +76,14 @@ const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
     const [form, setForm] = useState(
         usuario
             ? {
-                  nombre: usuario.nombre || '',
-                  email: getUserEmail(usuario),
-                  password: '',
-                  rol: getUserRole(usuario) || 'mesero',
-                  especialidad: usuario.especialidad || '',
-                  brigadaId: usuario.brigadaId ?? usuario.brigada_id ?? null,
-                  mesaId: usuario.mesaId ?? usuario.mesa_id ?? null,
-              }
+                nombre: usuario.nombre || '',
+                email: getUserEmail(usuario),
+                password: '',
+                rol: getUserRole(usuario) || 'mesero',
+                especialidad: usuario.especialidad || '',
+                brigadaId: usuario.brigadaId ?? usuario.brigada_id ?? null,
+                mesaId: usuario.mesaId ?? usuario.mesa_id ?? null,
+            }
             : EMPTY_USER
     );
 
@@ -94,10 +95,10 @@ const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
 
     const brigadaInferida = esMesero && form.mesaId
         ? brigadas.find((b) => {
-              const desde = Number(b.mesaDesde ?? b.mesa_desde ?? 0);
-              const hasta = Number(b.mesaHasta ?? b.mesa_hasta ?? 0);
-              return Number(form.mesaId) >= desde && Number(form.mesaId) <= hasta;
-          })
+            const desde = Number(b.mesaDesde ?? b.mesa_desde ?? 0);
+            const hasta = Number(b.mesaHasta ?? b.mesa_hasta ?? 0);
+            return Number(form.mesaId) >= desde && Number(form.mesaId) <= hasta;
+        })
         : null;
 
     return (
@@ -225,8 +226,8 @@ const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
                                         brigadaInferida
                                             ? brigadaInferida.nombre
                                             : form.mesaId
-                                            ? 'Mesa fuera de rango de brigadas'
-                                            : 'Selecciona una mesa primero'
+                                                ? 'Mesa fuera de rango de brigadas'
+                                                : 'Selecciona una mesa primero'
                                     }
                                 />
                             </div>
@@ -561,13 +562,13 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
     const [form, setForm] = useState(
         product
             ? {
-                  ...EMPTY_NEW,
-                  ...product,
-                  imagenUrl: getProductImage(product),
-                  stock: getProductStock(product) ?? 10,
-                  categoria_id: product.categoria_id ?? product.categoriaId ?? 1,
-                  kitchen_id: product.kitchen_id ?? product.kitchenId ?? 1,
-              }
+                ...EMPTY_NEW,
+                ...product,
+                imagenUrl: getProductImage(product),
+                stock: getProductStock(product) ?? 10,
+                categoria_id: product.categoria_id ?? product.categoriaId ?? 1,
+                kitchen_id: product.kitchen_id ?? product.kitchenId ?? 1,
+            }
             : EMPTY_NEW
     );
 
@@ -674,7 +675,7 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                                     src={imgPreview}
                                     alt="preview"
                                     style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: '0.5rem', marginTop: 6 }}
-                                    onError={e => e.target.style.display='none'}
+                                    onError={e => e.target.style.display = 'none'}
                                 />
                             )}
                         </div>
@@ -727,13 +728,13 @@ const MenuAdmin = () => {
         try {
             // Payload normalizado con los nombres que espera PlatilloAdminController
             const payload = {
-                nombre:      form.nombre,
-                precio:      parseFloat(form.precio),
+                nombre: form.nombre,
+                precio: parseFloat(form.precio),
                 descripcion: form.descripcion,
-                stock:       parseInt(form.stock, 10) || 0,
-                imagenUrl:   form.imagenUrl || null,
+                stock: parseInt(form.stock, 10) || 0,
+                imagenUrl: form.imagenUrl || null,
                 categoriaId: form.categoria_id,
-                kitchenId:   form.kitchen_id,
+                kitchenId: form.kitchen_id,
             };
 
             if (form.id) {
@@ -782,10 +783,10 @@ const MenuAdmin = () => {
                     loginPath="/admin/login"
                     accentColor="#e67e22"
                     navItems={[
-                        { id: 'menu',        icon: '🍽️', label: 'Gestión del Menú' },
-                        { id: 'personal',    icon: '👥', label: 'Personal' },
+                        { id: 'menu', icon: '🍽️', label: 'Gestión del Menú' },
+                        { id: 'personal', icon: '👥', label: 'Personal' },
                         { id: 'promociones', icon: '🏷️', label: 'Promociones' },
-                        { id: 'qr',          icon: '🖨️', label: 'Códigos QR', onClick: () => window.open('?admin=qr', '_blank') },
+                        { id: 'qr', icon: '🖨️', label: 'Códigos QR' },
                     ]}
                     activeItem={vistaActual}
                     onNavItemClick={setVistaActual}
@@ -809,6 +810,8 @@ const MenuAdmin = () => {
                     <PersonalAdmin mostrarToast={mostrarToast} />
                 ) : vistaActual === 'promociones' ? (
                     <PromocionesAdmin mostrarToast={mostrarToast} />
+                ) : vistaActual === 'qr' ? (
+                    <QRCodeGenerator />
                 ) : (
                     <>
                         <div className="d-flex flex-wrap gap-3 align-items-center mb-4">
@@ -840,9 +843,8 @@ const MenuAdmin = () => {
                             {categorias.map((cat) => (
                                 <button
                                     key={cat}
-                                    className={`btn btn-sm ${
-                                        filtroCategoria === cat ? 'btn-dark' : 'btn-outline-secondary'
-                                    }`}
+                                    className={`btn btn-sm ${filtroCategoria === cat ? 'btn-dark' : 'btn-outline-secondary'
+                                        }`}
                                     style={{ borderRadius: '2rem' }}
                                     onClick={() => setFiltroCategoria(cat)}
                                 >

@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/mesero")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class MeseroController {
 
     private final OrdenService ordenService;

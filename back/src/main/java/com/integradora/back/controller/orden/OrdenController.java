@@ -14,7 +14,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/ordenes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*", allowCredentials = "false")
 public class OrdenController {
 
     private final OrdenService service;

@@ -133,7 +133,7 @@ public class AuthService {
         if (tipo.contains("ADMIN")) return "ADMIN";
         if (tipo.contains("CLIENTE")) return "CLIENTE";
 
-        if (especifico.contains("SUPERUSER")) return "ADMIN";
+        if (especifico.contains("SUPERUSER") || especifico.contains("ADMIN")) return "ADMIN";
         if (especifico.contains("MESERO")) return "MESERO";
         if (especifico.contains("COCINERO")) return "COCINERO";
         if (especifico.contains("CHEF")) return "CHEF";
