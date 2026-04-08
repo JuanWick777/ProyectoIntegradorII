@@ -62,6 +62,16 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
         return () => clearInterval(interval);
     }, [cargarOrdenes]);
 
+    useEffect(() => {
+        fetchMeseroOrdenes();
+
+        const interval = setInterval(() => {
+            fetchMeseroOrdenes();
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     // ── Acción: cambiar estado ───────────────────────────────
     const accionEstado = async (ordenId, nuevoEstado) => {
         setLoadingId(ordenId);
@@ -181,14 +191,14 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                 ) : (
                     <div className="row g-3">
                         {ordenesFiltradas.map(orden => (
-                            <div key={orden.orden_id} className="col-12 col-md-6 col-xl-4">
+                            <div key={orden.id} className="col-12 col-md-6 col-xl-4">
                                 <OrderCard
                                     orden={orden}
-                                    loading={loadingId === orden.orden_id}
-                                    onAceptar={() => accionEstado(orden.orden_id, 'confirmada')}
-                                    onCancelar={() => accionEstado(orden.orden_id, 'cancelada')}
-                                    onEntregar={() => accionEstado(orden.orden_id, 'entregada')}
-                                    onCobrar={() => accionEstado(orden.orden_id, 'cerrada')}
+                                    loading={loadingId === orden.id}
+                                    onAceptar={() => accionEstado(orden.id, 'confirmada')}
+                                    onCancelar={() => accionEstado(orden.id, 'cancelada')}
+                                    onEntregar={() => accionEstado(orden.id, 'entregada')}
+                                    onCobrar={() => accionEstado(orden.id, 'cerrada')}
                                 />
                             </div>
                         ))}

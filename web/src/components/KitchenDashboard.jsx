@@ -2,172 +2,218 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import MeseroLogin from './mesero/MeseroLogin';
 
-// ────────────────────────────────────────────────────────────────────────────
-// KitchenTicket — tarjeta estilo "ticket de comanda"
-// ────────────────────────────────────────────────────────────────────────────
-const KitchenTicket = ({ orden, onPreparar, onTerminado, loading }) => {
-    const esNueva = orden.estado === 'confirmada';
-    const enPreparacion = orden.estado === 'en_preparacion';
+const ESTADO_CONFIG = {
+    PENDIENTE: {
+        label: 'Pendiente',
+        color: '#e74c3c',
+        bg: '#fff5f5',
+        border: '#f5b7b1',
+        icono: '🔴',
+    },
+    EN_PREPARACION: {
+        label: 'En preparación',
+        color: '#f1c40f',
+        bg: '#fffbea',
+        border: '#f9e79f',
+        icono: '🟡',
+    },
+    LISTO: {
+        label: 'Listo',
+        color: '#27ae60',
+        bg: '#f0fff4',
+        border: '#abebc6',
+        icono: '🟢',
+    },
+};
 
-    const createdAt = new Date(orden.created_at);
-    const minutosAgo = Math.floor((Date.now() - createdAt.getTime()) / 60000);
+const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
+    const estado = detalle.estadoPreparacion || 'PENDIENTE';
+    const cfg = ESTADO_CONFIG[estado] || ESTADO_CONFIG.PENDIENTE;
 
-    // Alerta de tiempo: > 12 min → urgente
+    const createdAt = new Date(detalle.orden?.fechaCreacion || detalle.createdAt || Date.now());
+    const minutosAgo = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 60000));
     const esUrgente = minutosAgo > 12;
+
+    const mesaNumero = detalle.orden?.mesa?.numero ?? detalle.orden?.mesaNumero ?? '-';
+    const ordenId = detalle.orden?.id ?? detalle.orden?.ordenId ?? detalle.ordenId ?? '-';
 
     return (
         <div
-            className={`card border-2 shadow-sm h-100 ${esNueva ? 'border-danger' : 'border-warning'}`}
+            className="card border-0 shadow-sm h-100"
             style={{
-                borderRadius: '0.75rem',
-                fontFamily: "'Courier New', Courier, monospace",
-                background: esUrgente ? '#fff5f5' : '#fff',
+                borderRadius: '1rem',
+                borderLeft: `6px solid ${cfg.color}`,
+                background: esUrgente ? '#fff8f5' : cfg.bg,
             }}
         >
-            {/* ── Header del ticket ──────────────────────────────────── */}
             <div
-                className={`card-header d-flex justify-content-between align-items-center py-2 ${esNueva ? 'bg-danger text-white' : 'bg-warning text-dark'}`}
-                style={{ borderRadius: '0.65rem 0.65rem 0 0' }}
+                className="card-header d-flex justify-content-between align-items-center py-2"
+                style={{
+                    background: 'linear-gradient(90deg, #fff3e0, #ffffff)',
+                    borderBottom: `1px solid ${cfg.border}`,
+                    borderRadius: '1rem 1rem 0 0',
+                }}
             >
-                <div className="fw-bold fs-5">🪑 Mesa {orden.mesa_numero}</div>
+                <div className="fw-bold" style={{ color: '#8e4b10' }}>
+                    🪑 Mesa {mesaNumero}
+                </div>
                 <div className="d-flex align-items-center gap-2">
-                    <span className="badge bg-light text-dark">#{orden.orden_id}</span>
+                    <span className="badge text-dark" style={{ background: '#ffe0b2' }}>
+                        #{ordenId}
+                    </span>
                     <span
-                        className={`badge ${esUrgente ? 'bg-light text-danger fw-bold' : 'bg-light text-dark'}`}
+                        className="badge"
+                        style={{ background: cfg.color, color: '#fff' }}
                     >
-                        {esUrgente ? '⚠️ ' : '⏱️ '}{minutosAgo} min
+                        {cfg.icono} {minutosAgo} min
                     </span>
                 </div>
             </div>
 
-            {/* ── Ítems del pedido ───────────────────────────────────── */}
             <div className="card-body p-3">
-                <div className="border-bottom border-dashed pb-2 mb-2">
-                    {orden.detalles?.map((d, idx) => (
-                        <div key={idx} className="mb-3">
-                            {/* Línea principal */}
-                            <div className="d-flex justify-content-between align-items-start">
-                                <span className="fw-bold" style={{ fontSize: '1.05rem' }}>
-                                    {d.cantidad}x {d.producto?.toUpperCase()}
-                                </span>
-                            </div>
-                            {/* Nota del cliente — resaltada para que no se pase */}
-                            {d.nota_cliente && d.nota_cliente.trim() !== '' && (
-                                <div
-                                    className="mt-1 px-2 py-1 rounded-2 fw-bold"
-                                    style={{
-                                        background: '#fff3cd',
-                                        color: '#856404',
-                                        border: '1px solid #ffc107',
-                                        fontSize: '0.88rem',
-                                    }}
-                                >
-                                    📝 {d.nota_cliente}
-                                </div>
-                            )}
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div className="fw-bold" style={{ fontSize: '1.05rem', color: '#5a3a1a' }}>
+                            {detalle.platillo?.nombre || 'Platillo'}
                         </div>
-                    ))}
+                        <div className="text-muted small">
+                            {detalle.cantidad} × ${Number(detalle.precioUnitario || 0).toFixed(2)}
+                        </div>
+                    </div>
+                    <span
+                        className="badge rounded-pill"
+                        style={{
+                            background: cfg.color,
+                            color: '#fff',
+                        }}
+                    >
+                        {cfg.label}
+                    </span>
                 </div>
 
-                {/* Estado legible */}
-                <div className="text-muted small text-center mb-2">
-                    {esNueva
-                        ? '🔔 Nuevo pedido — esperando preparación'
-                        : '🔥 En preparación...'}
+                {detalle.notaCliente && detalle.notaCliente.trim() !== '' && (
+                    <div
+                        className="mt-2 px-2 py-2 rounded-3 small"
+                        style={{
+                            background: '#fff8e1',
+                            color: '#8a5a00',
+                            border: '1px solid #ffd54f',
+                        }}
+                    >
+                        📝 {detalle.notaCliente}
+                    </div>
+                )}
+
+                <div className="mt-3 d-flex justify-content-between align-items-center border-top pt-2">
+                    <span className="text-muted small">Subtotal</span>
+                    <strong style={{ color: '#d35400' }}>
+                        ${Number(detalle.subtotal || 0).toFixed(2)}
+                    </strong>
                 </div>
             </div>
 
-            {/* ── Acción ────────────────────────────────────────────── */}
-            <div className="card-footer bg-transparent p-3">
-                {esNueva && (
+            <div className="card-footer bg-transparent p-3 border-0">
+                {estado === 'PENDIENTE' && (
                     <button
-                        className="btn btn-danger w-100 fw-bold"
-                        style={{ borderRadius: '0.6rem' }}
+                        className="btn w-100 fw-bold text-white"
+                        style={{ background: '#e67e22', borderRadius: '0.75rem' }}
                         onClick={onPreparar}
                         disabled={loading}
                     >
-                        {loading
-                            ? <span className="spinner-border spinner-border-sm me-2" />
-                            : '🔥 '}
-                        Preparar
+                        {loading ? (
+                            <span className="spinner-border spinner-border-sm me-2" />
+                        ) : (
+                            '🔥 Iniciar preparación'
+                        )}
                     </button>
                 )}
-                {enPreparacion && (
+
+                {estado === 'EN_PREPARACION' && (
                     <button
-                        className="btn btn-success w-100 fw-bold"
-                        style={{ borderRadius: '0.6rem' }}
-                        onClick={onTerminado}
+                        className="btn w-100 fw-bold text-white"
+                        style={{ background: '#27ae60', borderRadius: '0.75rem' }}
+                        onClick={onListo}
                         disabled={loading}
                     >
-                        {loading
-                            ? <span className="spinner-border spinner-border-sm me-2" />
-                            : '✅ '}
-                        Terminado
+                        {loading ? (
+                            <span className="spinner-border spinner-border-sm me-2" />
+                        ) : (
+                            '✅ Marcar como listo'
+                        )}
                     </button>
+                )}
+
+                {estado === 'LISTO' && (
+                    <div className="text-center fw-semibold" style={{ color: '#27ae60' }}>
+                        🟢 Ticket listo para entrega
+                    </div>
                 )}
             </div>
         </div>
     );
 };
 
-// ────────────────────────────────────────────────────────────────────────────
-// KitchenDashboard principal
-// ────────────────────────────────────────────────────────────────────────────
 const KitchenDashboard = () => {
-    const { usuario, fetchCurrentUser, cambiarEstadoOrden, logoutLocal } = useAppStore();
+    const { usuario, fetchCurrentUser, fetchKitchenTickets, updateDetalleEstado, logoutLocal } = useAppStore();
 
-
-    const [ordenes, setOrdenes] = useState([]);
+    const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingId, setLoadingId] = useState(null);
     const [ultimaSync, setUltimaSync] = useState(null);
 
-    // ── Carga de órdenes desde /api/cocina/ordenes ──────────────────────────
-    const cargarOrdenes = useCallback(async () => {
+    const cargarTickets = useCallback(async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-            const res = await fetch(`${API_URL}/cocina/ordenes`, {
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setOrdenes(data);
-                setUltimaSync(new Date());
-            }
+            const data = await fetchKitchenTickets();
+            setTickets(data || []);
+            setUltimaSync(new Date());
         } catch (e) {
-            console.error('KDS: Error cargando órdenes de cocina', e);
+            console.error('KDS: Error cargando tickets', e);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchKitchenTickets]);
 
-    // 1) Restaurar sesión al montar
     useEffect(() => {
-        fetchCurrentUser().catch(() => { });
+        fetchCurrentUser().catch(() => {});
     }, [fetchCurrentUser]);
 
-    // 2) Arrancar polling SOLO cuando hay sesión activa
     useEffect(() => {
         if (!usuario) return;
-        cargarOrdenes();
-        const interval = setInterval(cargarOrdenes, 10_000);
-        return () => clearInterval(interval);
-    }, [usuario, cargarOrdenes]);
 
-    // ── Cambio de estado ────────────────────────────────────────────────────
-    const accionEstado = async (ordenId, nuevoEstado) => {
-        setLoadingId(ordenId);
+        cargarTickets();
+        const interval = setInterval(cargarTickets, 8000);
+        return () => clearInterval(interval);
+    }, [usuario, cargarTickets]);
+
+    const accionEstado = async (detalleId, nuevoEstado) => {
+        setLoadingId(detalleId);
         try {
-            await cambiarEstadoOrden(ordenId, nuevoEstado);
-            await cargarOrdenes();
+            await updateDetalleEstado(detalleId, nuevoEstado);
+            await cargarTickets();
         } finally {
             setLoadingId(null);
         }
     };
 
-    // ── Sin sesión → Login ──────────────────────────────────────────────────
     if (!usuario) {
+        const rol = (usuario?.rol || '').toUpperCase();
+
+        const rolesCocina = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
+
+        if (!rolesCocina.includes(rol)) {
+            return (
+                <div className="min-vh-100 d-flex align-items-center justify-content-center">
+                    <div className="text-center">
+                        <h2>🚫 Acceso denegado</h2>
+                        <p>No tienes permisos para entrar a cocina</p>
+                        <button className="btn btn-primary mt-3" onClick={logoutLocal}>
+                            Volver
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <MeseroLogin
                 onLoginExitoso={() => fetchCurrentUser()}
@@ -178,45 +224,44 @@ const KitchenDashboard = () => {
         );
     }
 
-    // Separar columnas
-    const nuevas = ordenes.filter(o => o.estado === 'confirmada');
-    const enPreparacion = ordenes.filter(o => o.estado === 'en_preparacion');
+    const pendientes = tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'PENDIENTE');
+    const enPreparacion = tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'EN_PREPARACION');
+    const listos = tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'LISTO');
 
     return (
-        <div className="min-vh-100" style={{ background: '#1a1a2e' }}>
-
-            {/* ── Header KDS ──────────────────────────────────────────── */}
-            <header className="sticky-top shadow py-2 px-3 d-flex justify-content-between align-items-center"
-                style={{ background: '#16213e', borderBottom: '3px solid #e67e22' }}
+        <div className="min-vh-100" style={{ background: '#ffffff' }}>
+            <header
+                className="sticky-top shadow-sm py-3 px-3 d-flex justify-content-between align-items-center"
+                style={{
+                    background: 'linear-gradient(90deg, #fff7ed, #ffffff)',
+                    borderBottom: '2px solid #f39c12',
+                }}
             >
                 <div className="d-flex align-items-center gap-3">
-                    <span style={{ fontSize: 28 }}>👨‍🍳</span>
+                    <span style={{ fontSize: 30 }}>👨‍🍳</span>
                     <div>
-                        <h1 className="text-white fw-bold mb-0" style={{ fontSize: '1.1rem' }}>
-                            KDS — Cocina en Vivo
+                        <h1 className="fw-bold mb-0" style={{ fontSize: '1.15rem', color: '#b45309' }}>
+                            KDS - Cocina en Vivo
                         </h1>
-                        <span className="text-white-50" style={{ fontSize: '0.72rem' }}>
+                        <span className="text-muted" style={{ fontSize: '0.78rem' }}>
                             Chef: {usuario.nombre}
                         </span>
                     </div>
-                    <div className="d-flex gap-2 ms-2">
-                        <span className="badge bg-danger rounded-pill fs-6 px-3">
-                            {nuevas.length} nuevas
-                        </span>
-                        <span className="badge bg-warning text-dark rounded-pill fs-6 px-3">
-                            {enPreparacion.length} en cocina
-                        </span>
-                    </div>
                 </div>
+
                 <div className="d-flex align-items-center gap-2">
                     {ultimaSync && (
-                        <span className="text-white-50 d-none d-md-inline" style={{ fontSize: '0.7rem' }}>
-                            🔄 {ultimaSync.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        <span className="text-muted d-none d-md-inline" style={{ fontSize: '0.75rem' }}>
+                            🔄 {ultimaSync.toLocaleTimeString('es-MX', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                            })}
                         </span>
                     )}
                     <button
-                        className="btn btn-sm btn-outline-light"
-                        style={{ borderRadius: '0.75rem' }}
+                        className="btn btn-sm text-white"
+                        style={{ background: '#e67e22', borderRadius: '0.75rem' }}
                         onClick={logoutLocal}
                     >
                         Salir
@@ -224,72 +269,82 @@ const KitchenDashboard = () => {
                 </div>
             </header>
 
-            {/* ── Dos columnas ────────────────────────────────────────── */}
             <div className="container-fluid px-3 py-3">
                 {loading ? (
-                    <div className="text-center py-5 text-white">
-                        <div className="spinner-border text-warning mb-3" />
+                    <div className="text-center py-5" style={{ color: '#b45309' }}>
+                        <div className="spinner-border mb-3" style={{ color: '#e67e22' }} />
                         <p>Cargando tickets...</p>
                     </div>
                 ) : (
                     <div className="row g-3">
-
-                        {/* Columna NUEVAS (confirmada) */}
-                        <div className="col-12 col-lg-6">
-                            <div
-                                className="rounded-3 p-3"
-                                style={{ background: 'rgba(220,53,69,0.1)', border: '1px solid rgba(220,53,69,0.3)' }}
-                            >
-                                <h5 className="text-danger fw-bold mb-3">
-                                    🔔 Nuevas ({nuevas.length})
+                        <div className="col-12 col-lg-4">
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#fff5f5', border: '1px solid #f5b7b1' }}>
+                                <h5 className="fw-bold mb-3" style={{ color: '#c0392b' }}>
+                                    🔴 Pendiente ({pendientes.length})
                                 </h5>
-                                {nuevas.length === 0 ? (
-                                    <p className="text-center text-white-50 py-4">Sin pedidos nuevos</p>
+                                {pendientes.length === 0 ? (
+                                    <p className="text-center text-muted py-4">Sin tickets pendientes</p>
                                 ) : (
-                                    <div className="row g-3">
-                                        {nuevas.map(o => (
-                                            <div key={o.orden_id} className="col-12 col-xl-6">
-                                                <KitchenTicket
-                                                    orden={o}
-                                                    loading={loadingId === o.orden_id}
-                                                    onPreparar={() => accionEstado(o.orden_id, 'en_preparacion')}
-                                                    onTerminado={() => accionEstado(o.orden_id, 'lista')}
-                                                />
-                                            </div>
+                                    <div className="d-grid gap-3">
+                                        {pendientes.map(detalle => (
+                                            <KitchenTicket
+                                                key={detalle.id}
+                                                detalle={detalle}
+                                                loading={loadingId === detalle.id}
+                                                onPreparar={() => accionEstado(detalle.id, 'EN_PREPARACION')}
+                                                onListo={() => accionEstado(detalle.id, 'LISTO')}
+                                            />
                                         ))}
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Columna EN PREPARACIÓN */}
-                        <div className="col-12 col-lg-6">
-                            <div
-                                className="rounded-3 p-3"
-                                style={{ background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.3)' }}
-                            >
-                                <h5 className="text-warning fw-bold mb-3">
-                                    🔥 En preparación ({enPreparacion.length})
+                        <div className="col-12 col-lg-4">
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#fffbea', border: '1px solid #f9e79f' }}>
+                                <h5 className="fw-bold mb-3" style={{ color: '#b9770e' }}>
+                                    🟡 En preparación ({enPreparacion.length})
                                 </h5>
                                 {enPreparacion.length === 0 ? (
-                                    <p className="text-center text-white-50 py-4">Nada en cocina</p>
+                                    <p className="text-center text-muted py-4">Nada en preparación</p>
                                 ) : (
-                                    <div className="row g-3">
-                                        {enPreparacion.map(o => (
-                                            <div key={o.orden_id} className="col-12 col-xl-6">
-                                                <KitchenTicket
-                                                    orden={o}
-                                                    loading={loadingId === o.orden_id}
-                                                    onPreparar={() => accionEstado(o.orden_id, 'en_preparacion')}
-                                                    onTerminado={() => accionEstado(o.orden_id, 'lista')}
-                                                />
-                                            </div>
+                                    <div className="d-grid gap-3">
+                                        {enPreparacion.map(detalle => (
+                                            <KitchenTicket
+                                                key={detalle.id}
+                                                detalle={detalle}
+                                                loading={loadingId === detalle.id}
+                                                onPreparar={() => accionEstado(detalle.id, 'EN_PREPARACION')}
+                                                onListo={() => accionEstado(detalle.id, 'LISTO')}
+                                            />
                                         ))}
                                     </div>
                                 )}
                             </div>
                         </div>
 
+                        <div className="col-12 col-lg-4">
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#f0fff4', border: '1px solid #abebc6' }}>
+                                <h5 className="fw-bold mb-3" style={{ color: '#1e8449' }}>
+                                    🟢 Listo ({listos.length})
+                                </h5>
+                                {listos.length === 0 ? (
+                                    <p className="text-center text-muted py-4">Sin tickets listos</p>
+                                ) : (
+                                    <div className="d-grid gap-3">
+                                        {listos.map(detalle => (
+                                            <KitchenTicket
+                                                key={detalle.id}
+                                                detalle={detalle}
+                                                loading={loadingId === detalle.id}
+                                                onPreparar={() => accionEstado(detalle.id, 'EN_PREPARACION')}
+                                                onListo={() => accionEstado(detalle.id, 'LISTO')}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
