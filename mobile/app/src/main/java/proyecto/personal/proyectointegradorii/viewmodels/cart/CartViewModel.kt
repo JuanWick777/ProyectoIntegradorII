@@ -15,6 +15,7 @@ import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenResponseDTO
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 import proyecto.personal.proyectointegradorii.data.repositories.OrdenRepository
+import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 import retrofit2.Retrofit
 
 class CartViewModel : ViewModel() {
@@ -27,6 +28,27 @@ class CartViewModel : ViewModel() {
     val ordenActual = _ordenActual.asStateFlow()
 
     private var pollingJob: Job? = null
+
+    private val _usarPuntos = MutableStateFlow(false)
+    val usarPuntos = _usarPuntos.asStateFlow()
+
+    fun togglePuntos() {
+        _usarPuntos.value = !_usarPuntos.value
+    }
+
+    private val _puntosUsuario = MutableStateFlow(0)
+    val puntosUsuario = _puntosUsuario.asStateFlow()
+
+    fun cargarUsuario() {
+        viewModelScope.launch {
+            val repo = UserRepository()
+            val user = repo.getCurrentUser()
+
+            if (user != null) {
+                _puntosUsuario.value = user.puntosLealtad
+            }
+        }
+    }
 
     fun addToCart(
         platillo: PlatilloDto,
@@ -73,7 +95,8 @@ class CartViewModel : ViewModel() {
 
         val request = OrdenRequest(
             mesaId = mesaId,
-            detalles = detalles
+            detalles = detalles,
+            usarPuntos = _usarPuntos.value
         )
 
         viewModelScope.launch {

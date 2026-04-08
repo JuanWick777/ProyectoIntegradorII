@@ -110,8 +110,8 @@ public class OrdenService {
                     .orElseThrow(() -> new RuntimeException("No se pudo identificar al cliente"));
         }
 
-        Mesa mesa = mesaRepository.findById(request.getMesaId())
-                .orElseThrow(() -> new RuntimeException("Mesa no encontrada"));
+        Mesa mesa = mesaRepository.findByNumero(request.getMesaId().intValue())
+                .orElseThrow(() -> new RuntimeException("Mesa no encontrada con el numero: " + request.getMesaId()));
 
         Orden orden = Orden.builder()
                 .cliente(cliente)

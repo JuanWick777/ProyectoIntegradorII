@@ -2,6 +2,7 @@ package proyecto.personal.proyectointegradorii.ui.screens.account
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
@@ -28,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import proyecto.personal.proyectointegradorii.ui.components.buttons.ButtonSetting
 import proyecto.personal.proyectointegradorii.ui.components.buttons.GlobalButton
-import proyecto.personal.proyectointegradorii.ui.components.cards.GlobalCard
 import proyecto.personal.proyectointegradorii.ui.components.headers.HeaderCBack
 import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
 import proyecto.personal.proyectointegradorii.ui.theme.AlertColor
@@ -38,42 +39,68 @@ import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorDark
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorGray
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import proyecto.personal.proyectointegradorii.ui.theme.BackgroundCardColor
+import proyecto.personal.proyectointegradorii.ui.theme.DarkBackground
+import proyecto.personal.proyectointegradorii.ui.theme.DarkCardColor
+import proyecto.personal.proyectointegradorii.ui.theme.DarkHeaderColor
+import proyecto.personal.proyectointegradorii.ui.theme.DarkTextGray
+import proyecto.personal.proyectointegradorii.ui.theme.DarkTextWhite
 
 @Composable
 fun SConfigurate(navController: NavController){
     var notificationsEnabled by remember { mutableStateOf(true) }
     var darkModeEnabled by remember { mutableStateOf(false) }
 
-    Column(
+    /// Variables dinámicas
+    val currentBackground = if (darkModeEnabled) DarkBackground else BackgroundColor
+    val currentCardColor = if (darkModeEnabled) DarkCardColor else BackgroundCardColor
+    val currentHeaderColor = if (darkModeEnabled) DarkHeaderColor else MainColor
+    val currentTitleColor = if (darkModeEnabled) DarkTextWhite else TextColorDark
+    val currentSubtitleColor = if (darkModeEnabled) DarkTextGray else TextColorGray
+    val dividerColor = if (darkModeEnabled) DarkTextGray.copy(alpha = 0.1f) else BorderInputColor.copy(alpha = 0.3f)
+
+    // BOX PRINCIPAL: Solo lleva el color de fondo base
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(currentBackground)
     ) {
-        // 1. HEADER
-        HeaderCBack(
-            tittle = "Ajustes",
-            sizetittle = 25,
-            navController = navController
-        )
+        Column(modifier = Modifier.fillMaxSize()) {
 
-        // 2. CONTENIDO PRINCIPAL
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp)
-        ) {
-            Spacer(modifier = Modifier.height(25.dp))
+            // 1. HEADER (Ahora soporta el gradiente)
+            HeaderCBack(
+                tittle = "Ajustes",
+                sizetittle = 36,
+                navController = navController,
+                backgroundColor = currentHeaderColor,
+                modifier = Modifier
+            )
 
-            // TARJETA 1: Preferencias de la app
-            GlobalCard(
-                content = {
+            // 2. TARJETAS
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+            ) {
+                Spacer(modifier = Modifier.height(25.dp))
+
+                // TARJETA 1: Preferencias
+                Surface(
+                    color = currentCardColor,
+                    shadowElevation = if (darkModeEnabled) 0.dp else 8.dp,
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
                     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-
-                        // Opción: Notificaciones
                         ButtonSetting(
                             icon = Icons.Outlined.Notifications,
                             title = "Notificaciones",
-                            subtitle = "Recibe alertas de pedidos"
+                            subtitle = "Recibe alertas de pedidos",
+                            titleColor = currentTitleColor,
+                            subtitleColor = currentSubtitleColor
                         ) {
                             Switch(
                                 checked = notificationsEnabled,
@@ -81,23 +108,20 @@ fun SConfigurate(navController: NavController){
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MainColor,
-                                    uncheckedThumbColor = Color.White,
-                                    uncheckedTrackColor = BorderInputColor
+                                    uncheckedThumbColor = if (darkModeEnabled) Color.Gray else Color.White,
+                                    uncheckedTrackColor = if (darkModeEnabled) DarkBackground else BorderInputColor
                                 )
                             )
                         }
 
-                        Divider(
-                            modifier = Modifier.padding(horizontal = 18.dp),
-                            color = BorderInputColor.copy(alpha = 0.3f),
-                            thickness = 1.dp
-                        )
+                        Divider(modifier = Modifier.padding(horizontal = 18.dp), color = dividerColor, thickness = 1.dp)
 
-                        // Opción: Modo Oscuro
                         ButtonSetting(
                             icon = Icons.Outlined.DarkMode,
                             title = "Modo Oscuro",
-                            subtitle = "Apariencia oscura"
+                            subtitle = "Apariencia oscura",
+                            titleColor = currentTitleColor,
+                            subtitleColor = currentSubtitleColor
                         ) {
                             Switch(
                                 checked = darkModeEnabled,
@@ -105,39 +129,39 @@ fun SConfigurate(navController: NavController){
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MainColor,
-                                    uncheckedThumbColor = Color.White,
-                                    uncheckedTrackColor = BorderInputColor
+                                    uncheckedThumbColor = if (darkModeEnabled) Color.Gray else Color.White,
+                                    uncheckedTrackColor = if (darkModeEnabled) DarkBackground else BorderInputColor
                                 )
                             )
                         }
 
-                        Divider(
-                            modifier = Modifier.padding(horizontal = 18.dp),
-                            color = BorderInputColor.copy(alpha = 0.3f),
-                            thickness = 1.dp
-                        )
+                        Divider(modifier = Modifier.padding(horizontal = 18.dp), color = dividerColor, thickness = 1.dp)
 
-                        // Opción: Idioma
                         ButtonSetting(
                             icon = Icons.Outlined.Language,
                             title = "Idioma",
-                            subtitle = "Español"
+                            subtitle = "Español",
+                            titleColor = currentTitleColor,
+                            subtitleColor = currentSubtitleColor
                         )
                     }
                 }
-            )
 
-            Spacer(modifier = Modifier.height(25.dp))
+                Spacer(modifier = Modifier.height(25.dp))
 
-            // TARJETA 2: Zona de Peligro
-            GlobalCard(
-                // Le inyectamos el borde rojo claro al modificador base
-                modifier = Modifier.border(
-                    width = 1.dp,
-                    color = AlertColor.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(24.dp)
-                ),
-                content = {
+                // TARJETA 2: Zona de Peligro
+                Surface(
+                    color = currentCardColor,
+                    shadowElevation = if (darkModeEnabled) 0.dp else 8.dp,
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            color = if (darkModeEnabled) AlertColor.copy(alpha = 0.2f) else AlertColor.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -147,14 +171,15 @@ fun SConfigurate(navController: NavController){
                         GlobalText(
                             texto = "Zona de Peligro",
                             tamanio = 16,
-                            color = TextColorDark,
-                            peso = FontWeight.Bold
+                            color = currentTitleColor,
+                            peso = FontWeight.Bold,
+                            modifier = Modifier
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         GlobalText(
                             texto = "Esta acción es irreversible",
                             tamanio = 14,
-                            color = TextColorGray
+                            color = currentSubtitleColor
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -168,13 +193,18 @@ fun SConfigurate(navController: NavController){
                             colorbutton = AlertColor,
                             colortext = Color.White,
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                // Lógica para eliminar cuenta
-                            }
+                            onClick = { /* Lógica eliminar */ }
                         )
                     }
                 }
-            )
+            }
         }
     }
+}
+
+
+@Preview
+@Composable
+fun PsC(){
+    SConfigurate(NavController(LocalContext.current))
 }

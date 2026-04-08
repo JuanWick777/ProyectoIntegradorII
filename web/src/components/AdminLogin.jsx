@@ -37,24 +37,37 @@ const AdminLogin = ({ onLoginExitoso }) => {
     };
 
     return (
-        <div className="container min-vh-100 d-flex justify-content-center align-items-center">
-            <div className="card shadow-sm" style={{ width: '400px' }}>
-                <div className="card-body p-5">
-                    <h2 className="text-center mb-4">Acceso Administrativo</h2>
+        <div
+            className="min-vh-100 d-flex align-items-center justify-content-center"
+            style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%)' }}
+        >
+            <div className="card border-0 shadow-lg p-4" style={{ width: '100%', maxWidth: 400, borderRadius: '1.25rem' }}>
+                <div className="card-body">
+                    <div className="text-center mb-4">
+                        <div
+                            className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                            style={{ width: 64, height: 64, background: '#e67e22', fontSize: 28 }}
+                        >
+                            🔐
+                        </div>
+                        <h1 className="fs-4 fw-bold mb-0">Acceso Administrativo</h1>
+                        <p className="text-muted small mt-1">Gestión de Restaurante</p>
+                    </div>
 
                     {error && (
-                        <div className="alert alert-danger" role="alert">
-                            {error}
+                        <div className="alert alert-danger py-2 small" style={{ borderRadius: '0.75rem' }}>
+                            ⚠️ {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit}>
                         <div className="mb-3">
-                            <label className="form-label text-muted fw-bold">Correo Electrónico</label>
+                            <label className="form-label fw-semibold small">Correo electrónico</label>
                             <input
                                 type="email"
                                 name="email"
-                                className="form-control form-control-lg bg-light"
+                                className="form-control"
+                                style={{ borderRadius: '0.75rem' }}
                                 value={credentials.email}
                                 onChange={handleChange}
                                 placeholder="admin@rest.com"
@@ -63,11 +76,12 @@ const AdminLogin = ({ onLoginExitoso }) => {
                         </div>
 
                         <div className="mb-4">
-                            <label className="form-label text-muted fw-bold">Contraseña</label>
+                            <label className="form-label fw-semibold small">Contraseña</label>
                             <input
                                 type="password"
                                 name="password"
-                                className="form-control form-control-lg bg-light"
+                                className="form-control"
+                                style={{ borderRadius: '0.75rem' }}
                                 value={credentials.password}
                                 onChange={handleChange}
                                 placeholder="••••••"
@@ -77,11 +91,12 @@ const AdminLogin = ({ onLoginExitoso }) => {
 
                         <button
                             type="submit"
-                            className="btn btn-dark w-100 py-3 fw-bold"
+                            className="btn btn-primary w-100 fw-bold py-2 mt-1"
+                            style={{ background: '#e67e22', borderRadius: '0.75rem', border: 'none' }}
                             disabled={loading}
                         >
                             {loading ? (
-                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span className="spinner-border spinner-border-sm me-2" />
                             ) : null}
                             Ingresar
                         </button>

@@ -22,14 +22,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
-import proyecto.personal.proyectointegradorii.ui.theme.TextColorDark
-import proyecto.personal.proyectointegradorii.ui.theme.TextColorGray
 
 @Composable
 fun ButtonSetting(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    titleColor: Color,
+    subtitleColor: Color,
     iconTintColor: Color = MainColor,
     trailingContent: @Composable () -> Unit = {} // Por defecto vacío, por si no lleva Switch
 ) {
@@ -41,7 +41,7 @@ fun ButtonSetting(
             .padding(vertical = 12.dp, horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Caja del ícono (Misma lógica de tu ButtonAccount)
+        // Caja del ícono
         Box(
             modifier = Modifier
                 .size(40.dp)
@@ -61,14 +61,14 @@ fun ButtonSetting(
             GlobalText(
                 texto = title,
                 tamanio = 16,
-                color = TextColorDark,
+                color = titleColor,
                 peso = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.height(2.dp))
             GlobalText(
                 texto = subtitle,
                 tamanio = 14,
-                color = TextColorGray
+                color = subtitleColor
             )
         }
         Spacer(Modifier.width(10.dp))

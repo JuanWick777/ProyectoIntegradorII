@@ -21,10 +21,13 @@ const ClientePage = () => {
     const [ordenId, setOrdenId] = useState(ordenActual?.orden_id || null);
 
     useEffect(() => {
+        if (mesaParam && !numeroMesa) {
+            useAppStore.getState().setNumeroMesa(parseInt(mesaParam, 10));
+        }
         if (vista === 'menu' || vista === 'fidelidad') {
             fetchProducts();
         }
-    }, [vista, fetchProducts]);
+    }, [vista, fetchProducts, mesaParam, numeroMesa]);
 
     const handleMesaValida = () => setVista('fidelidad');
     const handleContinuarMenu = () => setVista('menu');

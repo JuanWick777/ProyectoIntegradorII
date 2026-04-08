@@ -64,7 +64,7 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
 
                 {/* ITEMS */}
                 <div className="border-top pt-2 mt-1">
-                    {orden.items?.map((d, idx) => {                         
+                    {(orden.detalles || orden.items || []).map((d, idx) => {                         
                         return (
                         <div key={idx} className="mb-2">
 
@@ -74,7 +74,7 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
                                 </span>
 
                                 <span className="text-muted small">
-                                    ${(Number(d.precio) * d.cantidad).toFixed(2)}
+                                    ${(Number(d.precioUnitario || d.precio || 0) * d.cantidad).toFixed(2)}
                                 </span>
                             </div>
 
