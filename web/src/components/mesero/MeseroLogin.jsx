@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { useNavigate } from 'react-router-dom';
 
 const MeseroLogin = ({
     onLoginExitoso,
@@ -14,6 +15,8 @@ const MeseroLogin = ({
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const navigate = useNavigate();
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -27,11 +30,26 @@ const MeseroLogin = ({
                 throw new Error('No tienes permisos para acceder a este portal');
             }
 
+            if (rol === 'MESERO') {
+                navigate('/mesero');
+            } else if (
+                rol === 'COCINERO' ||
+                rol === 'CHEF' ||
+                rol === 'PARRILLERO' ||
+                rol === 'BARISTA' ||
+                rol === 'REPOSTERO'
+            ) {
+                navigate('/cocina');
+            } else {
+                throw new Error('Rol no reconocido en el sistema');
+            }
+
             if (onLoginExitoso) {
                 onLoginExitoso();
             }
+
         } catch (err) {
-            setError(err.message || 'Credenciales incorrectas. Verifica tu email y contraseña.');
+            setError(err.message || 'Credenciales incorrectas.');
         } finally {
             setLoading(false);
         }

@@ -150,7 +150,6 @@ export const useAppStore = create(
                 if (carrito.length === 0 || !numeroMesa) return;
 
                 const payload = {
-                    clienteId: usuario?.id || 1,
                     mesaId: numeroMesa,
                     detalles: carrito.map((item) => ({
                         platilloId: item.id,
@@ -208,10 +207,8 @@ export const useAppStore = create(
 
             cambiarEstadoOrden: async (ordenId, nuevoEstado) => {
                 const { token } = get();
-                await apiFetch(`/ordenes/${ordenId}/estado`, {
+                await apiFetch(`/ordenes/${ordenId}/estado?estado=${nuevoEstado}`, {
                     method: 'PUT',
-                    body: JSON.stringify({ estado: nuevoEstado }),
-                    token,
                 });
             },
 
@@ -227,10 +224,8 @@ export const useAppStore = create(
 
             updateOrderStatus: async (ordenId, nuevoEstado) => {
                 const { token } = get();
-                await apiFetch(`/ordenes/${ordenId}/estado`, {
+                await apiFetch(`/ordenes/${ordenId}/estado?estado=${nuevoEstado}`, {
                     method: 'PUT',
-                    body: JSON.stringify({ estado: nuevoEstado }),
-                    token,
                 });
             },
 
@@ -239,17 +234,17 @@ export const useAppStore = create(
                 try {
                     const data = await apiFetch('/cocina/tickets', { token });
                     set({ orders: data });
+                    return data;
                 } catch (e) {
                     console.error('Error cargando tickets de cocina:', e);
+                    return [];
                 }
             },
 
             updateDetalleEstado: async (detalleId, nuevoEstado) => {
                 const { token } = get();
-                await apiFetch(`/detalles/${detalleId}/estado`, {
+                await apiFetch(`/detalles/${detalleId}/estado?estado=${nuevoEstado}`, {
                     method: 'PUT',
-                    body: JSON.stringify({ estado: nuevoEstado }),
-                    token,
                 });
             },
 

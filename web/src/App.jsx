@@ -1,72 +1,70 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from './store/useAppStore';
 
-// Páginas por rol
+// Páginas
 import ClientePage from './pages/ClientePage';
 import MeseroPage from './pages/MeseroPage';
 import KitchenDashboard from './components/KitchenDashboard';
-import QRCodeGenerator from './components/QRCodeGenerator';
 import MenuAdmin from './components/MenuAdmin';
 import AdminLogin from './components/AdminLogin';
+import MeseroLogin from './components/mesero/MeseroLogin';
 
 function App() {
-  const { setNumeroMesa, fetchCurrentUser, usuario, token } = useAppStore();
-
-  const [hydrated, setHydrated] = useState(false);
-
-  /*useEffect(() => {
-    setHydrated(useAppStore.persist?.hasHydrated?.() ?? true);
-    const unsub = useAppStore.persist?.onFinishHydration?.(() => setHydrated(true));
-    return () => unsub?.();
-  }, []);
-
-  if (!hydrated) return null;*/
-
-  const params = new URLSearchParams(window.location.search);
-  const esCocina = Boolean(params.get('cocina'));
-  const esMesero = Boolean(params.get('mesero'));
-  const adminView = params.get('admin');
-  const mesaParam = params.get('mesa');
+  const { usuario, token, fetchCurrentUser } = useAppStore();
 
   const rol = (usuario?.rol || '').toUpperCase();
-  const esAdmin = rol === 'ADMIN';
 
   useEffect(() => {
-    if (mesaParam && !esCocina) {
-      setNumeroMesa(parseInt(mesaParam, 10));
-    }
-
-    const esStaff =
-      esCocina ||
-      esMesero ||
-      Boolean(adminView) ||
-      (!mesaParam && !esCocina && !esMesero);
-
-    if (esStaff && token) {
+    if (token) {
       fetchCurrentUser().catch(() => {});
     }
-  }, [mesaParam, esCocina, esMesero, adminView, setNumeroMesa, fetchCurrentUser, token]);
+  }, [token, fetchCurrentUser]);
 
-  if (esMesero) return <MeseroPage />;
-  if (esCocina) return <KitchenDashboard />;
+  return (
+    <Routes>
 
-  if (adminView === 'qr') {
-    if (!esAdmin) return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
-    return <QRCodeGenerator />;
-  }
+      {/* LOGIN GENERAL */}
+      <Route path="/" element={<MeseroLogin />} />
 
-  if (adminView === 'menu') {
-    if (!esAdmin) return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
-    return <MenuAdmin />;
-  }
+      {/* CLIENTE */}
+      <Route path="/cliente" element={<ClientePage />} />
 
-  if (mesaParam) return <ClientePage />;
+      {/* ADMIN */}
+      <Route
+        path="/admin"
+        element={
+          rol === 'ADMIN'
+            ? <MenuAdmin />
+            : <Navigate to="/" />
+        }
+      />
 
-  if (!esAdmin) {
-    return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
-  }
+      {/* MESERO */}
+      <Route
+        path="/mesero"
+        element={
+          rol === 'MESERO'
+            ? <MeseroPage />
+            : <Navigate to="/" />
+        }
+      />
 
-  return <MenuAdmin />;
+      {/* COCINA */}
+      <Route
+        path="/cocina"
+        element={
+          ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'].includes(rol)
+            ? <KitchenDashboard />
+            : <Navigate to="/" />
+        }
+      />
+
+      {/* DEFAULT */}
+      <Route path="*" element={<Navigate to="/" />} />
+
+    </Routes>
+  );
 }
 
 export default App;
