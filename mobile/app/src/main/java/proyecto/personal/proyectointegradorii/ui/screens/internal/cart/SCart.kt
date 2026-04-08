@@ -20,6 +20,8 @@ fun SCart(cartViewModel: CartViewModel) {
 
     val items by cartViewModel.cartItems.collectAsState()
 
+    val orden by cartViewModel.ordenActual.collectAsState()
+
     Column(modifier = Modifier
         .fillMaxSize()
         .background(BackgroundColor)) {
@@ -66,6 +68,22 @@ fun SCart(cartViewModel: CartViewModel) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Confirmar pedido")
+            }
+
+            orden?.let {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = when (it.estado.lowercase()) {
+                        "pendiente_confirmacion" -> "Confirmando..."
+                        "confirmada" -> "Orden recibida"
+                        "en_preparacion" -> "En preparación"
+                        "lista" -> "Lista para servir"
+                        "entregada" -> "Entregada"
+                        else -> it.estado
+                    }
+                )
             }
         }
 

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
 import proyecto.personal.proyectointegradorii.data.repositories.PlatilloRepository
+import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 
 class HomeViewModel : ViewModel() {
 
@@ -20,6 +21,26 @@ class HomeViewModel : ViewModel() {
 
     init {
         cargarPlatillos()
+    }
+
+    // PRUEBA PATROCINADA POR GEPETO
+    private val userRepository = UserRepository()
+
+    fun testAuth() {
+        viewModelScope.launch {
+            try {
+                val user = userRepository.getCurrentUser()
+
+                if (user != null) {
+                    println("🔥 TOKEN FUNCIONA: ${user.correo}")
+                } else {
+                    println("💀 TOKEN NO FUNCIONA")
+                }
+
+            } catch (e: Exception) {
+                println("💥 ERROR: ${e.message}")
+            }
+        }
     }
 
     private fun cargarPlatillos() {

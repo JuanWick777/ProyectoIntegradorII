@@ -6,18 +6,27 @@ import kotlinx.coroutines.flow.asStateFlow
 import proyecto.personal.proyectointegradorii.data.model.cart.CartItem
 import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import proyecto.personal.proyectointegradorii.data.remote.api.ApiService
 import proyecto.personal.proyectointegradorii.data.remote.dto.detalleorden.DetalleOrdenRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenResponseDTO
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 import proyecto.personal.proyectointegradorii.data.repositories.OrdenRepository
 import retrofit2.Retrofit
 
 class CartViewModel : ViewModel() {
+    private val repository = OrdenRepository(RetrofitClient.api)
 
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems = _cartItems.asStateFlow()
+
+    private val _ordenActual = MutableStateFlow<OrdenResponseDTO?>(null)
+    val ordenActual = _ordenActual.asStateFlow()
+
+    private var pollingJob: Job? = null
 
     fun addToCart(
         platillo: PlatilloDto,
@@ -63,25 +72,48 @@ class CartViewModel : ViewModel() {
         }
 
         val request = OrdenRequest(
-            clienteId = clienteId,
             mesaId = mesaId,
             detalles = detalles
         )
 
         viewModelScope.launch {
             try {
-                val repo = OrdenRepository(RetrofitClient.api)
-                val success = repo.crearOrden(request)
+                val orden = repository.crearOrden(request)
 
-                if (success) {
-                    _cartItems.value = emptyList()
-                    println("Pedido enviado correctamente")
-                } else {
-                    println("Error al enviar pedido")
-                }
+                _ordenActual.value = orden
+
+                _cartItems.value = emptyList()
+
+                startPolling()
 
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    fun startPolling() {
+        val ordenId = _ordenActual.value?.id ?: return
+
+        pollingJob?.cancel()
+
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                try {
+                    val orden = repository.obtenerOrden(ordenId)
+                    _ordenActual.value = orden
+
+                    val estado = orden.estado.lowercase()
+
+                    if (estado in listOf("entregada", "cancelada", "cerrada")) {
+                        break
+                    }
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+                delay(5000)
             }
         }
     }
