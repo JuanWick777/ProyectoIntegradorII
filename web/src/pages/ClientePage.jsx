@@ -30,7 +30,8 @@ const ClientePage = () => {
     const handleContinuarMenu = () => setVista('menu');
     const handleVerCarrito = () => setVista('carrito');
     const handleVolverMenu = () => setVista('menu');
-    const handlePedidoEnviado = (ord) => { setOrdenId(ord.orden_id); setVista('tracker'); };
+    // El backend devuelve .id (no .orden_id)
+    const handlePedidoEnviado = (ord) => { setOrdenId(ord.id || ord.orden_id); setVista('tracker'); };
     const handleNuevoPedido = () => { setOrdenId(null); setVista('menu'); };
 
     switch (vista) {

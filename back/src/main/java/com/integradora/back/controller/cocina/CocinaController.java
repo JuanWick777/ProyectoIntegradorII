@@ -11,7 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cocina")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class CocinaController {
 
     private final DetalleOrdenRepository detalleOrdenRepository;
@@ -21,7 +20,8 @@ public class CocinaController {
         return detalleOrdenRepository.findByEstadoPreparacionIn(
                 List.of(
                         EstadoDetalle.PENDIENTE,
-                        EstadoDetalle.EN_PREPARACION
+                        EstadoDetalle.EN_PREPARACION,
+                        EstadoDetalle.LISTO
                 )
         );
     }

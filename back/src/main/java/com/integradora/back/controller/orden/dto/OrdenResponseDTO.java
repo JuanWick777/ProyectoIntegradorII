@@ -16,7 +16,7 @@ public class OrdenResponseDTO {
     private String estado;
     private Integer mesaNumero;
 
-    private List<DetalleOrdenDTO> items;
+    private List<DetalleOrdenDTO> detalles;
 
     private BigDecimal subtotal;
     private BigDecimal total;

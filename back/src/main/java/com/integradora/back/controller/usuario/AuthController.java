@@ -16,7 +16,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AuthController {
 
     private final AuthService authService;
@@ -45,5 +44,27 @@ public class AuthController {
 
         Usuario usuario = authService.obtenerPorCorreo(authentication.getName());
         return ResponseEntity.ok(authService.toLoginResponse(usuario));
+    }
+
+    @PutMapping("/perfil")
+    public ResponseEntity<?> actualizarPerfil(
+            Authentication authentication,
+            @RequestBody Map<String, String> body
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "No autenticado"));
+        }
+        try {
+            LoginResponseDTO response = authService.actualizarPerfil(
+                    authentication.getName(),
+                    body.get("nombre"),
+                    body.get("correo"),
+                    body.get("contrasena")
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

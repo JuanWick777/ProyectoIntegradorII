@@ -1,72 +1,97 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppStore } from './store/useAppStore';
 
-// Páginas por rol
+// Páginas
 import ClientePage from './pages/ClientePage';
 import MeseroPage from './pages/MeseroPage';
 import KitchenDashboard from './components/KitchenDashboard';
-import QRCodeGenerator from './components/QRCodeGenerator';
 import MenuAdmin from './components/MenuAdmin';
 import AdminLogin from './components/AdminLogin';
+import MeseroLogin from './components/mesero/MeseroLogin';
+
+// Componente que interpreta los query params de la raíz "/"
+function RootHandler() {
+  const params = new URLSearchParams(window.location.search);
+
+  // QR de mesa  → /?mesa=3       → cliente
+  if (params.get('mesa'))         return <ClientePage />;
+
+  // QR de cocina → /?cocina=true  → login de mesero/cocina
+  if (params.get('cocina'))       return <MeseroLogin />;
+
+  // QR de mesero → /?mesero=true  → login de mesero/cocina
+  if (params.get('mesero'))       return <MeseroLogin />;
+
+  // Panel admin  → /?admin=menu   → manejado por la ruta /admin
+  if (params.get('admin'))        return <Navigate to="/admin" replace />;
+
+  // Sin params → login de ADMIN
+  return <Navigate to="/admin/login" replace />;
+}
 
 function App() {
-  const { setNumeroMesa, fetchCurrentUser, usuario, token } = useAppStore();
-
-  const [hydrated, setHydrated] = useState(false);
-
-  /*useEffect(() => {
-    setHydrated(useAppStore.persist?.hasHydrated?.() ?? true);
-    const unsub = useAppStore.persist?.onFinishHydration?.(() => setHydrated(true));
-    return () => unsub?.();
-  }, []);
-
-  if (!hydrated) return null;*/
-
-  const params = new URLSearchParams(window.location.search);
-  const esCocina = Boolean(params.get('cocina'));
-  const esMesero = Boolean(params.get('mesero'));
-  const adminView = params.get('admin');
-  const mesaParam = params.get('mesa');
-
+  const { usuario, token, fetchCurrentUser } = useAppStore();
   const rol = (usuario?.rol || '').toUpperCase();
-  const esAdmin = rol === 'ADMIN';
 
   useEffect(() => {
-    if (mesaParam && !esCocina) {
-      setNumeroMesa(parseInt(mesaParam, 10));
-    }
-
-    const esStaff =
-      esCocina ||
-      esMesero ||
-      Boolean(adminView) ||
-      (!mesaParam && !esCocina && !esMesero);
-
-    if (esStaff && token) {
+    if (token) {
       fetchCurrentUser().catch(() => {});
     }
-  }, [mesaParam, esCocina, esMesero, adminView, setNumeroMesa, fetchCurrentUser, token]);
+  }, [token, fetchCurrentUser]);
 
-  if (esMesero) return <MeseroPage />;
-  if (esCocina) return <KitchenDashboard />;
+  return (
+    <Routes>
 
-  if (adminView === 'qr') {
-    if (!esAdmin) return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
-    return <QRCodeGenerator />;
-  }
+      {/* RAÍZ — interpreta query params o redirige a login admin */}
+      <Route path="/" element={<RootHandler />} />
 
-  if (adminView === 'menu') {
-    if (!esAdmin) return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
-    return <MenuAdmin />;
-  }
+      {/* ── ADMIN ──────────────────────────────────────────── */}
+      <Route
+        path="/admin/login"
+        element={
+          rol === 'ADMIN'
+            ? <Navigate to="/admin" replace />
+            : <AdminLogin onLoginExitoso={() => window.location.replace('/admin')} />
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          rol === 'ADMIN'
+            ? <MenuAdmin />
+            : <Navigate to="/admin/login" replace />
+        }
+      />
 
-  if (mesaParam) return <ClientePage />;
+      {/* ── PERSONAL (mesero / cocina) ─────────────────────── */}
+      <Route path="/login" element={<MeseroLogin />} />
 
-  if (!esAdmin) {
-    return <AdminLogin onLoginExitoso={() => fetchCurrentUser()} />;
-  }
+      <Route
+        path="/mesero"
+        element={
+          rol === 'MESERO'
+            ? <MeseroPage />
+            : <Navigate to="/login" replace />
+        }
+      />
+      <Route
+        path="/cocina"
+        element={
+          ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'].includes(rol)
+            ? <KitchenDashboard />
+            : <Navigate to="/login" replace />
+        }
+      />
 
-  return <MenuAdmin />;
+      {/* ── CLIENTE ────────────────────────────────────────── */}
+      <Route path="/cliente" element={<ClientePage />} />
+
+      {/* DEFAULT */}
+      <Route path="*" element={<Navigate to="/admin/login" replace />} />
+
+    </Routes>
+  );
 }
 
 export default App;

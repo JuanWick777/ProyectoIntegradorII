@@ -10,9 +10,11 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DetalleOrdenDTO {
+    private Long id;           // id del DetalleOrden (para cambios de estado desde cocina)
     private Long platilloId;
     private String nombre;
     private Integer cantidad;
-    private BigDecimal precio;
+    private BigDecimal precioUnitario;
     private String nota;
+    private String estadoPreparacion;
 }

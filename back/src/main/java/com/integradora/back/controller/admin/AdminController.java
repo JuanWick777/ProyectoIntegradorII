@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AdminController {
 
     private final UsuarioRepository usuarioRepository;
@@ -39,7 +38,7 @@ public class AdminController {
         usuario.setCorreo(req.getEmail());
         usuario.setContrasena(passwordEncoder.encode(req.getPassword()));
         usuario.setTipoUsuario("Empleado");
-        usuario.setRolEspecifico(req.getRol());
+        usuario.setRolEspecifico(req.getRol().toUpperCase());
         usuario.setAreaAsignada(req.getEspecialidad());
         usuario.setEstado("ACTIVO");
         usuario.setPuntosLealtad(0);

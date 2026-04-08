@@ -1,6 +1,5 @@
 package com.integradora.back.service;
 
-import com.integradora.back.controller.detalleorden.dto.DetalleOrdenDTO;
 import com.integradora.back.controller.detalleorden.dto.DetalleOrdenRequestDTO;
 import com.integradora.back.controller.orden.OrdenMapper;
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
@@ -14,6 +13,8 @@ import com.integradora.back.model.platillo.Platillo;
 import com.integradora.back.model.usuario.Usuario;
 import com.integradora.back.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,14 +75,39 @@ public class OrdenService {
             orden.setFechaFinalizacion(LocalDateTime.now());
         }
 
+        if (estado.equalsIgnoreCase("confirmada")) {
+
+            List<DetalleOrden> detalles = detalleRepository.findByOrdenId(ordenId);
+
+            for (DetalleOrden d : detalles) {
+                d.setEstadoPreparacion(EstadoDetalle.PENDIENTE);
+            }
+
+            detalleRepository.saveAll(detalles);
+        }
+
         return ordenRepository.save(orden);
     }
 
     @Transactional
     public OrdenResponseDTO crearOrdenCompleta(OrdenRequestDTO request) {
 
-        Usuario cliente = usuarioRepository.findById(request.getClienteId())
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        Usuario cliente;
+        if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
+            // Cliente logueado: usar email del token
+            cliente = usuarioRepository.findByCorreo(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+        } else if (request.getClienteId() != null) {
+            // Cliente anónimo: usar clienteId del body (el front manda usuario?.id || 1)
+            cliente = usuarioRepository.findById(request.getClienteId())
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + request.getClienteId()));
+        } else {
+            // Último fallback: usar cliente con id=1 (usuario anónimo)
+            cliente = usuarioRepository.findById(1L)
+                    .orElseThrow(() -> new RuntimeException("No se pudo identificar al cliente"));
+        }
 
         Mesa mesa = mesaRepository.findById(request.getMesaId())
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada"));
@@ -92,6 +118,10 @@ public class OrdenService {
                 .estadoPreparacion(EstadoOrden.PENDIENTE_CONFIRMACION)
                 .fechaCreacion(LocalDateTime.now())
                 .build();
+
+        if ("MESERO".equals(cliente.getRolEspecifico())) {
+            orden.setMesero(cliente);
+        }
 
         orden = ordenRepository.save(orden);
 
@@ -154,5 +184,14 @@ public class OrdenService {
                         EstadoOrden.CANCELADA
                 )
         );
+    }
+
+    public OrdenResponseDTO obtenerPorId(Long id) {
+        Orden orden = ordenRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        List<DetalleOrden> detalles = detalleRepository.findByOrdenId(id);
+
+        return OrdenMapper.toDTO(orden, detalles);
     }
 }

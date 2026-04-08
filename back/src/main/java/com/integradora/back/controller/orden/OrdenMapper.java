@@ -1,10 +1,12 @@
 package com.integradora.back.controller.orden;
 
 import com.integradora.back.controller.detalleorden.dto.DetalleOrdenDTO;
-import com.integradora.back.model.orden.Orden;
+import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
 import com.integradora.back.model.detalleorden.DetalleOrden;
-import com.integradora.back.controller.orden.dto.*;
+import com.integradora.back.model.orden.Orden;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,23 +14,43 @@ public class OrdenMapper {
 
     public static OrdenResponseDTO toDTO(Orden orden, List<DetalleOrden> detalles) {
 
-        List<DetalleOrdenDTO> items = detalles.stream().map(det ->
-                new DetalleOrdenDTO(
-                        det.getPlatillo().getId(),
-                        det.getPlatillo().getNombre(),
-                        det.getCantidad(),
-                        det.getPrecioUnitario(),
-                        det.getNotaCliente()
-                )
-        ).collect(Collectors.toList());
+        // ── Estado de la orden ────────────────────────────────────────────────
+        String estado = (orden.getEstadoPreparacion() != null)
+                ? orden.getEstadoPreparacion().name().toLowerCase()
+                : "pendiente_confirmacion";
+
+        // ── Número de mesa ────────────────────────────────────────────────────
+        Integer mesaNumero = (orden.getMesa() != null) ? orden.getMesa().getNumero() : null;
+
+        // ── Mapear detalles (lista segura contra nulls) ───────────────────────
+        List<DetalleOrden> listaDetalles = (detalles != null) ? detalles : new ArrayList<>();
+
+        List<DetalleOrdenDTO> items = listaDetalles.stream()
+                .map(det -> {
+                    Long platilloId = (det.getPlatillo() != null) ? det.getPlatillo().getId() : null;
+                    String nombre = (det.getPlatillo() != null) ? det.getPlatillo().getNombre() : "Platillo eliminado";
+                    BigDecimal precio = (det.getPrecioUnitario() != null) ? det.getPrecioUnitario() : BigDecimal.ZERO;
+                    String estadoDet = (det.getEstadoPreparacion() != null) ? det.getEstadoPreparacion().name() : "PENDIENTE";
+
+                    return new DetalleOrdenDTO(
+                            det.getId(),
+                            platilloId,
+                            nombre,
+                            det.getCantidad(),
+                            precio,
+                            det.getNotaCliente(),
+                            estadoDet
+                    );
+                })
+                .collect(Collectors.toList());
 
         return new OrdenResponseDTO(
                 orden.getId(),
-                orden.getEstadoPreparacion().name().toLowerCase(),
-                orden.getMesa().getNumero(),
+                estado,
+                mesaNumero,
                 items,
-                orden.getSubtotal(),
-                orden.getTotal(),
+                orden.getSubtotal() != null ? orden.getSubtotal() : BigDecimal.ZERO,
+                orden.getTotal() != null ? orden.getTotal() : BigDecimal.ZERO,
                 orden.getFechaCreacion()
         );
     }

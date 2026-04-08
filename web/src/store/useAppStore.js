@@ -30,7 +30,6 @@ async function apiFetch(endpoint, options = {}) {
     const res = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
-        credentials: 'include',
     });
 
     let data = {};
@@ -150,7 +149,6 @@ export const useAppStore = create(
                 if (carrito.length === 0 || !numeroMesa) return;
 
                 const payload = {
-                    clienteId: usuario?.id || 1,
                     mesaId: numeroMesa,
                     detalles: carrito.map((item) => ({
                         platilloId: item.id,
@@ -208,10 +206,8 @@ export const useAppStore = create(
 
             cambiarEstadoOrden: async (ordenId, nuevoEstado) => {
                 const { token } = get();
-                await apiFetch(`/ordenes/${ordenId}/estado`, {
+                await apiFetch(`/ordenes/${ordenId}/estado?estado=${nuevoEstado}`, {
                     method: 'PUT',
-                    body: JSON.stringify({ estado: nuevoEstado }),
-                    token,
                 });
             },
 
@@ -227,10 +223,8 @@ export const useAppStore = create(
 
             updateOrderStatus: async (ordenId, nuevoEstado) => {
                 const { token } = get();
-                await apiFetch(`/ordenes/${ordenId}/estado`, {
+                await apiFetch(`/ordenes/${ordenId}/estado?estado=${nuevoEstado}`, {
                     method: 'PUT',
-                    body: JSON.stringify({ estado: nuevoEstado }),
-                    token,
                 });
             },
 
@@ -239,17 +233,17 @@ export const useAppStore = create(
                 try {
                     const data = await apiFetch('/cocina/tickets', { token });
                     set({ orders: data });
+                    return data;
                 } catch (e) {
                     console.error('Error cargando tickets de cocina:', e);
+                    return [];
                 }
             },
 
             updateDetalleEstado: async (detalleId, nuevoEstado) => {
-                const { token } = get();
                 await apiFetch(`/detalles/${detalleId}/estado`, {
                     method: 'PUT',
                     body: JSON.stringify({ estado: nuevoEstado }),
-                    token,
                 });
             },
 
@@ -282,6 +276,19 @@ export const useAppStore = create(
                 set({ usuario: null, token: null, ordenActual: null, carrito: [] });
             },
 
+            actualizarPerfil: async ({ nombre, correo, contrasena }) => {
+                const data = await apiFetch('/auth/perfil', {
+                    method: 'PUT',
+                    body: JSON.stringify({ nombre, correo, contrasena }),
+                });
+                const usuarioNormalizado = {
+                    ...data,
+                    rol: (data?.rol || '').toUpperCase(),
+                };
+                set({ usuario: usuarioNormalizado, token: data.token || get().token });
+                return usuarioNormalizado;
+            },
+
             fetchCurrentUser: async () => {
                 const { token } = get();
                 if (!token) {
@@ -301,14 +308,14 @@ export const useAppStore = create(
 
             fetchAdminProducts: async () => {
                 const { token } = get();
-                const data = await apiFetchWithFallback(['/admin/platillos', '/admin/productos'], { token });
+                const data = await apiFetch('/admin/platillos', { token });
                 set({ products: data });
                 return data;
             },
 
             updateProduct: async (id, productData) => {
                 const { token } = get();
-                await apiFetchWithFallback([`/admin/platillos/${id}`, `/admin/productos/${id}`], {
+                return await apiFetch(`/admin/platillos/${id}`, {
                     method: 'PUT',
                     body: JSON.stringify(productData),
                     token,
@@ -317,7 +324,7 @@ export const useAppStore = create(
 
             createProduct: async (productData) => {
                 const { token } = get();
-                await apiFetchWithFallback(['/admin/platillos', '/admin/productos'], {
+                return await apiFetch('/admin/platillos', {
                     method: 'POST',
                     body: JSON.stringify(productData),
                     token,
@@ -326,11 +333,58 @@ export const useAppStore = create(
 
             deleteProduct: async (id) => {
                 const { token } = get();
-                await apiFetchWithFallback([`/admin/platillos/${id}`, `/admin/productos/${id}`], {
+                return await apiFetch(`/admin/platillos/${id}`, {
                     method: 'DELETE',
                     token,
                 });
             },
+
+            // ── Promociones ───────────────────────────────────────────
+            fetchPromociones: async () => {
+                return await apiFetch('/promociones');
+            },
+
+            fetchAdminPromociones: async () => {
+                const { token } = get();
+                return await apiFetch('/admin/promociones', { token });
+            },
+
+            createPromocion: async (data) => {
+                const { token } = get();
+                return await apiFetch('/admin/promociones', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    token,
+                });
+            },
+
+            updatePromocion: async (id, data) => {
+                const { token } = get();
+                return await apiFetch(`/admin/promociones/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                    token,
+                });
+            },
+
+            deletePromocion: async (id) => {
+                const { token } = get();
+                return await apiFetch(`/admin/promociones/${id}`, {
+                    method: 'DELETE',
+                    token,
+                });
+            },
+
+            aplicarPromocion: async (ordenId, codigoPromo) => {
+                const { token } = get();
+                return await apiFetch(`/mesero/ordenes/${ordenId}/promocion`, {
+                    method: 'POST',
+                    body: JSON.stringify({ codigoPromo }),
+                    token,
+                });
+            },
+
+
 
             fetchUsuarios: async () => {
                 const { token } = get();

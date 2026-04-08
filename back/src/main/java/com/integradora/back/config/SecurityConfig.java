@@ -37,9 +37,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/test").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/mesas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/platillos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/promociones").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ordenes/completa").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/perfil").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/cocina/**").hasAnyRole("COCINERO", "CHEF", "PARRILLERO", "BARISTA", "REPOSTERO", "ADMIN")
                         .requestMatchers("/api/mesero/**").hasAnyRole("MESERO", "ADMIN")
@@ -55,7 +57,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://localhost:*"));
+        // allowedOriginPatterns permite usar allowCredentials con comodines
+        config.addAllowedOriginPattern("http://localhost:*");
+        config.addAllowedOriginPattern("http://192.168.*.*:*");
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

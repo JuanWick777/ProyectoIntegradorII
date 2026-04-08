@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-
 import OrderCard from './OrderCard';
+import HamburgerMenu from '../shared/HamburgerMenu';
 
 const FILTROS = [
     { key: 'todos', label: 'Todos', icono: '📋' },
@@ -17,8 +17,7 @@ const FILTROS = [
  * Polling cada 10 s a GET /api/mesero/ordenes
  */
 const WaiterDashboard = ({ usuario, onLogout }) => {
-    const { fetchMeseroOrdenes, cambiarEstadoOrden, logoutLocal } = useAppStore();
-
+    const { fetchMeseroOrdenes, cambiarEstadoOrden, logoutLocal, aplicarPromocion } = useAppStore();
 
     const [sesionExpirada, setSesionExpirada] = useState(false);
     const [ordenes, setOrdenes] = useState([]);
@@ -26,6 +25,10 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
     const [loading, setLoading] = useState(true);
     const [loadingId, setLoadingId] = useState(null);
     const [ultimaSync, setUltimaSync] = useState(null);
+    const [promoPanel, setPromoPanel] = useState(false);
+    const [promoOrdenId, setPromoOrdenId] = useState('');
+    const [promoCodigo, setPromoCodigo] = useState('');
+    const [promoMsg, setPromoMsg] = useState(null);
 
     // ── Detectar sesión expirada (server restart) ────────────
     useEffect(() => {
@@ -118,13 +121,11 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                                 🔄 {ultimaSync.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </span>
                         )}
-                        <button
-                            className="btn btn-sm btn-outline-light"
-                            style={{ borderRadius: '0.75rem', fontSize: '0.78rem' }}
-                            onClick={onLogout}
-                        >
-                            Salir
-                        </button>
+                        <HamburgerMenu
+                            loginPath="/login"
+                            accentColor="#e67e22"
+                            onLogout={onLogout}
+                        />
                     </div>
                 </div>
             </header>
@@ -151,6 +152,66 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                         </button>
                     ))}
                 </div>
+            </div>
+
+            {/* ── Barra de Promo (mesero aplica código) ──── */}
+            <div style={{ background: '#fff8f0', borderBottom: '1px solid #f0c080', padding: '0.5rem 1rem' }}>
+                <button
+                    className="btn btn-sm fw-bold"
+                    style={{ background: 'transparent', border: 'none', color: '#e67e22', padding: 0, fontSize: '0.82rem' }}
+                    onClick={() => { setPromoPanel(v => !v); setPromoMsg(null); }}
+                >
+                    {promoPanel ? '▲' : '▼'} 🏷️ Aplicar Promo
+                </button>
+                {promoPanel && (
+                    <div className="d-flex flex-wrap gap-2 align-items-center mt-2">
+                        <input
+                            className="form-control form-control-sm"
+                            style={{ maxWidth: 110, fontFamily: 'monospace', textTransform: 'uppercase' }}
+                            placeholder="Código"
+                            value={promoCodigo}
+                            onChange={e => setPromoCodigo(e.target.value.toUpperCase())}
+                        />
+                        <select
+                            className="form-select form-select-sm"
+                            style={{ maxWidth: 160 }}
+                            value={promoOrdenId}
+                            onChange={e => setPromoOrdenId(e.target.value)}
+                        >
+                            <option value="">-- Selecciona orden --</option>
+                            {ordenes
+                                .filter(o => !['cerrada','cancelada'].includes(o.estado))
+                                .map(o => (
+                                    <option key={o.id} value={o.id}>
+                                        #{o.id} — Mesa {o.mesaNumero ?? o.mesa?.numero ?? '?'}
+                                    </option>
+                                ))
+                            }
+                        </select>
+                        <button
+                            className="btn btn-sm fw-bold"
+                            style={{ background: '#e67e22', color: 'white', borderRadius: '0.5rem' }}
+                            disabled={!promoCodigo || !promoOrdenId}
+                            onClick={async () => {
+                                try {
+                                    await aplicarPromocion(Number(promoOrdenId), promoCodigo);
+                                    setPromoMsg({ ok: true, txt: '✅ Descuento aplicado con éxito' });
+                                    setPromoCodigo(''); setPromoOrdenId('');
+                                    await cargarOrdenes();
+                                } catch (e) {
+                                    setPromoMsg({ ok: false, txt: '❌ ' + (e?.error || e?.message || 'Código inválido') });
+                                }
+                            }}
+                        >
+                            Aplicar
+                        </button>
+                        {promoMsg && (
+                            <span style={{ fontSize: '0.8rem', color: promoMsg.ok ? '#198754' : '#dc3545', fontWeight: 600 }}>
+                                {promoMsg.txt}
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* ── Grid de órdenes ─────────────────────────── */}
@@ -181,14 +242,14 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                 ) : (
                     <div className="row g-3">
                         {ordenesFiltradas.map(orden => (
-                            <div key={orden.orden_id} className="col-12 col-md-6 col-xl-4">
+                            <div key={orden.id} className="col-12 col-md-6 col-xl-4">
                                 <OrderCard
                                     orden={orden}
-                                    loading={loadingId === orden.orden_id}
-                                    onAceptar={() => accionEstado(orden.orden_id, 'confirmada')}
-                                    onCancelar={() => accionEstado(orden.orden_id, 'cancelada')}
-                                    onEntregar={() => accionEstado(orden.orden_id, 'entregada')}
-                                    onCobrar={() => accionEstado(orden.orden_id, 'cerrada')}
+                                    loading={loadingId === orden.id}
+                                    onAceptar={() => accionEstado(orden.id, 'confirmada')}
+                                    onCancelar={() => accionEstado(orden.id, 'cancelada')}
+                                    onEntregar={() => accionEstado(orden.id, 'entregada')}
+                                    onCobrar={() => accionEstado(orden.id, 'cerrada')}
                                 />
                             </div>
                         ))}

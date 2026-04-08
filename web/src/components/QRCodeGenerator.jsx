@@ -46,7 +46,7 @@ const QRGenerator = () => {
         try {
             const API = `http://${window.location.hostname}:8080`;
             const res = await fetch(`${API}/api/admin/mesas/generar?hasta=${totalMesas}`, {
-                method: 'POST', credentials: 'include'
+                method: 'POST'
             });
             const data = await res.json();
             setGenMsg(data.mensaje || 'Listo');
@@ -115,7 +115,7 @@ const QRGenerator = () => {
                 <div className="col-sm-6 col-md-4 col-lg-3 page-break-avoid">
                     <div className="card h-100 shadow-sm border-0" style={{ borderTop: '4px solid #0d6efd', backgroundColor: '#f8fbfc' }}>
                         <div className="card-body d-flex flex-column align-items-center text-center">
-                            <h5 className="card-title fw-bold text-uppercase text-primary mb-3">KDS Cocina</h5>
+                            <h5 className="card-title fw-bold text-uppercase text-primary mb-3">Cocina</h5>
                             <QRCodeSVG
                                 value={`${baseUrl}/?cocina=true`}
                                 size={150}
@@ -124,7 +124,7 @@ const QRGenerator = () => {
                                 fgColor="#0d6efd"
                             />
                             <div className="mt-3">
-                                <span className="badge bg-primary px-3 py-2 rounded-pill shadow-sm">👨‍🍳 Staff Backend</span>
+                                <span className="badge bg-primary px-3 py-2 rounded-pill shadow-sm">👨‍🍳 Cocina </span>
                             </div>
                             <small className="text-muted mt-3 font-monospace" style={{ fontSize: '0.65rem' }}>{`${baseUrl}/?cocina=true`}</small>
                         </div>
@@ -144,7 +144,7 @@ const QRGenerator = () => {
                                 fgColor="#198754"
                             />
                             <div className="mt-3">
-                                <span className="badge bg-success px-3 py-2 rounded-pill shadow-sm">📋 Empleado</span>
+                                <span className="badge bg-success px-3 py-2 rounded-pill shadow-sm">📋 Mesero</span>
                             </div>
                             <small className="text-muted mt-3 font-monospace" style={{ fontSize: '0.65rem' }}>{`${baseUrl}/?mesero=true`}</small>
                         </div>
