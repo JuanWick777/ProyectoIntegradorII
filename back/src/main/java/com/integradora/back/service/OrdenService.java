@@ -1,6 +1,5 @@
 package com.integradora.back.service;
 
-import com.integradora.back.controller.detalleorden.dto.DetalleOrdenDTO;
 import com.integradora.back.controller.detalleorden.dto.DetalleOrdenRequestDTO;
 import com.integradora.back.controller.orden.OrdenMapper;
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
@@ -55,6 +54,11 @@ public class OrdenService {
         return ordenRepository.findAll();
     }
 
+    public Orden obtenerPorId(Long id) {
+        return ordenRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + id));
+    }
+
     public List<Orden> porCliente(Long clienteId) {
         return ordenRepository.findByClienteId(clienteId);
     }
@@ -94,10 +98,21 @@ public class OrdenService {
     public OrdenResponseDTO crearOrdenCompleta(OrdenRequestDTO request) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String correo = auth.getName();
 
-        Usuario cliente = usuarioRepository.findByCorreo(correo)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+        Usuario cliente;
+        if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
+            // Cliente logueado: usar email del token
+            cliente = usuarioRepository.findByCorreo(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+        } else if (request.getClienteId() != null) {
+            // Cliente anónimo: usar clienteId del body (el front manda usuario?.id || 1)
+            cliente = usuarioRepository.findById(request.getClienteId())
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + request.getClienteId()));
+        } else {
+            // Último fallback: usar cliente con id=1 (usuario anónimo)
+            cliente = usuarioRepository.findById(1L)
+                    .orElseThrow(() -> new RuntimeException("No se pudo identificar al cliente"));
+        }
 
         Mesa mesa = mesaRepository.findById(request.getMesaId())
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada"));

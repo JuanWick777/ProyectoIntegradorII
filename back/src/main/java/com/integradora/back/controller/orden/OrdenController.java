@@ -2,17 +2,17 @@ package com.integradora.back.controller.orden;
 
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
 import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
-import com.integradora.back.model.orden.EstadoOrden;
+import com.integradora.back.model.detalleorden.DetalleOrden;
 import com.integradora.back.model.orden.Orden;
-import com.integradora.back.model.usuario.Usuario;
+import com.integradora.back.repository.DetalleOrdenRepository;
 import com.integradora.back.service.OrdenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ordenes")
@@ -21,6 +21,7 @@ import java.util.List;
 public class OrdenController {
 
     private final OrdenService service;
+    private final DetalleOrdenRepository detalleOrdenRepository;
 
     @PostMapping
     public Orden crear(
@@ -40,12 +41,19 @@ public class OrdenController {
         return service.porCliente(clienteId);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<OrdenResponseDTO> obtenerPorId(@PathVariable Long id) {
+        Orden orden = service.obtenerPorId(id);
+        List<DetalleOrden> detalles = detalleOrdenRepository.findByOrdenId(id);
+        return ResponseEntity.ok(OrdenMapper.toDTO(orden, detalles));
+    }
+
     @PutMapping("/{id}/estado")
     public Orden actualizarEstado(
             @PathVariable Long id,
-            @RequestParam String estado
+            @RequestBody Map<String, String> body
     ) {
-        return service.actualizarEstado(id, estado);
+        return service.actualizarEstado(id, body.get("estado"));
     }
 
     @PostMapping("/completa")

@@ -14,6 +14,7 @@ public class OrdenMapper {
 
         List<DetalleOrdenDTO> items = detalles.stream().map(det ->
                 new DetalleOrdenDTO(
+                        det.getId(),
                         det.getPlatillo().getId(),
                         det.getPlatillo().getNombre(),
                         det.getCantidad(),

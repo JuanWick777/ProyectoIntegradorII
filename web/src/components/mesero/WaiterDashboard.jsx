@@ -62,16 +62,6 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
         return () => clearInterval(interval);
     }, [cargarOrdenes]);
 
-    useEffect(() => {
-        fetchMeseroOrdenes();
-
-        const interval = setInterval(() => {
-            fetchMeseroOrdenes();
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, []);
-
     // ── Acción: cambiar estado ───────────────────────────────
     const accionEstado = async (ordenId, nuevoEstado) => {
         setLoadingId(ordenId);
