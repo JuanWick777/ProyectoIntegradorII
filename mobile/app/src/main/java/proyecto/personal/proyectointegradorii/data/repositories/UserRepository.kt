@@ -31,4 +31,16 @@ class UserRepository {
             false
         }
     }
+
+    // PRUEBAS
+    suspend fun getCurrentUser(): LoginResponse? {
+        return try {
+            val response = RetrofitClient.api.getCurrentUser()
+            if (response.isSuccessful) {
+                response.body()
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
