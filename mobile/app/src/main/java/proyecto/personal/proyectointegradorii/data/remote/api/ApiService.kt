@@ -5,6 +5,7 @@ import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.RegisterRe
 import proyecto.personal.proyectointegradorii.data.model.usuario.Usuario
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -14,7 +15,7 @@ interface ApiService {
 
     // USUARIOS
     @POST("api/auth/login")
-    suspend fun login(@Body request: LoginRequest): Usuario
+    suspend fun login(@Body request: LoginRequest): LoginResponse
 
     @POST("api/auth/register")
     suspend fun register(@Body request: RegisterRequest): Usuario

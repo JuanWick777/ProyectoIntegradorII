@@ -14,6 +14,8 @@ import com.integradora.back.model.platillo.Platillo;
 import com.integradora.back.model.usuario.Usuario;
 import com.integradora.back.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,13 +76,27 @@ public class OrdenService {
             orden.setFechaFinalizacion(LocalDateTime.now());
         }
 
+        if (estado.equalsIgnoreCase("confirmada")) {
+
+            List<DetalleOrden> detalles = detalleRepository.findByOrdenId(ordenId);
+
+            for (DetalleOrden d : detalles) {
+                d.setEstadoPreparacion(EstadoDetalle.PENDIENTE);
+            }
+
+            detalleRepository.saveAll(detalles);
+        }
+
         return ordenRepository.save(orden);
     }
 
     @Transactional
     public OrdenResponseDTO crearOrdenCompleta(OrdenRequestDTO request) {
 
-        Usuario cliente = usuarioRepository.findById(request.getClienteId())
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String correo = auth.getName();
+
+        Usuario cliente = usuarioRepository.findByCorreo(correo)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
         Mesa mesa = mesaRepository.findById(request.getMesaId())
@@ -92,6 +108,10 @@ public class OrdenService {
                 .estadoPreparacion(EstadoOrden.PENDIENTE_CONFIRMACION)
                 .fechaCreacion(LocalDateTime.now())
                 .build();
+
+        if ("MESERO".equals(cliente.getRolEspecifico())) {
+            orden.setMesero(cliente);
+        }
 
         orden = ordenRepository.save(orden);
 

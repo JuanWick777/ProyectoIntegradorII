@@ -21,7 +21,8 @@ public class CocinaController {
         return detalleOrdenRepository.findByEstadoPreparacionIn(
                 List.of(
                         EstadoDetalle.PENDIENTE,
-                        EstadoDetalle.EN_PREPARACION
+                        EstadoDetalle.EN_PREPARACION,
+                        EstadoDetalle.LISTO
                 )
         );
     }

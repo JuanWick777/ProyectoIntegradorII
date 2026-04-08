@@ -16,11 +16,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import proyecto.personal.proyectointegradorii.ui.components.bars.navigationbar.MainBottomBar
+import proyecto.personal.proyectointegradorii.ui.screens.internal.account.SAccount
 import proyecto.personal.proyectointegradorii.ui.screens.internal.cart.SCart
 import proyecto.personal.proyectointegradorii.ui.screens.internal.home.SHome
 import proyecto.personal.proyectointegradorii.ui.screens.internal.offers.SOffers
 import proyecto.personal.proyectointegradorii.ui.screens.internal.points.SPoints
 import proyecto.personal.proyectointegradorii.ui.screens.internal.scan.SScan
+import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
 import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
 
 @Composable
@@ -32,6 +34,7 @@ fun SMain(rootNavController: NavHostController) {
     val cartViewModel: CartViewModel = remember { CartViewModel() }
 
     Scaffold(
+        containerColor = BackgroundColor,
         bottomBar = {
             MainBottomBar(navController)
         }
@@ -50,6 +53,7 @@ fun SMain(rootNavController: NavHostController) {
             composable("scan") { SScan() }
             composable("offers") { SOffers() }
             composable("points") { SPoints() }
+            composable("account") { SAccount(navController, rootNavController) }
         }
     }
 }

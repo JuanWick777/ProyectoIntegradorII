@@ -24,13 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import proyecto.personal.proyectointegradorii.ui.components.buttons.GlobalButton
-import proyecto.personal.proyectointegradorii.ui.components.cards.header.CardHeaderCBack
-import proyecto.personal.proyectointegradorii.ui.components.cards.register.RegisterCard
+import proyecto.personal.proyectointegradorii.ui.components.cards.GlobalCard
+import proyecto.personal.proyectointegradorii.ui.components.headers.HeaderCBack
 import proyecto.personal.proyectointegradorii.ui.components.inputs.GlobalTextInput
 import proyecto.personal.proyectointegradorii.ui.components.inputs.PasswordInput
 import proyecto.personal.proyectointegradorii.ui.components.texts.ErrorText
 import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
-import proyecto.personal.proyectointegradorii.ui.theme.AlertColor
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorDark
@@ -69,6 +68,7 @@ fun ScreenRegister(
     val errorConfirmPassword by viewModel.errorConfirmPassword.collectAsState()
     val isRegister by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val successRegister by viewModel.success.collectAsState()
 
     Column(
         modifier = Modifier
@@ -79,14 +79,14 @@ fun ScreenRegister(
                 end = 20.dp
             )
     ) {
-        CardHeaderCBack(
+        HeaderCBack(
             "Crear Cuenta",
             35,
             Modifier,
             navController
         )
         Spacer(modifier = Modifier.height(40.dp))
-        RegisterCard(
+        GlobalCard(
             modifier = Modifier,
             content = {
                 Column(
@@ -194,6 +194,11 @@ fun ScreenRegister(
                                 Color.White,
                                 {
                                     viewModel.registrar()
+                                    if (successRegister) {
+                                        navController.navigate("Login") {
+                                            popUpTo("Register") { inclusive = true }
+                                        }
+                                    }
                                 },
                                 Modifier
                             )
@@ -204,12 +209,4 @@ fun ScreenRegister(
             }
         )
     }
-}
-
-@Preview
-@Composable
-fun PSR(){
-    ScreenRegister(
-        navController = NavController(LocalContext.current)
-    )
 }

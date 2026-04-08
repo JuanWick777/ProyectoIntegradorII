@@ -1,4 +1,4 @@
-package proyecto.personal.proyectointegradorii.ui.components.cards.account
+package proyecto.personal.proyectointegradorii.ui.components.headers
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

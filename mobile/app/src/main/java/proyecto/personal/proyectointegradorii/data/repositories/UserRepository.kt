@@ -2,14 +2,15 @@ package proyecto.personal.proyectointegradorii.data.repositories
 
 import proyecto.personal.proyectointegradorii.data.model.usuario.Usuario
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.RegisterRequest
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 
 class UserRepository {
-    suspend fun login(correo: String, password: String): Usuario? {
+    suspend fun login(email: String, password: String): LoginResponse? {
         return try {
             RetrofitClient.api.login(
-                LoginRequest(correo, password)
+                LoginRequest(email, password)
             )
         } catch (e: Exception) {
             null
