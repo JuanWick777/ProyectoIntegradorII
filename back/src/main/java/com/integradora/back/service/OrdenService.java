@@ -54,11 +54,6 @@ public class OrdenService {
         return ordenRepository.findAll();
     }
 
-    public Orden obtenerPorId(Long id) {
-        return ordenRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + id));
-    }
-
     public List<Orden> porCliente(Long clienteId) {
         return ordenRepository.findByClienteId(clienteId);
     }

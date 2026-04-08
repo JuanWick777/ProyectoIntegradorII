@@ -37,9 +37,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/test").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/mesas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/platillos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/promociones").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ordenes/completa").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/perfil").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/cocina/**").hasAnyRole("COCINERO", "CHEF", "PARRILLERO", "BARISTA", "REPOSTERO", "ADMIN")
                         .requestMatchers("/api/mesero/**").hasAnyRole("MESERO", "ADMIN")
@@ -55,15 +57,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*",
-                "http://192.168.*:*",
-                "http://10.*:*"
-        ));
+        config.addAllowedOrigin("*");   // JWT = stateless, no credentials
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

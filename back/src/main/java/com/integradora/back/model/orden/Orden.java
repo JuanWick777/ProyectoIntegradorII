@@ -43,6 +43,13 @@ public class Orden {
     @Column(name = "subtotal", precision = 10, scale = 2)
     private BigDecimal subtotal;
 
+    @Builder.Default
+    @Column(name = "monto_descuento", precision = 10, scale = 2)
+    private BigDecimal montoDescuento = BigDecimal.ZERO;
+
+    @Column(name = "codigo_promo_aplicado")
+    private String codigoPromoAplicado;
+
     @Column(name = "total", precision = 10, scale = 2)
     private BigDecimal total;
 
@@ -51,4 +58,4 @@ public class Orden {
 
     @Column(name = "fecha_finalizacion")
     private LocalDateTime fechaFinalizacion;
-}
+}

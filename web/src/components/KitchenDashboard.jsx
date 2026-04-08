@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import MeseroLogin from './mesero/MeseroLogin';
+import HamburgerMenu from './shared/HamburgerMenu';
 
 const ESTADO_CONFIG = {
     PENDIENTE: {
@@ -259,13 +260,11 @@ const KitchenDashboard = () => {
                             })}
                         </span>
                     )}
-                    <button
-                        className="btn btn-sm text-white"
-                        style={{ background: '#e67e22', borderRadius: '0.75rem' }}
-                        onClick={logoutLocal}
-                    >
-                        Salir
-                    </button>
+                    <HamburgerMenu
+                        loginPath="/login"
+                        accentColor="#e67e22"
+                        onLogout={logoutLocal}
+                    />
                 </div>
             </header>
 

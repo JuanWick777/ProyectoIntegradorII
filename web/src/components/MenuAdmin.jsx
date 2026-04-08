@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import HamburgerMenu from './shared/HamburgerMenu';
+import PromocionesAdmin from './PromocionesAdmin';
 
 const CATEGORIAS = [
     { id: 1, nombre: 'Hamburguesas' },
@@ -29,7 +31,7 @@ const getUserRole = (u) => normalizeRole(u?.rol ?? u?.tipoUsuario);
 const getProductName = (p) => p?.nombre ?? '';
 const getProductDesc = (p) => p?.descripcion ?? '';
 const getProductPrice = (p) => p?.precio ?? 0;
-const getProductStock = (p) => p?.stock_disponible ?? p?.stockDisponible ?? null;
+const getProductStock = (p) => p?.stock ?? p?.stock_disponible ?? p?.stockDisponible ?? null;
 const getProductCategoryName = (p) => {
     const cat = p?.categoria;
     if (typeof cat === 'string') return cat;
@@ -37,7 +39,7 @@ const getProductCategoryName = (p) => {
     return p?.categoria_nombre ?? p?.categoriaNombre ?? 'Otros';
 };
 const getProductImage = (p) =>
-    p?.imagen_url ?? p?.urlImagen ?? p?.imagenUrl ?? '';
+    p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '';;
 
 const ROL_BADGE = {
     admin: { color: '#6f42c1', label: '🛡️ Admin' },
@@ -61,10 +63,10 @@ const EMPTY_NEW = {
     nombre: '',
     precio: '',
     descripcion: '',
-    imagen_url: '',
+    imagenUrl: '',
     categoria_id: 1,
     kitchen_id: 1,
-    stock_disponible: 10,
+    stock: 10,
 };
 
 const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
@@ -561,8 +563,8 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
             ? {
                   ...EMPTY_NEW,
                   ...product,
-                  imagen_url: getProductImage(product),
-                  stock_disponible: getProductStock(product) ?? 10,
+                  imagenUrl: getProductImage(product),
+                  stock: getProductStock(product) ?? 10,
                   categoria_id: product.categoria_id ?? product.categoriaId ?? 1,
                   kitchen_id: product.kitchen_id ?? product.kitchenId ?? 1,
               }
@@ -570,6 +572,7 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
     );
 
     const set = (field, val) => setForm((prev) => ({ ...prev, [field]: val }));
+    const imgPreview = form.imagenUrl;
 
     return (
         <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
@@ -610,8 +613,8 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                                 <input
                                     className="form-control"
                                     type="number"
-                                    value={form.stock_disponible}
-                                    onChange={(e) => set('stock_disponible', e.target.value)}
+                                    value={form.stock}
+                                    onChange={(e) => set('stock', e.target.value)}
                                 />
                             </div>
                         </div>
@@ -662,10 +665,18 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                             <label className="form-label fw-semibold small">URL Imagen</label>
                             <input
                                 className="form-control form-control-sm"
-                                value={form.imagen_url || ''}
-                                onChange={(e) => set('imagen_url', e.target.value)}
+                                value={form.imagenUrl || ''}
+                                onChange={(e) => set('imagenUrl', e.target.value)}
                                 placeholder="https://..."
                             />
+                            {imgPreview && (
+                                <img
+                                    src={imgPreview}
+                                    alt="preview"
+                                    style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: '0.5rem', marginTop: 6 }}
+                                    onError={e => e.target.style.display='none'}
+                                />
+                            )}
                         </div>
                     </div>
 
@@ -694,7 +705,7 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
 };
 
 const MenuAdmin = () => {
-    const { products, updateProduct, createProduct, fetchAdminProducts } = useAppStore();
+    const { products, updateProduct, createProduct, fetchAdminProducts, logout } = useAppStore();
     const [modalProduct, setModalProduct] = useState(null);
     const [saving, setSaving] = useState(false);
     const [busqueda, setBusqueda] = useState('');
@@ -714,30 +725,29 @@ const MenuAdmin = () => {
     const handleSave = async (form) => {
         setSaving(true);
         try {
-            const payloadBase = {
-                nombre: form.nombre,
-                precio: parseFloat(form.precio),
+            // Payload normalizado con los nombres que espera PlatilloAdminController
+            const payload = {
+                nombre:      form.nombre,
+                precio:      parseFloat(form.precio),
                 descripcion: form.descripcion,
-                stock_disponible: parseInt(form.stock_disponible, 10) || 0,
+                stock:       parseInt(form.stock, 10) || 0,
+                imagenUrl:   form.imagenUrl || null,
+                categoriaId: form.categoria_id,
+                kitchenId:   form.kitchen_id,
             };
 
             if (form.id) {
-                await updateProduct(form.id, payloadBase);
+                await updateProduct(form.id, payload);
                 mostrarToast('✅ Producto actualizado');
             } else {
-                await createProduct({
-                    ...payloadBase,
-                    categoria_id: form.categoria_id,
-                    kitchen_id: form.kitchen_id,
-                    imagen_url: form.imagen_url || null,
-                });
+                await createProduct(payload);
                 mostrarToast('✅ Producto creado');
             }
 
             await fetchAdminProducts();
             setModalProduct(null);
         } catch (e) {
-            mostrarToast('❌ Error al guardar');
+            mostrarToast('❌ Error al guardar: ' + (e?.message || ''));
         } finally {
             setSaving(false);
         }
@@ -759,6 +769,8 @@ const MenuAdmin = () => {
 
     return (
         <div className="min-vh-100" style={{ background: '#f4f6fb' }}>
+
+            {/* ── NAVBAR SUPERIOR ────────────────────────────────────── */}
             <nav
                 className="navbar sticky-top shadow-sm px-3 py-2"
                 style={{
@@ -766,48 +778,37 @@ const MenuAdmin = () => {
                     borderBottom: '3px solid #e67e22',
                 }}
             >
-                <div className="d-flex align-items-center gap-3 me-auto">
-                    <span style={{ fontSize: 26 }}>🍴</span>
+                <HamburgerMenu
+                    loginPath="/admin/login"
+                    accentColor="#e67e22"
+                    navItems={[
+                        { id: 'menu',        icon: '🍽️', label: 'Gestión del Menú' },
+                        { id: 'personal',    icon: '👥', label: 'Personal' },
+                        { id: 'promociones', icon: '🏷️', label: 'Promociones' },
+                        { id: 'qr',          icon: '🖨️', label: 'Códigos QR', onClick: () => window.open('?admin=qr', '_blank') },
+                    ]}
+                    activeItem={vistaActual}
+                    onNavItemClick={setVistaActual}
+                />
+
+                <div className="d-flex align-items-center gap-2 ms-3 me-auto">
+                    <span style={{ fontSize: 22 }}>🍴</span>
                     <span className="fw-bold text-white fs-5">Panel Administrador</span>
                 </div>
 
-                <div className="d-flex gap-2">
-                    <button
-                        className={`btn btn-sm ${
-                            vistaActual === 'menu' ? 'btn-warning text-dark' : 'btn-outline-light'
-                        } fw-semibold`}
-                        style={{ borderRadius: '2rem' }}
-                        onClick={() => setVistaActual('menu')}
-                    >
-                        🍽️ Menú
-                    </button>
-                    <button
-                        className={`btn btn-sm ${
-                            vistaActual === 'personal' ? 'btn-warning text-dark' : 'btn-outline-light'
-                        } fw-semibold`}
-                        style={{ borderRadius: '2rem' }}
-                        onClick={() => setVistaActual('personal')}
-                    >
-                        👥 Personal
-                    </button>
-                    <button
-                        className={`btn btn-sm ${
-                            vistaActual === 'qr' ? 'btn-warning text-dark' : 'btn-outline-light'
-                        } fw-semibold`}
-                        style={{ borderRadius: '2rem' }}
-                        onClick={() => {
-                            setVistaActual('qr');
-                            window.open('?admin=qr', '_blank');
-                        }}
-                    >
-                        🖨️ QRs
-                    </button>
-                </div>
+                <span
+                    className="badge fw-semibold px-3 py-2"
+                    style={{ background: 'rgba(230,126,34,0.25)', color: '#e67e22', borderRadius: '2rem', fontSize: '0.8rem' }}
+                >
+                    {{ menu: '🍽️ Menú', personal: '👥 Personal', qr: '🖨️ QRs', promociones: '🏷️ Promociones' }[vistaActual]}
+                </span>
             </nav>
 
             <div className="container-fluid px-4 py-4">
                 {vistaActual === 'personal' ? (
                     <PersonalAdmin mostrarToast={mostrarToast} />
+                ) : vistaActual === 'promociones' ? (
+                    <PromocionesAdmin mostrarToast={mostrarToast} />
                 ) : (
                     <>
                         <div className="d-flex flex-wrap gap-3 align-items-center mb-4">

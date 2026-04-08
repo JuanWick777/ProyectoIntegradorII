@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import ProductCard from './ProductCard';
 
@@ -13,9 +13,14 @@ import ProductCard from './ProductCard';
  *   onVerCarrito — callback para navegar al carrito
  */
 const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
-    const { products, loadingProducts, carrito } = useAppStore();
+    const { products, loadingProducts, carrito, fetchPromociones } = useAppStore();
     const [categoriaActiva, setCategoriaActiva] = useState('todos');
     const [busqueda, setBusqueda] = useState('');
+    const [promos, setPromos] = useState([]);
+
+    useEffect(() => {
+        fetchPromociones().then(data => setPromos(data || [])).catch(() => {});
+    }, []);
 
     // Derivar categorías únicas de los productos
     const categorias = useMemo(() => {
@@ -102,6 +107,56 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
                     ))}
                 </div>
             </header>
+
+            {/* ── Banner de Promociones del día ────────────────────────── */}
+            {promos.length > 0 && (
+                <div style={{ padding: '0.75rem 0.75rem 0.25rem', background: '#fff' }}>
+                    <p className="fw-bold mb-2 text-dark" style={{ fontSize: '0.9rem' }}>
+                        🏷️ Promociones del día
+                    </p>
+                    <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
+                        {promos.map(p => (
+                            <div
+                                key={p.id}
+                                style={{
+                                    minWidth: 180,
+                                    flexShrink: 0,
+                                    background: 'linear-gradient(135deg, #FF7A00, #E06900)',
+                                    borderRadius: '0.875rem',
+                                    padding: '0.75rem 1rem',
+                                    color: 'white',
+                                }}
+                            >
+                                <div className="fw-bold" style={{ fontSize: '0.88rem', lineHeight: 1.2 }}>{p.titulo}</div>
+                                {p.descripcion && (
+                                    <div style={{ fontSize: '0.73rem', opacity: 0.88, marginTop: 3 }}>{p.descripcion}</div>
+                                )}
+                                <div className="fw-bold mt-2" style={{ fontSize: '1.1rem' }}>
+                                    {p.tipoDescuento === 'PORCENTAJE'
+                                        ? `${p.valorDescuento}% OFF`
+                                        : `$${p.valorDescuento} OFF`}
+                                </div>
+                                {p.codigoPromo && (
+                                    <div
+                                        style={{
+                                            marginTop: 4,
+                                            background: 'rgba(255,255,255,0.25)',
+                                            borderRadius: '0.4rem',
+                                            padding: '2px 7px',
+                                            display: 'inline-block',
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.8rem',
+                                            letterSpacing: '0.06em',
+                                        }}
+                                    >
+                                        {p.codigoPromo}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* ── Grid de productos ────────────────────────────────────── */}
             <main className="flex-grow-1 p-3">

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppStore } from './store/useAppStore';
 
 // Páginas
@@ -10,9 +10,28 @@ import MenuAdmin from './components/MenuAdmin';
 import AdminLogin from './components/AdminLogin';
 import MeseroLogin from './components/mesero/MeseroLogin';
 
+// Componente que interpreta los query params de la raíz "/"
+function RootHandler() {
+  const params = new URLSearchParams(window.location.search);
+
+  // QR de mesa  → /?mesa=3       → cliente
+  if (params.get('mesa'))         return <ClientePage />;
+
+  // QR de cocina → /?cocina=true  → login de mesero/cocina
+  if (params.get('cocina'))       return <MeseroLogin />;
+
+  // QR de mesero → /?mesero=true  → login de mesero/cocina
+  if (params.get('mesero'))       return <MeseroLogin />;
+
+  // Panel admin  → /?admin=menu   → manejado por la ruta /admin
+  if (params.get('admin'))        return <Navigate to="/admin" replace />;
+
+  // Sin params → login de ADMIN
+  return <Navigate to="/admin/login" replace />;
+}
+
 function App() {
   const { usuario, token, fetchCurrentUser } = useAppStore();
-
   const rol = (usuario?.rol || '').toUpperCase();
 
   useEffect(() => {
@@ -24,44 +43,52 @@ function App() {
   return (
     <Routes>
 
-      {/* LOGIN GENERAL */}
-      <Route path="/" element={<MeseroLogin />} />
+      {/* RAÍZ — interpreta query params o redirige a login admin */}
+      <Route path="/" element={<RootHandler />} />
 
-      {/* CLIENTE */}
-      <Route path="/cliente" element={<ClientePage />} />
-
-      {/* ADMIN */}
+      {/* ── ADMIN ──────────────────────────────────────────── */}
+      <Route
+        path="/admin/login"
+        element={
+          rol === 'ADMIN'
+            ? <Navigate to="/admin" replace />
+            : <AdminLogin onLoginExitoso={() => window.location.replace('/admin')} />
+        }
+      />
       <Route
         path="/admin"
         element={
           rol === 'ADMIN'
             ? <MenuAdmin />
-            : <Navigate to="/" />
+            : <Navigate to="/admin/login" replace />
         }
       />
 
-      {/* MESERO */}
+      {/* ── PERSONAL (mesero / cocina) ─────────────────────── */}
+      <Route path="/login" element={<MeseroLogin />} />
+
       <Route
         path="/mesero"
         element={
           rol === 'MESERO'
             ? <MeseroPage />
-            : <Navigate to="/" />
+            : <Navigate to="/login" replace />
         }
       />
-
-      {/* COCINA */}
       <Route
         path="/cocina"
         element={
           ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'].includes(rol)
             ? <KitchenDashboard />
-            : <Navigate to="/" />
+            : <Navigate to="/login" replace />
         }
       />
 
+      {/* ── CLIENTE ────────────────────────────────────────── */}
+      <Route path="/cliente" element={<ClientePage />} />
+
       {/* DEFAULT */}
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to="/admin/login" replace />} />
 
     </Routes>
   );

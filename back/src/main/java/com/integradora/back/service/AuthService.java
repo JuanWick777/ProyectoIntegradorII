@@ -89,6 +89,43 @@ public class AuthService {
                 .build();
     }
 
+    public LoginResponseDTO actualizarPerfil(String correoActual, String nombre, String nuevoCorreo, String contrasena) {
+        Usuario usuario = usuarioRepository.findByCorreo(correoActual)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (nombre != null && !nombre.isBlank()) {
+            usuario.setNombreCompleto(nombre.trim());
+        }
+
+        if (nuevoCorreo != null && !nuevoCorreo.isBlank() && !nuevoCorreo.equalsIgnoreCase(correoActual)) {
+            if (usuarioRepository.findByCorreo(nuevoCorreo).isPresent()) {
+                throw new RuntimeException("El correo ya está en uso por otro usuario");
+            }
+            usuario.setCorreo(nuevoCorreo.trim());
+        }
+
+        if (contrasena != null && !contrasena.isBlank()) {
+            if (contrasena.length() < 6) {
+                throw new RuntimeException("La contraseña debe tener al menos 6 caracteres");
+            }
+            usuario.setContrasena(passwordEncoder.encode(contrasena));
+        }
+
+        usuario = usuarioRepository.save(usuario);
+
+        // Genera un nuevo token con el correo actualizado
+        String rol = normalizarRol(usuario);
+        String token = jwtService.generateToken(usuario.getCorreo(), rol, usuario.getId());
+
+        return LoginResponseDTO.builder()
+                .id(usuario.getId())
+                .nombre(usuario.getNombreCompleto())
+                .correo(usuario.getCorreo())
+                .rol(rol)
+                .token(token)
+                .build();
+    }
+
     private String normalizarRol(Usuario usuario) {
         String tipo = usuario.getTipoUsuario() == null ? "" : usuario.getTipoUsuario().trim().toUpperCase();
         String especifico = usuario.getRolEspecifico() == null ? "" : usuario.getRolEspecifico().trim().toUpperCase();
@@ -107,4 +144,4 @@ public class AuthService {
 
         return "CLIENTE";
     }
-}
+}

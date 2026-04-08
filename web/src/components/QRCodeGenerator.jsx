@@ -46,7 +46,7 @@ const QRGenerator = () => {
         try {
             const API = `http://${window.location.hostname}:8080`;
             const res = await fetch(`${API}/api/admin/mesas/generar?hasta=${totalMesas}`, {
-                method: 'POST', credentials: 'include'
+                method: 'POST'
             });
             const data = await res.json();
             setGenMsg(data.mensaje || 'Listo');
