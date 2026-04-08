@@ -70,4 +70,9 @@ public class OrdenController {
     public List<Orden> historial() {
         return service.historial();
     }
+
+    @GetMapping("/{id}")
+    public OrdenResponseDTO obtenerPorId(@PathVariable Long id) {
+        return service.obtenerPorId(id);
+    }
 }
