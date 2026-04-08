@@ -1,7 +1,9 @@
 package proyecto.personal.proyectointegradorii.data.remote.network
 
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import proyecto.personal.proyectointegradorii.App
 import proyecto.personal.proyectointegradorii.data.remote.api.ApiService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -15,8 +17,21 @@ object RetrofitClient {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
+    val authInterceptor = Interceptor { chain ->
+        val requestBuilder = chain.request().newBuilder()
+
+        val token = SessionManager.getToken(App.instance)
+
+        if (token != null) {
+            requestBuilder.addHeader("Authorization", "Bearer $token")
+        }
+
+        chain.proceed(requestBuilder.build())
+    }
+
     private val client = OkHttpClient.Builder()
         .addInterceptor(logging)
+        .addInterceptor(authInterceptor)
         .build()
 
     val api: ApiService = Retrofit.Builder()

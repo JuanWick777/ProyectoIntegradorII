@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import proyecto.personal.proyectointegradorii.data.model.usuario.AppDatabase
+import proyecto.personal.proyectointegradorii.data.remote.network.SessionManager
 import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
@@ -65,12 +66,12 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoading.value = true
 
-            val usuario = repository.login(
-                _email.value,
-                _password.value
-            )
+            val response = repository.login(_email.value, _password.value)
 
-            if (usuario != null) {
+            if (response != null) {
+
+                SessionManager.saveToken(getApplication(), response.token)
+
                 _loginSuccess.value = true
             } else {
                 _generalErrorMessage.value = "Credenciales incorrectas"

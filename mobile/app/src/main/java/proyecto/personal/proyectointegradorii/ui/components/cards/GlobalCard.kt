@@ -1,4 +1,4 @@
-package proyecto.personal.proyectointegradorii.ui.components.cards.register
+package proyecto.personal.proyectointegradorii.ui.components.cards
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundCardColor
 
 @Composable
-fun RegisterCard(
+fun GlobalCard(
     content: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier
 ) {

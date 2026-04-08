@@ -15,7 +15,7 @@ fun ErrorText(
     error: String?,
     size: Int,
     modifier: Modifier = Modifier
-    ) {
+) {
     if (error != null) {
         Text(
             text = error,

@@ -21,13 +21,13 @@ fun Tittle(titulo: String, size: Int,modifier: Modifier = Modifier){
         modifier = modifier.fillMaxWidth(),
         fontSize = size.sp,
         fontWeight = FontWeight.Bold,
-        fontStyle =  FontStyle.Italic,
-        letterSpacing = 1.35.sp,
+        fontStyle =  FontStyle.Normal,
+        letterSpacing = 1.25.sp,
         style = TextStyle(
             shadow = Shadow(
                 color = Color.Gray,
-                offset = Offset(-3f, 5f),
-                blurRadius = 4f
+                offset = Offset(-1.5f, 2.5f),
+                blurRadius = 2f
             )
         ),
         color = Color.White
