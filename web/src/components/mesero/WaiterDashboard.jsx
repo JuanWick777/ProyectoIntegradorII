@@ -155,16 +155,16 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
             </div>
 
             {/* ── Barra de Promo (mesero aplica código) ──── */}
-            <div style={{ background: '#fff8f0', borderBottom: '1px solid #f0c080', padding: '0.5rem 1rem' }}>
-                <button
-                    className="btn btn-sm fw-bold"
-                    style={{ background: 'transparent', border: 'none', color: '#e67e22', padding: 0, fontSize: '0.82rem' }}
+            <div style={{ background: '#fff8f0', borderBottom: '1px solid #f0c080' }}>
+                <div 
+                    role="button"
+                    style={{ padding: '0.6rem 1rem', display: 'block', width: '100%', textAlign: 'left', fontWeight: 'bold', color: '#e67e22', fontSize: '0.85rem' }}
                     onClick={() => { setPromoPanel(v => !v); setPromoMsg(null); }}
                 >
                     {promoPanel ? '▲' : '▼'} 🏷️ Aplicar Promo
-                </button>
+                </div>
                 {promoPanel && (
-                    <div className="d-flex flex-wrap gap-2 align-items-center mt-2">
+                    <div className="d-flex flex-wrap gap-2 align-items-center pb-2 px-3" onClick={e => e.stopPropagation()}>
                         <input
                             className="form-control form-control-sm"
                             style={{ maxWidth: 110, fontFamily: 'monospace', textTransform: 'uppercase' }}

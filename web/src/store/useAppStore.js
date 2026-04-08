@@ -206,8 +206,10 @@ export const useAppStore = create(
 
             cambiarEstadoOrden: async (ordenId, nuevoEstado) => {
                 const { token } = get();
-                await apiFetch(`/ordenes/${ordenId}/estado?estado=${nuevoEstado}`, {
+                await apiFetch(`/ordenes/${ordenId}/estado`, {
                     method: 'PUT',
+                    token,
+                    body: JSON.stringify({ estado: nuevoEstado }),
                 });
             },
 
@@ -223,8 +225,10 @@ export const useAppStore = create(
 
             updateOrderStatus: async (ordenId, nuevoEstado) => {
                 const { token } = get();
-                await apiFetch(`/ordenes/${ordenId}/estado?estado=${nuevoEstado}`, {
+                await apiFetch(`/ordenes/${ordenId}/estado`, {
                     method: 'PUT',
+                    token,
+                    body: JSON.stringify({ estado: nuevoEstado }),
                 });
             },
 

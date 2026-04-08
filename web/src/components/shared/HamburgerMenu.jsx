@@ -233,10 +233,13 @@ const HamburgerMenu = ({
                 onClick={() => setAbierto(true)}
                 style={{
                     background: 'none', border: 'none',
-                    color: 'white', fontSize: 24,
+                    color: accentColor, fontSize: 28,
                     cursor: 'pointer', padding: '4px 8px',
                     borderRadius: '0.5rem', lineHeight: 1,
+                    transition: 'transform 0.2s',
                 }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                 title="Menú"
             >☰</button>
 
