@@ -14,4 +14,5 @@ public class OrdenRequestDTO {
     private Long clienteId;
     private Long mesaId;
     private List<DetalleOrdenRequestDTO> detalles;
+    private Boolean usarPuntos;
 }

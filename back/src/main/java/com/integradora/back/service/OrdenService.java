@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -125,6 +126,7 @@ public class OrdenService {
 
         orden = ordenRepository.save(orden);
 
+        BigDecimal subtotal = null;
         for (DetalleOrdenRequestDTO det : request.getDetalles()) {
 
             Platillo platillo = platilloRepository.findById(det.getPlatilloId())
@@ -135,7 +137,7 @@ public class OrdenService {
             }
 
             BigDecimal precio = platillo.getPrecio();
-            BigDecimal subtotal = precio.multiply(BigDecimal.valueOf(det.getCantidad()));
+            subtotal = precio.multiply(BigDecimal.valueOf(det.getCantidad()));
 
             DetalleOrden detalle = DetalleOrden.builder()
                     .orden(orden)
@@ -160,6 +162,27 @@ public class OrdenService {
         BigDecimal subtotalTotal = detalles.stream()
                 .map(DetalleOrden::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int puntosGanados = subtotal.divide(new BigDecimal(200), RoundingMode.FLOOR).intValue();
+
+        BigDecimal descuento = BigDecimal.ZERO;
+
+        if (Boolean.TRUE.equals(request.getUsarPuntos())) {
+            int puntosDisponibles = cliente.getPuntosLealtad();
+
+            descuento = new BigDecimal(puntosDisponibles);
+
+            if (descuento.compareTo(subtotal) > 0) {
+                descuento = subtotal;
+            }
+
+            cliente.setPuntosLealtad(0);
+        }
+
+        BigDecimal total = subtotal.subtract(descuento);
+
+        cliente.setPuntosLealtad(cliente.getPuntosLealtad() + puntosGanados);
+        usuarioRepository.save(cliente);
 
         orden.setSubtotal(subtotalTotal);
         orden.setTotal(subtotalTotal);
