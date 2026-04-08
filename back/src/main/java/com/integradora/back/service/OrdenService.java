@@ -175,4 +175,13 @@ public class OrdenService {
                 )
         );
     }
+
+    public OrdenResponseDTO obtenerPorId(Long id) {
+        Orden orden = ordenRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        List<DetalleOrden> detalles = detalleRepository.findByOrdenId(id);
+
+        return OrdenMapper.toDTO(orden, detalles);
+    }
 }
