@@ -19,6 +19,14 @@ const COCINAS = [
     { id: 4, nombre: 'Repostería' },
 ];
 
+const MAPA_COCINAS_POR_CATEGORIA = {
+    1: [1, 2], // Entradas: Cocina Fría, Parrilla
+    2: [1, 2], // Platos Fuertes: Cocina Fría, Parrilla
+    3: [3],    // Bebidas: Bebidas
+    4: [4],    // Postres: Repostería
+    5: [1],    // Ensaladas: Cocina Fría
+};
+
 const MESAS_OPCIONES = Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
     nombre: `Mesa ${i + 1}`,
@@ -39,8 +47,20 @@ const getProductCategoryName = (p) => {
     if (cat?.nombre) return cat.nombre;
     return p?.categoria_nombre ?? p?.categoriaNombre ?? 'Otros';
 };
+const getProductCategoryId = (p) => {
+    if (p?.categoria?.id) return Number(p.categoria.id);
+    if (p?.categoria_id) return Number(p.categoria_id);
+    if (p?.categoriaId) return Number(p.categoriaId);
+    return 1;
+};
+const getProductKitchenId = (p) => {
+    if (p?.cocina?.id) return Number(p.cocina.id);
+    if (p?.kitchen_id) return Number(p.kitchen_id);
+    if (p?.kitchenId) return Number(p.kitchenId);
+    return 1;
+};
 const getProductImage = (p) =>
-    p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '';;
+    p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '';
 
 const ROL_BADGE = {
     admin: { color: '#6f42c1', label: '🛡️ Admin' },
@@ -566,14 +586,34 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                 ...product,
                 imagenUrl: getProductImage(product),
                 stock: getProductStock(product) ?? 10,
-                categoria_id: product.categoria_id ?? product.categoriaId ?? 1,
-                kitchen_id: product.kitchen_id ?? product.kitchenId ?? 1,
+                categoria_id: product.categoria?.id ?? product.categoria_id ?? product.categoriaId ?? 1,
+                kitchen_id: product.cocina?.id ?? product.kitchen_id ?? product.kitchenId ?? 1,
             }
             : EMPTY_NEW
     );
 
     const set = (field, val) => setForm((prev) => ({ ...prev, [field]: val }));
     const imgPreview = form.imagenUrl;
+
+    const handleCategoriaChange = (e) => {
+        const nuevaCat = Number(e.target.value);
+        const permitidas = MAPA_COCINAS_POR_CATEGORIA[nuevaCat] || COCINAS.map(c => c.id);
+        
+        let nuevaCocina = form.kitchen_id;
+        if (!permitidas.includes(nuevaCocina)) {
+            nuevaCocina = permitidas[0];
+        }
+        
+        setForm(prev => ({
+            ...prev,
+            categoria_id: nuevaCat,
+            kitchen_id: nuevaCocina
+        }));
+    };
+
+    const cocinasDisponibles = COCINAS.filter(c => 
+        (MAPA_COCINAS_POR_CATEGORIA[form.categoria_id] || COCINAS.map(x => x.id)).includes(c.id)
+    );
 
     return (
         <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
@@ -626,7 +666,7 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                                 <select
                                     className="form-select"
                                     value={form.categoria_id}
-                                    onChange={(e) => set('categoria_id', Number(e.target.value))}
+                                    onChange={handleCategoriaChange}
                                 >
                                     {CATEGORIAS.map((c) => (
                                         <option key={c.id} value={c.id}>
@@ -642,7 +682,7 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                                     value={form.kitchen_id}
                                     onChange={(e) => set('kitchen_id', Number(e.target.value))}
                                 >
-                                    {COCINAS.map((c) => (
+                                    {cocinasDisponibles.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.nombre}
                                         </option>
