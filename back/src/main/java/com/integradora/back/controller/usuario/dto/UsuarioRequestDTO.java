@@ -15,6 +15,6 @@ public class UsuarioRequestDTO {
     private String password;
     private String rol;
     private String especialidad;
-    private Long brigadaId;
+    private String fotoPerfil;
     private Long mesaId;
 }

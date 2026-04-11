@@ -33,8 +33,8 @@ public class DetalleOrdenService {
         Platillo platillo = platilloRepository.findById(platilloId)
                 .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
 
-        if (platillo.getStock() != null && platillo.getStock() < cantidad) {
-            throw new RuntimeException("Stock insuficiente para el platillo: " + platillo.getNombre());
+        if ("AGOTADO".equalsIgnoreCase(platillo.getDisponibilidad())) {
+            throw new RuntimeException("El platillo se encuentra agotado: " + platillo.getNombre());
         }
 
         BigDecimal precio = platillo.getPrecio();
@@ -50,11 +50,6 @@ public class DetalleOrdenService {
                 .notaCliente(nota)
                 .estadoPreparacion(EstadoDetalle.PENDIENTE)
                 .build();
-
-        if (platillo.getStock() != null) {
-            platillo.setStock(platillo.getStock() - cantidad);
-            platilloRepository.save(platillo);
-        }
 
         return detalleRepository.save(detalle);
     }

@@ -12,13 +12,15 @@ public class UsuarioResponseDTO {
     private String nombre;
     private String correo;
     private String rol;
+    private String fotoPerfil;
 
     public static UsuarioResponseDTO from(Usuario u) {
         return new UsuarioResponseDTO(
                 u.getId(),
                 u.getNombreCompleto(), // 👈 aquí el fix
                 u.getCorreo(),
-                resolverRol(u) // 👈 aquí el fix
+                resolverRol(u), // 👈 aquí el fix
+                u.getFotoPerfil()
         );
     }
 

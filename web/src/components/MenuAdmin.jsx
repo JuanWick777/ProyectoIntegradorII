@@ -1,764 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import HamburgerMenu from './shared/HamburgerMenu';
+import AdminSidebar from './admin/AdminSidebar';
+import PersonalAdmin from './admin/PersonalAdmin';
+import ProductCard from './admin/ProductCard';
+import ProductModal from './admin/ProductModal';
 import PromocionesAdmin from './PromocionesAdmin';
 import QRCodeGenerator from './QRCodeGenerator';
-
-const CATEGORIAS = [
-    { id: 21, nombre: 'Entradas y Snacks' },
-    { id: 24, nombre: 'Platos Fuertes' },
-    { id: 27, nombre: 'Coctelería' },
-    { id: 23, nombre: 'Postres Gourmet' },
-    { id: 2, nombre: 'Bebidas Frías' },
-    { id: 22, nombre: 'Pizzas Artesanales' },
-    { id: 25, nombre: 'Ensaladas y Bowls' },
-    { id: 26, nombre: 'Mariscos y Pescados' },
-];
-
-const COCINAS = [
-    { id: 1, nombre: 'Cocina Caliente' },
-    { id: 2, nombre: 'Parrilla' },
-    { id: 3, nombre: 'Bebidas' },
-    { id: 4, nombre: 'Repostería' },
-];
-
-const MAPA_COCINAS_POR_CATEGORIA = {
-    21: [1, 2], // Entradas
-    24: [1, 2], // Platos Fuertes
-    27: [3],    // Cocteleria
-    23: [4],    // Postres
-    2: [3],     // Bebidas
-    22: [1, 2], // Pizzas
-    25: [1],    // Ensaladas
-    26: [1, 2], // Mariscos
-};
-
-const MESAS_OPCIONES = Array.from({ length: 20 }, (_, i) => ({
-    id: i + 1,
-    nombre: `Mesa ${i + 1}`,
-}));
-
-const normalizeRole = (rol) => (rol || '').toString().trim().toLowerCase();
-
-const getUserEmail = (u) => u?.email ?? u?.correo ?? '';
-const getUserRole = (u) => normalizeRole(u?.rol ?? u?.tipoUsuario);
-
-const getProductName = (p) => p?.nombre ?? '';
-const getProductDesc = (p) => p?.descripcion ?? '';
-const getProductPrice = (p) => p?.precio ?? 0;
-const getProductStock = (p) => p?.stock ?? p?.stock_disponible ?? p?.stockDisponible ?? null;
-const getProductCategoryName = (p) => {
-    const cat = p?.categoria;
-    if (typeof cat === 'string') return cat;
-    if (cat?.nombre) return cat.nombre;
-    return p?.categoria_nombre ?? p?.categoriaNombre ?? 'Otros';
-};
-const getProductCategoryId = (p) => {
-    if (p?.categoria?.id) return Number(p.categoria.id);
-    if (p?.categoria_id) return Number(p.categoria_id);
-    if (p?.categoriaId) return Number(p.categoriaId);
-    return 1;
-};
-const getProductKitchenId = (p) => {
-    if (p?.cocina?.id) return Number(p.cocina.id);
-    if (p?.kitchen_id) return Number(p.kitchen_id);
-    if (p?.kitchenId) return Number(p.kitchenId);
-    return 1;
-};
-const getProductImage = (p) =>
-    p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '';
-
-const ROL_BADGE = {
-    admin: { color: '#6f42c1', label: '🛡️ Admin' },
-    cocinero: { color: '#fd7e14', label: '👨‍🍳 Cocinero' },
-    chef: { color: '#fd7e14', label: '👨‍🍳 Chef' },
-    mesero: { color: '#0d6efd', label: '🧑‍🍽️ Mesero' },
-    cliente: { color: '#198754', label: '👤 Cliente' },
-};
-
-const EMPTY_USER = {
-    nombre: '',
-    email: '',
-    password: '',
-    rol: 'mesero',
-    especialidad: '',
-    brigadaId: null,
-    mesaId: null,
-};
-
-const EMPTY_NEW = {
-    nombre: '',
-    precio: '',
-    descripcion: '',
-    imagenUrl: '',
-    categoria_id: 1,
-    kitchen_id: 1,
-    stock: 10,
-};
-
-const UsuarioModal = ({ usuario, brigadas = [], onSave, onClose, saving }) => {
-    const isNew = !usuario?.id;
-
-    const [form, setForm] = useState(
-        usuario
-            ? {
-                nombre: usuario.nombre || '',
-                email: getUserEmail(usuario),
-                password: '',
-                rol: getUserRole(usuario) || 'mesero',
-                especialidad: usuario.especialidad || '',
-                brigadaId: usuario.brigadaId ?? usuario.brigada_id ?? null,
-                mesaId: usuario.mesaId ?? usuario.mesa_id ?? null,
-            }
-            : EMPTY_USER
-    );
-
-    const set = (f, v) => setForm((prev) => ({ ...prev, [f]: v }));
-
-    const rolForm = normalizeRole(form.rol);
-    const esCocinero = ['cocinero', 'chef'].includes(rolForm);
-    const esMesero = rolForm === 'mesero';
-
-    const brigadaInferida = esMesero && form.mesaId
-        ? brigadas.find((b) => {
-            const desde = Number(b.mesaDesde ?? b.mesa_desde ?? 0);
-            const hasta = Number(b.mesaHasta ?? b.mesa_hasta ?? 0);
-            return Number(form.mesaId) >= desde && Number(form.mesaId) <= hasta;
-        })
-        : null;
-
-    return (
-        <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
-            <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.25rem' }}>
-                    <div className="modal-header border-0 pb-0">
-                        <h5 className="modal-title fw-bold">
-                            {isNew ? '➕ Nuevo Empleado' : '✏️ Editar Empleado'}
-                        </h5>
-                        <button type="button" className="btn-close" onClick={onClose} />
-                    </div>
-
-                    <div className="modal-body">
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold small">Nombre completo *</label>
-                            <input
-                                className="form-control"
-                                value={form.nombre}
-                                onChange={(e) => set('nombre', e.target.value)}
-                                placeholder="Ej. Juan Pérez"
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold small">Correo electrónico *</label>
-                            <input
-                                className="form-control"
-                                type="email"
-                                value={form.email}
-                                onChange={(e) => set('email', e.target.value)}
-                                placeholder="empleado@rest.com"
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold small">
-                                Contraseña {!isNew && <span className="text-muted">(dejar vacío para no cambiar)</span>}
-                            </label>
-                            <input
-                                className="form-control"
-                                type="password"
-                                value={form.password}
-                                onChange={(e) => set('password', e.target.value)}
-                                placeholder={isNew ? 'Mínimo 6 caracteres' : '••••••'}
-                            />
-                        </div>
-
-                        <div className="row g-3 mb-3">
-                            <div className="col-6">
-                                <label className="form-label fw-semibold small">Rol *</label>
-                                <select
-                                    className="form-select"
-                                    value={rolForm}
-                                    onChange={(e) => set('rol', e.target.value)}
-                                >
-                                    <option value="mesero">🧑‍🍽️ Mesero</option>
-                                    <option value="cocinero">👨‍🍳 Cocinero</option>
-                                    <option value="chef">👨‍🍳 Chef</option>
-                                    <option value="admin">🛡️ Administrador</option>
-                                </select>
-                            </div>
-
-                            {esCocinero && (
-                                <div className="col-6">
-                                    <label className="form-label fw-semibold small">Especialidad</label>
-                                    <select
-                                        className="form-select"
-                                        value={form.especialidad}
-                                        onChange={(e) => set('especialidad', e.target.value)}
-                                    >
-                                        <option value="">— Sin especialidad —</option>
-                                        <option value="parrillero">🔥 Parrillero</option>
-                                        <option value="barista">☕ Barista</option>
-                                        <option value="repostero">🍰 Repostero</option>
-                                    </select>
-                                </div>
-                            )}
-                        </div>
-
-                        {esCocinero && (
-                            <div className="mb-3">
-                                <label className="form-label fw-semibold small">🚒 Brigada asignada</label>
-                                <select
-                                    className="form-select"
-                                    value={form.brigadaId || ''}
-                                    onChange={(e) => set('brigadaId', e.target.value ? Number(e.target.value) : null)}
-                                >
-                                    <option value="">— Sin brigada —</option>
-                                    {brigadas.map((b) => (
-                                        <option key={b.id} value={b.id}>
-                                            {b.nombre} (Mesas {b.mesaDesde}–{b.mesaHasta})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        {esMesero && (
-                            <div className="mb-3">
-                                <label className="form-label fw-semibold small">🪑 Mesa asignada</label>
-                                <select
-                                    className="form-select"
-                                    value={form.mesaId || ''}
-                                    onChange={(e) => set('mesaId', e.target.value ? Number(e.target.value) : null)}
-                                >
-                                    <option value="">— Sin mesa —</option>
-                                    {MESAS_OPCIONES.map((m) => (
-                                        <option key={m.id} value={m.id}>
-                                            {m.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        {esMesero && (
-                            <div className="mb-3">
-                                <label className="form-label fw-semibold small">🚒 Brigada (automática)</label>
-                                <input
-                                    className="form-control"
-                                    style={{ background: '#f0f0f0', color: '#6c757d', cursor: 'not-allowed' }}
-                                    readOnly
-                                    value={
-                                        brigadaInferida
-                                            ? brigadaInferida.nombre
-                                            : form.mesaId
-                                                ? 'Mesa fuera de rango de brigadas'
-                                                : 'Selecciona una mesa primero'
-                                    }
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="modal-footer border-0 pt-0">
-                        <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
-                            Cancelar
-                        </button>
-                        <button
-                            className="btn btn-primary fw-bold px-4"
-                            style={{ borderRadius: '0.75rem' }}
-                            onClick={() => onSave(form)}
-                            disabled={saving || !form.nombre || !form.email}
-                        >
-                            {saving ? (
-                                <>
-                                    <span className="spinner-border spinner-border-sm me-2" />
-                                    Guardando...
-                                </>
-                            ) : isNew ? '➕ Crear' : '💾 Guardar'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const PersonalAdmin = ({ mostrarToast }) => {
-    const { fetchUsuarios, createUsuario, updateUsuario, deleteUsuario, fetchBrigadas } = useAppStore();
-    const [usuarios, setUsuarios] = useState([]);
-    const [brigadas, setBrigadas] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [modal, setModal] = useState(null);
-    const [saving, setSaving] = useState(false);
-    const [confirmDel, setConfirmDel] = useState(null);
-
-    const cargar = async () => {
-        setLoading(true);
-        try {
-            const [uList, bList] = await Promise.all([fetchUsuarios(), fetchBrigadas()]);
-            setUsuarios(uList);
-            setBrigadas(bList);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        cargar();
-    }, []);
-
-    const handleSave = async (form) => {
-        setSaving(true);
-        try {
-            let brigadaId = form.brigadaId;
-
-            const rol = normalizeRole(form.rol);
-            if (rol === 'mesero' && form.mesaId && !brigadaId) {
-                const brigada = brigadas.find((b) => {
-                    const desde = Number(b.mesaDesde ?? b.mesa_desde ?? 0);
-                    const hasta = Number(b.mesaHasta ?? b.mesa_hasta ?? 0);
-                    return Number(form.mesaId) >= desde && Number(form.mesaId) <= hasta;
-                });
-                brigadaId = brigada?.id || null;
-            }
-
-            const payload = {
-                nombre: form.nombre,
-                email: form.email,
-                password: form.password || undefined,
-                rol,
-                especialidad: form.especialidad || null,
-                brigadaId: brigadaId || null,
-                mesaId: form.mesaId || null,
-            };
-
-            if (modal?.id) await updateUsuario(modal.id, payload);
-            else await createUsuario(payload);
-
-            mostrarToast(modal?.id ? '✅ Empleado actualizado' : '✅ Empleado creado');
-            await cargar();
-            setModal(null);
-        } catch (e) {
-            mostrarToast('❌ ' + (e.message || 'Error al guardar'));
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        try {
-            await deleteUsuario(id);
-            mostrarToast('🗑️ Empleado eliminado');
-            await cargar();
-        } catch {
-            mostrarToast('❌ No se pudo eliminar');
-        }
-        setConfirmDel(null);
-    };
-
-    return (
-        <div>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="fw-bold mb-0">
-                    Personal <span className="badge bg-secondary ms-2">{usuarios.length}</span>
-                </h2>
-                <button
-                    className="btn btn-primary fw-bold"
-                    style={{ borderRadius: '2rem' }}
-                    onClick={() => setModal({})}
-                >
-                    ➕ Nuevo Empleado
-                </button>
-            </div>
-
-            {loading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" />
-                </div>
-            ) : (
-                <div className="card border-0 shadow-sm" style={{ borderRadius: '1rem', overflow: 'hidden' }}>
-                    <table className="table table-hover mb-0">
-                        <thead style={{ background: '#f0f0f8' }}>
-                            <tr>
-                                <th className="ps-4">Empleado</th>
-                                <th>Rol</th>
-                                <th>Asignación</th>
-                                <th>Estado</th>
-                                <th className="text-end pe-4">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {usuarios.map((u) => {
-                                const rol = getUserRole(u);
-                                const badge = ROL_BADGE[rol] || { color: '#aaa', label: rol || '—' };
-                                const email = getUserEmail(u);
-
-                                return (
-                                    <tr key={u.id}>
-                                        <td className="ps-4">
-                                            <div className="fw-semibold">{u.nombre}</div>
-                                            <div className="text-muted small">{email}</div>
-                                        </td>
-
-                                        <td>
-                                            <span
-                                                className="badge fw-semibold"
-                                                style={{ background: badge.color, borderRadius: '2rem', fontSize: '0.8rem' }}
-                                            >
-                                                {badge.label}
-                                            </span>
-                                        </td>
-
-                                        <td className="text-muted small">
-                                            {['cocinero', 'chef'].includes(rol) && (
-                                                <div>
-                                                    {u.especialidad && (
-                                                        <span>
-                                                            🔪{' '}
-                                                            {u.especialidad.charAt(0).toUpperCase() +
-                                                                u.especialidad.slice(1)}
-                                                        </span>
-                                                    )}
-                                                    {(u.brigadaNombre ?? u.brigada_nombre) && (
-                                                        <span className="ms-2">
-                                                            · 🚒 {u.brigadaNombre ?? u.brigada_nombre}
-                                                        </span>
-                                                    )}
-                                                    {!u.especialidad && !(u.brigadaNombre ?? u.brigada_nombre) && (
-                                                        <em>Sin asignar</em>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {rol === 'mesero' && (
-                                                <div>
-                                                    {(u.mesaId ?? u.mesa_id) && (
-                                                        <span>🪑 Mesa {u.mesaId ?? u.mesa_id}</span>
-                                                    )}
-                                                    {(u.brigadaNombre ?? u.brigada_nombre) && (
-                                                        <span className={(u.mesaId ?? u.mesa_id) ? 'ms-2' : ''}>
-                                                            · 🚒 {u.brigadaNombre ?? u.brigada_nombre}
-                                                        </span>
-                                                    )}
-                                                    {!(u.mesaId ?? u.mesa_id) && !(u.brigadaNombre ?? u.brigada_nombre) && (
-                                                        <em>Sin asignar</em>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {rol === 'admin' && <em>—</em>}
-                                        </td>
-
-                                        <td>
-                                            <span className={`badge ${u.activo ? 'bg-success' : 'bg-secondary'}`}>
-                                                {u.activo ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </td>
-
-                                        <td className="text-end pe-4">
-                                            <button
-                                                className="btn btn-sm btn-outline-primary me-2"
-                                                style={{ borderRadius: '0.5rem' }}
-                                                onClick={() => setModal(u)}
-                                            >
-                                                ✏️ Editar
-                                            </button>
-                                            <button
-                                                className="btn btn-sm btn-outline-danger"
-                                                style={{ borderRadius: '0.5rem' }}
-                                                onClick={() => setConfirmDel(u)}
-                                            >
-                                                🗑️
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-
-                            {usuarios.length === 0 && (
-                                <tr>
-                                    <td colSpan="5" className="text-center py-5 text-muted">
-                                        Sin empleados registrados
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {modal !== null && (
-                <UsuarioModal
-                    usuario={modal?.id ? modal : null}
-                    brigadas={brigadas}
-                    onSave={handleSave}
-                    onClose={() => setModal(null)}
-                    saving={saving}
-                />
-            )}
-
-            {confirmDel && (
-                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }}>
-                    <div className="modal-dialog modal-dialog-centered modal-sm">
-                        <div className="modal-content border-0 shadow-lg text-center p-4" style={{ borderRadius: '1.25rem' }}>
-                            <p style={{ fontSize: 40 }}>⚠️</p>
-                            <h5 className="fw-bold">¿Eliminar empleado?</h5>
-                            <p className="text-muted small mb-3">{confirmDel.nombre}</p>
-                            <div className="d-flex gap-2 justify-content-center">
-                                <button className="btn btn-secondary" onClick={() => setConfirmDel(null)}>
-                                    Cancelar
-                                </button>
-                                <button className="btn btn-danger fw-bold" onClick={() => handleDelete(confirmDel.id)}>
-                                    Sí, eliminar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
-const ProductCard = ({ product, onEdit }) => {
-    const stock = getProductStock(product);
-    const stockBajo = stock != null && stock <= 3;
-    const imagen = getProductImage(product);
-    const nombre = getProductName(product);
-    const descripcion = getProductDesc(product);
-    const precio = getProductPrice(product);
-
-    return (
-        <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '1rem', overflow: 'hidden' }}>
-            <div style={{ height: 140, background: '#f0f0f0', overflow: 'hidden', position: 'relative' }}>
-                {imagen ? (
-                    <img
-                        src={imagen}
-                        alt={nombre}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                ) : (
-                    <div className="d-flex align-items-center justify-content-center h-100 text-muted" style={{ fontSize: 48 }}>
-                        🍽️
-                    </div>
-                )}
-                {stockBajo && (
-                    <span className="badge bg-danger position-absolute top-0 end-0 m-2">
-                        ⚠️ Stock bajo
-                    </span>
-                )}
-            </div>
-
-            <div className="card-body d-flex flex-column p-3">
-                <h6 className="fw-bold mb-1" style={{ fontSize: '0.95rem' }}>
-                    {nombre}
-                </h6>
-                <p
-                    className="text-muted small mb-2"
-                    style={{
-                        overflow: 'hidden',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                    }}
-                >
-                    {descripcion || <em>Sin descripción</em>}
-                </p>
-
-                <div className="mt-auto d-flex justify-content-between align-items-center">
-                    <span className="fw-bold text-success fs-5">${Number(precio).toFixed(2)}</span>
-                    <span className="text-muted small">Stock: {stock ?? '—'}</span>
-                </div>
-
-                <button
-                    className="btn btn-outline-primary btn-sm mt-2 w-100 fw-semibold"
-                    style={{ borderRadius: '0.6rem' }}
-                    onClick={() => onEdit(product)}
-                >
-                    ✏️ Editar
-                </button>
-            </div>
-        </div>
-    );
-};
-
-const ProductModal = ({ product, onSave, onClose, saving }) => {
-    const isNew = !product?.id;
-    const [form, setForm] = useState(
-        product
-            ? {
-                ...EMPTY_NEW,
-                ...product,
-                imagenUrl: getProductImage(product),
-                stock: getProductStock(product) ?? 10,
-                categoria_id: product.categoria?.id ?? product.categoria_id ?? product.categoriaId ?? 1,
-                kitchen_id: product.cocina?.id ?? product.kitchen_id ?? product.kitchenId ?? 1,
-            }
-            : EMPTY_NEW
-    );
-
-    const set = (field, val) => setForm((prev) => ({ ...prev, [field]: val }));
-    const imgPreview = form.imagenUrl;
-
-    const handleCategoriaChange = (e) => {
-        const nuevaCat = Number(e.target.value);
-        const permitidas = MAPA_COCINAS_POR_CATEGORIA[nuevaCat] || COCINAS.map(c => c.id);
-        
-        let nuevaCocina = form.kitchen_id;
-        if (!permitidas.includes(nuevaCocina)) {
-            nuevaCocina = permitidas[0];
-        }
-        
-        setForm(prev => ({
-            ...prev,
-            categoria_id: nuevaCat,
-            kitchen_id: nuevaCocina
-        }));
-    };
-
-    const cocinasDisponibles = COCINAS.filter(c => 
-        (MAPA_COCINAS_POR_CATEGORIA[form.categoria_id] || COCINAS.map(x => x.id)).includes(c.id)
-    );
-
-    return (
-        <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
-            <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.25rem' }}>
-                    <div className="modal-header border-0 pb-0">
-                        <h5 className="modal-title fw-bold">
-                            {isNew ? '➕ Nuevo Platillo' : '✏️ Editar Platillo'}
-                        </h5>
-                        <button type="button" className="btn-close" onClick={onClose} />
-                    </div>
-
-                    <div className="modal-body pt-2">
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold small">Nombre *</label>
-                            <input
-                                className="form-control"
-                                value={form.nombre}
-                                onChange={(e) => set('nombre', e.target.value)}
-                                placeholder="Ej. Hamburguesa Doble"
-                            />
-                        </div>
-
-                        <div className="row g-3 mb-3">
-                            <div className="col-6">
-                                <label className="form-label fw-semibold small">Precio ($) *</label>
-                                <input
-                                    className="form-control"
-                                    type="number"
-                                    step="0.01"
-                                    value={form.precio}
-                                    onChange={(e) => set('precio', e.target.value)}
-                                    placeholder="0.00"
-                                />
-                            </div>
-                            <div className="col-6">
-                                <label className="form-label fw-semibold small">Stock disponible</label>
-                                <input
-                                    className="form-control"
-                                    type="number"
-                                    value={form.stock}
-                                    onChange={(e) => set('stock', e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="row g-3 mb-3">
-                            <div className="col-6">
-                                <label className="form-label fw-semibold small">Categoría</label>
-                                <select
-                                    className="form-select"
-                                    value={form.categoria_id}
-                                    onChange={handleCategoriaChange}
-                                >
-                                    {CATEGORIAS.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="col-6">
-                                <label className="form-label fw-semibold small">Cocina</label>
-                                <select
-                                    className="form-select"
-                                    value={form.kitchen_id}
-                                    onChange={(e) => set('kitchen_id', Number(e.target.value))}
-                                >
-                                    {cocinasDisponibles.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label fw-semibold small">Descripción</label>
-                            <textarea
-                                className="form-control"
-                                rows="2"
-                                value={form.descripcion}
-                                onChange={(e) => set('descripcion', e.target.value)}
-                                placeholder="Ingredientes, detalles..."
-                            />
-                        </div>
-
-                        <div className="mb-1">
-                            <label className="form-label fw-semibold small">URL Imagen</label>
-                            <input
-                                className="form-control form-control-sm"
-                                value={form.imagenUrl || ''}
-                                onChange={(e) => set('imagenUrl', e.target.value)}
-                                placeholder="https://..."
-                            />
-                            {imgPreview && (
-                                <img
-                                    src={imgPreview}
-                                    alt="preview"
-                                    style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: '0.5rem', marginTop: 6 }}
-                                    onError={e => e.target.style.display = 'none'}
-                                />
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="modal-footer border-0 pt-0">
-                        <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
-                            Cancelar
-                        </button>
-                        <button
-                            className="btn btn-primary fw-bold px-4"
-                            style={{ borderRadius: '0.75rem' }}
-                            onClick={() => onSave(form)}
-                            disabled={saving || !form.nombre || !form.precio}
-                        >
-                            {saving ? (
-                                <>
-                                    <span className="spinner-border spinner-border-sm me-2" />
-                                    Guardando...
-                                </>
-                            ) : isNew ? '➕ Crear' : '💾 Guardar'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+import { getProductCategoryName, getProductName } from './admin/adminConstants';
 
 const MenuAdmin = () => {
-    const { products, updateProduct, createProduct, fetchAdminProducts, logout } = useAppStore();
+    const { products, updateProduct, createProduct, fetchAdminProducts, uploadPlatilloImage, deletePlatilloImage, logout } = useAppStore();
     const [modalProduct, setModalProduct] = useState(null);
     const [saving, setSaving] = useState(false);
     const [busqueda, setBusqueda] = useState('');
     const [filtroCategoria, setFiltroCategoria] = useState('Todos');
     const [toast, setToast] = useState('');
     const [vistaActual, setVistaActual] = useState('menu');
+    const [isSidebarPinned, setIsSidebarPinned] = useState(true);
 
     useEffect(() => {
         fetchAdminProducts();
@@ -772,13 +30,30 @@ const MenuAdmin = () => {
     const handleSave = async (form) => {
         setSaving(true);
         try {
+            const imagenUrlAnterior = form.imagenUrl || null;
+            const debeEliminarAnterior = Boolean(form.imagenRemoved) || (form.imagenFile instanceof File);
+
+            let imagenUrlFinal = form.imagenRemoved ? null : (form.imagenUrl || null);
+            if (form.imagenFile instanceof File) {
+                const up = await uploadPlatilloImage(form.imagenFile);
+                imagenUrlFinal = up?.url || up?.path || null;
+            }
+
+            if (debeEliminarAnterior && imagenUrlAnterior) {
+                try {
+                    await deletePlatilloImage(imagenUrlAnterior);
+                } catch {
+                    // si falla el borrado no bloqueamos el guardado del platillo
+                }
+            }
+
             // Payload normalizado con los nombres que espera PlatilloAdminController
             const payload = {
                 nombre: form.nombre,
                 precio: parseFloat(form.precio),
                 descripcion: form.descripcion,
-                stock: parseInt(form.stock, 10) || 0,
-                imagenUrl: form.imagenUrl || null,
+                disponibilidad: form.disponibilidad || 'DISPONIBLE',
+                imagenUrl: imagenUrlFinal,
                 categoriaId: form.categoria_id,
                 kitchenId: form.kitchen_id,
             };
@@ -815,125 +90,151 @@ const MenuAdmin = () => {
     });
 
     return (
-        <div className="min-vh-100" style={{ background: '#f4f6fb' }}>
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#f4f6fb' }}>
+            <AdminSidebar
+                loginPath="/admin/login"
+                accentColor="#0f3460"
+                isPinned={isSidebarPinned}
+                setIsPinned={setIsSidebarPinned}
+                navItems={[
+                    { id: 'menu', icon: '🍽️', label: 'Gestión del Menú' },
+                    { id: 'personal', icon: '👥', label: 'Personal' },
+                    { id: 'promociones', icon: '🏷️', label: 'Promociones' },
+                    { id: 'qr', icon: '🖨️', label: 'Códigos QR' },
+                    { id: 'historial', icon: '📜', label: 'Historial' }
+                ]}
+                activeItem={vistaActual}
+                onNavItemClick={setVistaActual}
+            />
 
-            {/* ── NAVBAR SUPERIOR ────────────────────────────────────── */}
-            <nav
-                className="navbar sticky-top shadow-sm px-3 py-2"
-                style={{
-                    background: 'linear-gradient(90deg,#1a1a2e,#0f3460)',
-                    borderBottom: '3px solid #e67e22',
-                }}
-            >
-                <HamburgerMenu
-                    loginPath="/admin/login"
-                    accentColor="#e67e22"
-                    navItems={[
-                        { id: 'menu', icon: '🍽️', label: 'Gestión del Menú' },
-                        { id: 'personal', icon: '👥', label: 'Personal' },
-                        { id: 'promociones', icon: '🏷️', label: 'Promociones' },
-                        { id: 'qr', icon: '🖨️', label: 'Códigos QR' },
-                    ]}
-                    activeItem={vistaActual}
-                    onNavItemClick={setVistaActual}
-                />
+            {/* MAIN CONTENT AREA */}
+            <div style={{
+                flex: 1,
+                marginLeft: isSidebarPinned ? 260 : 70,
+                transition: 'margin-left 0.28s cubic-bezier(.4,0,.2,1)'
+            }}>
 
-                <div className="d-flex align-items-center gap-2 ms-3 me-auto">
-                    <span style={{ fontSize: 22 }}>🍴</span>
-                    <span className="fw-bold text-white fs-5">Panel Administrador</span>
-                </div>
-
-                <span
-                    className="badge fw-semibold px-3 py-2"
-                    style={{ background: 'rgba(230,126,34,0.25)', color: '#e67e22', borderRadius: '2rem', fontSize: '0.8rem' }}
+                {/* ── NAVBAR SUPERIOR ────────────────────────────────────── */}
+                <nav
+                    className="navbar sticky-top shadow-sm px-4 py-2"
+                    style={{
+                        background: 'linear-gradient(90deg,#ffffff,#f8f9fa)',
+                        borderBottom: '1px solid #e2e8f0',
+                        display: 'flex', alignItems: 'center'
+                    }}
                 >
-                    {{ menu: '🍽️ Menú', personal: '👥 Personal', qr: '🖨️ QRs', promociones: '🏷️ Promociones' }[vistaActual]}
-                </span>
-            </nav>
+                    <div className="d-flex align-items-center gap-2 me-auto">
+                        <span style={{ fontSize: 22 }}>🍴</span>
+                        <span className="fw-bold text-dark fs-5">Panel Administrador</span>
+                    </div>
 
-            <div className="container-fluid px-4 py-4">
-                {vistaActual === 'personal' ? (
-                    <PersonalAdmin mostrarToast={mostrarToast} />
-                ) : vistaActual === 'promociones' ? (
-                    <PromocionesAdmin mostrarToast={mostrarToast} />
-                ) : vistaActual === 'qr' ? (
-                    <QRCodeGenerator />
-                ) : (
-                    <>
-                        <div className="d-flex flex-wrap gap-3 align-items-center mb-4">
-                            <h2 className="fw-bold mb-0 me-auto">
-                                Gestión del Menú
-                                <span className="badge bg-secondary ms-2 fs-6">
-                                    {products.length} productos
-                                </span>
-                            </h2>
+                    <div className="d-flex gap-3 align-items-center">
+                        <button
+                            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+                            style={{ borderRadius: '0.75rem', fontWeight: 600 }}
+                            onClick={() => setVistaActual('historial')}
+                        >
+                            <span style={{ fontSize: 16 }}>📜</span> Historial
+                        </button>
+                        <span
+                            className="badge fw-semibold px-3 py-2"
+                            style={{ background: 'rgba(15,52,96,0.1)', color: '#0f3460', borderRadius: '2rem', fontSize: '0.8rem' }}
+                        >
+                            {{ menu: '🍽️ Menú', personal: '👥 Personal', qr: '🖨️ QRs', promociones: '🏷️ Promociones', historial: '📜 Historial' }[vistaActual]}
+                        </span>
+                    </div>
+                </nav>
 
-                            <input
-                                className="form-control form-control-sm"
-                                style={{ maxWidth: 220, borderRadius: '2rem' }}
-                                placeholder="🔍 Buscar platillo..."
-                                value={busqueda}
-                                onChange={(e) => setBusqueda(e.target.value)}
-                            />
-
-                            <button
-                                className="btn btn-primary fw-bold"
-                                style={{ borderRadius: '2rem' }}
-                                onClick={() => setModalProduct({})}
-                            >
-                                ➕ Nuevo Platillo
-                            </button>
+                <div className="container-fluid px-4 py-4">
+                    {vistaActual === 'personal' ? (
+                        <PersonalAdmin mostrarToast={mostrarToast} />
+                    ) : vistaActual === 'promociones' ? (
+                        <PromocionesAdmin mostrarToast={mostrarToast} />
+                    ) : vistaActual === 'qr' ? (
+                        <QRCodeGenerator />
+                    ) : vistaActual === 'historial' ? (
+                        <div className="text-center py-5 text-muted">
+                            <p style={{ fontSize: 48 }}>📜</p>
+                            <h4 className="fw-bold text-dark">Historial de Órdenes</h4>
+                            <p>Plataforma de historial en construcción</p>
                         </div>
+                    ) : (
+                        <>
+                            <div className="d-flex flex-wrap gap-3 align-items-center mb-4">
+                                <h2 className="fw-bold mb-0 me-auto">
+                                    Gestión del Menú
+                                    <span className="badge bg-secondary ms-2 fs-6">
+                                        {products.length} productos
+                                    </span>
+                                </h2>
 
-                        <div className="d-flex gap-2 flex-wrap mb-4">
-                            {categorias.map((cat) => (
+                                <input
+                                    className="form-control form-control-sm"
+                                    style={{ maxWidth: 220, borderRadius: '2rem' }}
+                                    placeholder="🔍 Buscar platillo..."
+                                    value={busqueda}
+                                    onChange={(e) => setBusqueda(e.target.value)}
+                                />
+
                                 <button
-                                    key={cat}
-                                    className={`btn btn-sm ${filtroCategoria === cat ? 'btn-dark' : 'btn-outline-secondary'
-                                        }`}
+                                    className="btn btn-primary fw-bold"
                                     style={{ borderRadius: '2rem' }}
-                                    onClick={() => setFiltroCategoria(cat)}
+                                    onClick={() => setModalProduct({})}
                                 >
-                                    {cat}
+                                    ➕ Nuevo Platillo
                                 </button>
-                            ))}
-                        </div>
-
-                        {productsFiltrados.length === 0 ? (
-                            <div className="text-center py-5 text-muted">
-                                <p style={{ fontSize: 48 }}>🍽️</p>
-                                <p className="fw-semibold">Sin productos que mostrar</p>
                             </div>
-                        ) : (
-                            <div className="row g-3">
-                                {productsFiltrados.map((p) => (
-                                    <div key={p.id} className="col-6 col-md-4 col-lg-3 col-xl-2">
-                                        <ProductCard product={p} onEdit={setModalProduct} />
-                                    </div>
+
+                            <div className="d-flex gap-2 flex-wrap mb-4">
+                                {categorias.map((cat) => (
+                                    <button
+                                        key={cat}
+                                        className={`btn btn-sm ${filtroCategoria === cat ? 'btn-dark' : 'btn-outline-secondary'
+                                            }`}
+                                        style={{ borderRadius: '2rem' }}
+                                        onClick={() => setFiltroCategoria(cat)}
+                                    >
+                                        {cat}
+                                    </button>
                                 ))}
                             </div>
-                        )}
-                    </>
+
+                            {productsFiltrados.length === 0 ? (
+                                <div className="text-center py-5 text-muted">
+                                    <p style={{ fontSize: 48 }}>🍽️</p>
+                                    <p className="fw-semibold">Sin productos que mostrar</p>
+                                </div>
+                            ) : (
+                                <div className="row g-3">
+                                    {productsFiltrados.map((p) => (
+                                        <div key={p.id} className="col-6 col-md-4 col-lg-3 col-xl-2">
+                                            <ProductCard product={p} onEdit={setModalProduct} />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+
+                {modalProduct !== null && (
+                    <ProductModal
+                        product={modalProduct?.id ? modalProduct : null}
+                        onSave={handleSave}
+                        onClose={() => setModalProduct(null)}
+                        saving={saving}
+                    />
+                )}
+
+                {toast && (
+                    <div
+                        className="position-fixed bottom-0 end-0 m-4 alert alert-dark shadow-lg fw-semibold"
+                        style={{ borderRadius: '1rem', zIndex: 9999, minWidth: 220 }}
+                    >
+                        {toast}
+                    </div>
                 )}
             </div>
-
-            {modalProduct !== null && (
-                <ProductModal
-                    product={modalProduct?.id ? modalProduct : null}
-                    onSave={handleSave}
-                    onClose={() => setModalProduct(null)}
-                    saving={saving}
-                />
-            )}
-
-            {toast && (
-                <div
-                    className="position-fixed bottom-0 end-0 m-4 alert alert-dark shadow-lg fw-semibold"
-                    style={{ borderRadius: '1rem', zIndex: 9999, minWidth: 220 }}
-                >
-                    {toast}
-                </div>
-            )}
         </div>
     );
 };

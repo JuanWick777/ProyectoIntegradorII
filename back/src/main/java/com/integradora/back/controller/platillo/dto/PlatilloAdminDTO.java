@@ -10,7 +10,7 @@ public class PlatilloAdminDTO {
     private String descripcion;
     private BigDecimal precio;
     private String imagenUrl;   // camelCase → columna url_imagen
-    private Integer stock;
+    private String disponibilidad;
     private Long categoriaId;
     private Long kitchenId;     // id de la cocina
 }

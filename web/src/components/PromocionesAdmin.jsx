@@ -63,7 +63,7 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
                             </div>
                             <div className="col-6">
                                 <label className="form-label fw-semibold small">
-                                    Valor {form.tipoDescuento === 'PORCENTAJE' ? '(%)' : '($)'}
+                                    Valor {form.tipoDescuento === 'PORCENTAJE' ? '(%)' : '($)'} *
                                 </label>
                                 <input
                                     className="form-control"
@@ -71,6 +71,11 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
                                     step="0.01"
                                     min="0"
                                     value={form.valorDescuento}
+                                    onKeyDown={(e) => {
+                                        if (['+', '-', 'e', 'E'].includes(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                    }}
                                     onChange={e => set('valorDescuento', e.target.value)}
                                     placeholder="Ej. 10"
                                 />
@@ -82,6 +87,9 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
                             <input
                                 className="form-control"
                                 value={form.codigoPromo}
+                                onKeyDown={(e) => {
+                                    if (['+', '-'].includes(e.key)) e.preventDefault();
+                                }}
                                 onChange={e => set('codigoPromo', e.target.value.toUpperCase())}
                                 placeholder="Ej. PROMO10"
                                 style={{ fontFamily: 'monospace', letterSpacing: '0.08em' }}
@@ -121,7 +129,7 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
                             className="btn fw-bold px-4"
                             style={{ background: '#e67e22', color: 'white', borderRadius: '0.75rem' }}
                             onClick={() => onSave(form)}
-                            disabled={saving || !form.titulo || !form.valorDescuento}
+                            disabled={saving || !form.titulo?.trim() || !form.valorDescuento || Number(form.valorDescuento) <= 0}
                         >
                             {saving
                                 ? <><span className="spinner-border spinner-border-sm me-2" />Guardando...</>

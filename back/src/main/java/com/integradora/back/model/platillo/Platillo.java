@@ -37,8 +37,8 @@ public class Platillo {
     private BigDecimal precio;
 
     @Builder.Default
-    @Column(name = "stock")
-    private Integer stock = 0;
+    @Column(name = "disponibilidad")
+    private String disponibilidad = "DISPONIBLE";
 
     @Column(name = "url_imagen")
     private String urlImagen;
