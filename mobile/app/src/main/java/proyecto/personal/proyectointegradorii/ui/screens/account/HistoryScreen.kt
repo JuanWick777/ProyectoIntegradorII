@@ -28,6 +28,7 @@ fun HistoryScreen(
         HeaderCBack(
             "Historial de Pedidos",
             30,
+            BackgroundColor,
             Modifier,
             navController
         )
@@ -43,7 +44,7 @@ fun HistoryScreen(
                 HistoryCard(
                     "120",
                     "Completado",
-            "2020",
+                    "2020",
                     na,
                     "330",
                     Modifier

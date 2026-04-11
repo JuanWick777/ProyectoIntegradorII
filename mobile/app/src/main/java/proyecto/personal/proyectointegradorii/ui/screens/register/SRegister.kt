@@ -82,6 +82,7 @@ fun ScreenRegister(
         HeaderCBack(
             "Crear Cuenta",
             35,
+            BackgroundColor,
             Modifier,
             navController
         )

@@ -9,13 +9,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundCardColor
 
 @Composable
 fun GlobalCard(
     content: @Composable ColumnScope.() -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = BackgroundCardColor
 ) {
     Surface(
         color = BackgroundCardColor,

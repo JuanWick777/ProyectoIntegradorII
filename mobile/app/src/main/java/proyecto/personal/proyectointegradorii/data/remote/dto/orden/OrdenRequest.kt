@@ -4,5 +4,6 @@ import proyecto.personal.proyectointegradorii.data.remote.dto.detalleorden.Detal
 
 data class OrdenRequest(
     val mesaId: Long,
-    val detalles: List<DetalleOrdenRequest>
+    val detalles: List<DetalleOrdenRequest>,
+    val usarPuntos: Boolean
 )

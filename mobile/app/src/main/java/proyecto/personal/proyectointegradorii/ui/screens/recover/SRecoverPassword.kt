@@ -70,6 +70,7 @@ fun SRecoverPassword(
         HeaderCBack(
             if (isCodeSent) "Nueva Contraseña" else "Recuperar Contraseña",
             if (isCodeSent) 30 else 27,
+            backgroundColor = BackgroundColor,
             Modifier,
             navController
         )

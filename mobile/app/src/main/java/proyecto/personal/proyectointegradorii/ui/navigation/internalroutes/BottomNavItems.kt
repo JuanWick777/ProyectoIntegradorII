@@ -14,8 +14,8 @@ sealed class BottomNavItems(
     val label: String
 ) {
     object Home: BottomNavItems("home", Icons.Default.Home, "Inicio")
-    object Scan: BottomNavItems("scan", Icons.Default.QrCode, "Escanear")
     object Cart: BottomNavItems("cart", Icons.Default.ShoppingCart, "Carrito")
+    object Scan: BottomNavItems("scan", Icons.Default.QrCode, "Escanear")
     object Offers: BottomNavItems("offers", Icons.Default.LocalOffer, "Ofertas")
     object Points: BottomNavItems("points", Icons.Default.StarBorder, "Puntos")
 }

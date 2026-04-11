@@ -6,13 +6,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import proyecto.personal.proyectointegradorii.data.model.usuario.AppDatabase
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
 import proyecto.personal.proyectointegradorii.data.remote.network.SessionManager
 import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val dao = AppDatabase.getDatabase(application).usuarioDao()
     private val repository = UserRepository()
 
     private val _email = MutableStateFlow("")
@@ -35,6 +34,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _passwordError = MutableStateFlow<String?>(null)
     val passwordError = _passwordError.asStateFlow()
+
+    private val _usuario = MutableStateFlow<LoginResponse?>(null)
+    val usuario = _usuario.asStateFlow()
 
     fun onEmailChange(newEmail: String){
         _email.value = newEmail
@@ -66,15 +68,31 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoading.value = true
 
-            val response = repository.login(_email.value, _password.value)
+            try {
+                val response = repository.login(
+                    _email.value,
+                    _password.value
+                )
 
-            if (response != null) {
+                if (response != null) {
 
-                SessionManager.saveToken(getApplication(), response.token)
+                    // 🔥 Guardar usuario en memoria
+                    _usuario.value = response
 
-                _loginSuccess.value = true
-            } else {
-                _generalErrorMessage.value = "Credenciales incorrectas"
+                    // 🔐 Guardar token
+                    SessionManager.saveToken(
+                        getApplication(),
+                        response.token
+                    )
+
+                    _loginSuccess.value = true
+
+                } else {
+                    _generalErrorMessage.value = "Credenciales incorrectas"
+                }
+
+            } catch (e: Exception) {
+                _generalErrorMessage.value = "Error de conexión"
             }
 
             _isLoading.value = false

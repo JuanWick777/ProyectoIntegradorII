@@ -25,4 +25,9 @@ val OfferColorP = Color(0xFFF92B88)
 val OfferColorM = Color(0xFFA135FE)
 val OfferColorO = Color(0xFFFF8C00)
 val OfferColorR = Color(0xFFFF2A2A)
-val ColorAd = Color(0xFFFFEBE0)
+// --- Colores Dark Mode ---
+val DarkBackground = Color(0xFF0A0604) // Fondo principal casi negro, para que resalte el gradiente
+val DarkCardColor = Color(0xFF1A1919)  // Color de las tarjetas (más claro que el fondo)
+val DarkHeaderColor = Color(0xFF1A1A1A) // Color de los headers
+val DarkTextWhite = Color(0xFFF5F5F5)  // Blanco suave para no deslumbrar
+val DarkTextGray = Color(0xFFA1A1A1)   // Gris para subtítulos en modo oscuro
