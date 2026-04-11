@@ -67,7 +67,7 @@ public class AdminPlatilloController {
         if (dto.getDescripcion() != null) platillo.setDescripcion(dto.getDescripcion());
         if (dto.getPrecio() != null)      platillo.setPrecio(dto.getPrecio());
         if (dto.getImagenUrl() != null)   platillo.setUrlImagen(dto.getImagenUrl());
-        if (dto.getStock() != null)       platillo.setStock(dto.getStock());
+        if (dto.getDisponibilidad() != null)       platillo.setDisponibilidad(dto.getDisponibilidad());
 
         if (dto.getCategoriaId() != null) {
             Categoria cat = categoriaRepository.findById(dto.getCategoriaId())

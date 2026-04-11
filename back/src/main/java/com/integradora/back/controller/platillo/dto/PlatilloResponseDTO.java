@@ -14,7 +14,7 @@ public class PlatilloResponseDTO {
     private String descripcion;
     private BigDecimal precio;
     private String urlImagen;
-    private Integer stock;
+    private String disponibilidad;
     private Long categoriaId;
     private String categoriaNombre;
     private Long kitchenId;
@@ -27,7 +27,7 @@ public class PlatilloResponseDTO {
                 .descripcion(p.getDescripcion())
                 .precio(p.getPrecio())
                 .urlImagen(p.getUrlImagen())
-                .stock(p.getStock())
+                .disponibilidad(p.getDisponibilidad())
                 .categoriaId(p.getCategoria() != null ? p.getCategoria().getId() : null)
                 .categoriaNombre(p.getCategoria() != null ? p.getCategoria().getNombre() : null)
                 .kitchenId(p.getCocina() != null ? p.getCocina().getId() : null)

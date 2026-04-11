@@ -1,6 +1,5 @@
 package com.integradora.back.model.usuario;
 
-import com.integradora.back.model.brigada.Brigada;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -51,7 +50,6 @@ public class Usuario {
     @Column(name = "fecha_registro", insertable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
-    @ManyToOne
-    @JoinColumn(name = "brigada_id")
-    private Brigada brigada;
+    @Column(name = "foto_perfil")
+    private String fotoPerfil;
 }

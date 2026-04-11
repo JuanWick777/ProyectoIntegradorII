@@ -77,13 +77,30 @@ public class OrdenService {
         }
 
         if (estado.equalsIgnoreCase("confirmada")) {
+            // Lógica de Límite de Mesas (Bloque 3)
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
+                Usuario meseroActual = usuarioRepository.findByCorreo(auth.getName())
+                        .orElseThrow(() -> new RuntimeException("Mesero no encontrado"));
+
+                // Solo validar límite si el mesero NO es el que ya estaba asignado (o si no tiene mesero)
+                if (orden.getMesero() == null || !orden.getMesero().getId().equals(meseroActual.getId())) {
+                    long activas = ordenRepository.countByMeseroIdAndEstadoPreparacionIn(
+                            meseroActual.getId(),
+                            List.of(EstadoOrden.CONFIRMADA, EstadoOrden.EN_PREPARACION, EstadoOrden.LISTA)
+                    );
+
+                    if (activas >= 3) {
+                        throw new RuntimeException("Límite alcanzado: Ya tienes 3 mesas activas asignadas.");
+                    }
+                    orden.setMesero(meseroActual);
+                }
+            }
 
             List<DetalleOrden> detalles = detalleRepository.findByOrdenId(ordenId);
-
             for (DetalleOrden d : detalles) {
                 d.setEstadoPreparacion(EstadoDetalle.PENDIENTE);
             }
-
             detalleRepository.saveAll(detalles);
         }
 
@@ -132,8 +149,8 @@ public class OrdenService {
             Platillo platillo = platilloRepository.findById(det.getPlatilloId())
                     .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
 
-            if (platillo.getStock() != null && platillo.getStock() < det.getCantidad()) {
-                throw new RuntimeException("Stock insuficiente para el platillo: " + platillo.getNombre());
+            if ("AGOTADO".equalsIgnoreCase(platillo.getDisponibilidad())) {
+                throw new RuntimeException("El platillo se encuentra agotado: " + platillo.getNombre());
             }
 
             BigDecimal precio = platillo.getPrecio();
@@ -152,10 +169,6 @@ public class OrdenService {
 
             detalleRepository.save(detalle);
 
-            if (platillo.getStock() != null) {
-                platillo.setStock(platillo.getStock() - det.getCantidad());
-                platilloRepository.save(platillo);
-            }
         }
 
         List<DetalleOrden> detalles = detalleRepository.findByOrdenId(orden.getId());

@@ -2,9 +2,7 @@ package com.integradora.back.controller.admin;
 
 import com.integradora.back.controller.usuario.dto.UsuarioRequestDTO;
 import com.integradora.back.controller.usuario.dto.UsuarioResponseDTO;
-import com.integradora.back.model.brigada.Brigada;
 import com.integradora.back.model.usuario.Usuario;
-import com.integradora.back.repository.BrigadaRepository;
 import com.integradora.back.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,7 +18,6 @@ import java.util.List;
 public class AdminController {
 
     private final UsuarioRepository usuarioRepository;
-    private final BrigadaRepository brigadaRepository;
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/usuarios")
@@ -43,6 +40,7 @@ public class AdminController {
         usuario.setEstado("ACTIVO");
         usuario.setPuntosLealtad(0);
         usuario.setTurno(null);
+        usuario.setFotoPerfil(req.getFotoPerfil());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(UsuarioResponseDTO.from(usuarioRepository.save(usuario)));
@@ -57,6 +55,7 @@ public class AdminController {
         usuario.setCorreo(req.getEmail());
         usuario.setRolEspecifico(req.getRol());
         usuario.setAreaAsignada(req.getEspecialidad());
+        usuario.setFotoPerfil(req.getFotoPerfil());
 
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             usuario.setContrasena(passwordEncoder.encode(req.getPassword()));
@@ -67,36 +66,10 @@ public class AdminController {
 
     @DeleteMapping("/usuarios/{id}")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
+        if (id == 1L) {
+            throw new RuntimeException("Acción denegada: No se puede eliminar al Super Administrador principal.");
+        }
         usuarioRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/brigadas")
-    public List<Brigada> listarBrigadas() {
-        return brigadaRepository.findAll();
-    }
-
-    @PostMapping("/brigadas")
-    public ResponseEntity<Brigada> crearBrigada(@RequestBody Brigada brigada) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(brigadaRepository.save(brigada));
-    }
-
-    @PutMapping("/brigadas/{id}")
-    public Brigada actualizarBrigada(@PathVariable Long id, @RequestBody Brigada req) {
-        Brigada brigada = brigadaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Brigada no encontrada"));
-
-        brigada.setNombre(req.getNombre());
-        brigada.setDescripcion(req.getDescripcion());
-        brigada.setMesaDesde(req.getMesaDesde());
-        brigada.setMesaHasta(req.getMesaHasta());
-
-        return brigadaRepository.save(brigada);
-    }
-
-    @DeleteMapping("/brigadas/{id}")
-    public ResponseEntity<Void> eliminarBrigada(@PathVariable Long id) {
-        brigadaRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }
