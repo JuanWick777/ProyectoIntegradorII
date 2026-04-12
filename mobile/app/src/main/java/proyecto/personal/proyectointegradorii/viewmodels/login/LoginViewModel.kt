@@ -74,12 +74,19 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     _password.value
                 )
 
-                if (response != null) {
+                if (response != null && response.token.isNotBlank()) {
+                    if (response.rol.uppercase() != "CLIENTE") {
+                        _generalErrorMessage.value = "Esta app solo permite acceso a clientes"
+                        _loginSuccess.value = false
+                        _isLoading.value = false
+                        return@launch
+                    }
 
-                    // 🔥 Guardar usuario en memoria
+
+                    println("LOGIN RESPONSE: $response")
+
                     _usuario.value = response
 
-                    // 🔐 Guardar token
                     SessionManager.saveToken(
                         getApplication(),
                         response.token
