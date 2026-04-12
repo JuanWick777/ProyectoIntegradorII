@@ -18,8 +18,11 @@ function getStoredToken() {
 async function apiFetch(endpoint, options = {}) {
     const token = options.token || getStoredToken();
 
+    const isFormDataBody =
+        typeof FormData !== 'undefined' && options?.body instanceof FormData;
+
     const headers = {
-        'Content-Type': 'application/json',
+        ...(!isFormDataBody ? { 'Content-Type': 'application/json' } : {}),
         ...(options.headers || {}),
     };
 
@@ -245,8 +248,10 @@ export const useAppStore = create(
             },
 
             updateDetalleEstado: async (detalleId, nuevoEstado) => {
-                await apiFetch(`/detalles/${detalleId}/estado`, {
+                const { token } = get();
+                await apiFetch(`/detalle-orden/${detalleId}/estado`, {
                     method: 'PUT',
+                    token,
                     body: JSON.stringify({ estado: nuevoEstado }),
                 });
             },
@@ -322,6 +327,26 @@ export const useAppStore = create(
                 return await apiFetch(`/admin/platillos/${id}`, {
                     method: 'PUT',
                     body: JSON.stringify(productData),
+                    token,
+                });
+            },
+
+            uploadPlatilloImage: async (file) => {
+                const { token } = get();
+                const body = new FormData();
+                body.append('file', file);
+                return await apiFetch('/admin/uploads/platillos', {
+                    method: 'POST',
+                    body,
+                    token,
+                });
+            },
+
+            deletePlatilloImage: async (pathOrUrl) => {
+                const { token } = get();
+                const qs = new URLSearchParams({ path: pathOrUrl || '' }).toString();
+                return await apiFetch(`/admin/uploads/platillos?${qs}`, {
+                    method: 'DELETE',
                     token,
                 });
             },

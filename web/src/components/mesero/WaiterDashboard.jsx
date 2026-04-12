@@ -73,6 +73,11 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
             await cargarOrdenes(); // Refresh inmediato
         } catch (e) {
             console.error('Error actualizando estado:', e);
+            if (e.message?.includes('Límite alcanzado')) {
+                alert('⚠️ Límite de mesas: ' + e.message);
+            } else {
+                alert('❌ Error: ' + (e.message || 'No se pudo actualizar la orden'));
+            }
         } finally {
             setLoadingId(null);
         }
