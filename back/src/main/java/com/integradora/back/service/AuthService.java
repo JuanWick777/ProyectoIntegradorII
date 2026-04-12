@@ -41,20 +41,15 @@ public class AuthService {
     }
 
     public LoginResponseDTO login(LoginRequest request) {
+
         Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
                 .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
 
         String raw = request.getContrasena();
         String stored = usuario.getContrasena();
 
-        boolean matches = passwordEncoder.matches(raw, stored) || raw.equals(stored);
-        if (!matches) {
+        if (!passwordEncoder.matches(raw, stored)) {
             throw new RuntimeException("Credenciales incorrectas");
-        }
-
-        if (stored == null || !stored.startsWith("$2")) {
-            usuario.setContrasena(passwordEncoder.encode(raw));
-            usuario = usuarioRepository.save(usuario);
         }
 
         String rol = normalizarRol(usuario);
@@ -65,6 +60,7 @@ public class AuthService {
                 .nombre(usuario.getNombreCompleto())
                 .correo(usuario.getCorreo())
                 .rol(rol)
+                .puntosLealtad(usuario.getPuntosLealtad())
                 .token(token)
                 .build();
     }
@@ -85,6 +81,7 @@ public class AuthService {
                 .nombre(usuario.getNombreCompleto())
                 .correo(usuario.getCorreo())
                 .rol(normalizarRol(usuario))
+                .puntosLealtad(usuario.getPuntosLealtad())
                 .token(null)
                 .build();
     }
@@ -122,6 +119,7 @@ public class AuthService {
                 .nombre(usuario.getNombreCompleto())
                 .correo(usuario.getCorreo())
                 .rol(rol)
+                .puntosLealtad(usuario.getPuntosLealtad())
                 .token(token)
                 .build();
     }
@@ -144,4 +142,4 @@ public class AuthService {
 
         return "CLIENTE";
     }
-}
+}

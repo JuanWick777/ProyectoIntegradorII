@@ -14,5 +14,6 @@ public class LoginResponseDTO {
     private String nombre;
     private String correo;
     private String rol;
+    private Integer puntosLealtad;
     private String token;
 }

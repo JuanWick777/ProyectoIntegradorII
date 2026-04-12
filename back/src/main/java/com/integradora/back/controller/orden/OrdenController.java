@@ -6,6 +6,7 @@ import com.integradora.back.model.orden.Orden;
 import com.integradora.back.service.OrdenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -69,4 +70,10 @@ public class OrdenController {
     public OrdenResponseDTO crearCompleta(@RequestBody OrdenRequestDTO request) {
         return service.crearOrdenCompleta(request);
     }
+
+    @GetMapping("/mis-ordenes")
+    public ResponseEntity<List<OrdenResponseDTO>> misOrdenes(Authentication authentication) {
+        return ResponseEntity.ok(service.obtenerOrdenesDelClienteActual(authentication));
+    }
+
 }

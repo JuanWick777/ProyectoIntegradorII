@@ -56,7 +56,7 @@ public class OrdenService {
     }
 
     public List<Orden> porCliente(Long clienteId) {
-        return ordenRepository.findByClienteId(clienteId);
+        return ordenRepository.findByClienteIdOrderByIdDesc(clienteId);
     }
 
     public Orden actualizarEstado(Long ordenId, String estado) {
@@ -176,7 +176,7 @@ public class OrdenService {
                 .map(DetalleOrden::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        int puntosGanados = subtotal.divide(new BigDecimal(200), RoundingMode.FLOOR).intValue();
+        int puntosGanados = subtotalTotal.divide(new BigDecimal(200), RoundingMode.FLOOR).intValue();
 
         BigDecimal descuento = BigDecimal.ZERO;
 
@@ -185,20 +185,20 @@ public class OrdenService {
 
             descuento = new BigDecimal(puntosDisponibles);
 
-            if (descuento.compareTo(subtotal) > 0) {
-                descuento = subtotal;
+            if (descuento.compareTo(subtotalTotal) > 0) {
+                descuento = subtotalTotal;
             }
 
             cliente.setPuntosLealtad(0);
         }
 
-        BigDecimal total = subtotal.subtract(descuento);
+        BigDecimal total = subtotalTotal.subtract(descuento);
 
         cliente.setPuntosLealtad(cliente.getPuntosLealtad() + puntosGanados);
         usuarioRepository.save(cliente);
 
         orden.setSubtotal(subtotalTotal);
-        orden.setTotal(subtotalTotal);
+        orden.setTotal(total);
         orden = ordenRepository.save(orden);
 
         return OrdenMapper.toDTO(orden, detalles);
@@ -230,4 +230,21 @@ public class OrdenService {
 
         return OrdenMapper.toDTO(orden, detalles);
     }
+
+    public List<OrdenResponseDTO> obtenerOrdenesDelClienteActual(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("No autenticado");
+        }
+
+        Usuario cliente = usuarioRepository.findByCorreo(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+
+        return ordenRepository.findByClienteIdOrderByIdDesc(cliente.getId()).stream()
+                .map(orden -> {
+                    List<DetalleOrden> detalles = detalleRepository.findByOrdenId(orden.getId());
+                    return OrdenMapper.toDTO(orden, detalles);
+                })
+                .toList();
+    }
+
 }

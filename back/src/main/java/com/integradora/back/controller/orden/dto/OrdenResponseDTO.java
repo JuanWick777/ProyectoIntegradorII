@@ -11,15 +11,11 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class OrdenResponseDTO {
-
     private Long id;
     private String estado;
     private Integer mesaNumero;
-
     private List<DetalleOrdenDTO> detalles;
-
     private BigDecimal subtotal;
     private BigDecimal total;
-
     private LocalDateTime fechaCreacion;
 }
