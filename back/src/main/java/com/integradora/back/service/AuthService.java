@@ -61,6 +61,7 @@ public class AuthService {
                 .correo(usuario.getCorreo())
                 .rol(rol)
                 .puntosLealtad(usuario.getPuntosLealtad())
+                .fotoPerfil(usuario.getFotoPerfil())
                 .token(token)
                 .build();
     }
@@ -82,6 +83,7 @@ public class AuthService {
                 .correo(usuario.getCorreo())
                 .rol(normalizarRol(usuario))
                 .puntosLealtad(usuario.getPuntosLealtad())
+                .fotoPerfil(usuario.getFotoPerfil())
                 .token(null)
                 .build();
     }
@@ -120,6 +122,7 @@ public class AuthService {
                 .correo(usuario.getCorreo())
                 .rol(rol)
                 .puntosLealtad(usuario.getPuntosLealtad())
+                .fotoPerfil(usuario.getFotoPerfil())
                 .token(token)
                 .build();
     }

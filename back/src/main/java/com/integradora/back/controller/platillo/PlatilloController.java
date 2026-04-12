@@ -1,5 +1,6 @@
 package com.integradora.back.controller.platillo;
 
+import com.integradora.back.controller.platillo.dto.PlatilloResponseDTO;
 import com.integradora.back.model.platillo.Platillo;
 import com.integradora.back.service.PlatilloService;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +24,16 @@ public class PlatilloController {
     }
 
     @GetMapping
-    public List<Platillo> listar() {
-        return service.listar();
+    public List<PlatilloResponseDTO> listar() {
+        return service.listar().stream()
+                .map(PlatilloResponseDTO::from)
+                .toList();
     }
 
     @GetMapping("/categoria/{categoriaId}")
-    public List<Platillo> porCategoria(@PathVariable Long categoriaId) {
-        return service.listarPorCategoria(categoriaId);
+    public List<PlatilloResponseDTO> porCategoria(@PathVariable Long categoriaId) {
+        return service.listarPorCategoria(categoriaId).stream()
+                .map(PlatilloResponseDTO::from)
+                .toList();
     }
 }

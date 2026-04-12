@@ -114,17 +114,13 @@ public class OrdenService {
 
         Usuario cliente;
         if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
-            // Cliente logueado: usar email del token
+            // Cliente autenticado desde app móvil
             cliente = usuarioRepository.findByCorreo(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
-        } else if (request.getClienteId() != null) {
-            // Cliente anónimo: usar clienteId del body (el front manda usuario?.id || 1)
-            cliente = usuarioRepository.findById(request.getClienteId())
-                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + request.getClienteId()));
         } else {
-            // Último fallback: usar cliente con id=1 (usuario anónimo)
+            // Pedido anónimo desde web
             cliente = usuarioRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("No se pudo identificar al cliente"));
+                    .orElseThrow(() -> new RuntimeException("No se pudo identificar al cliente invitado"));
         }
 
         Mesa mesa = mesaRepository.findByNumero(request.getMesaId().intValue())
