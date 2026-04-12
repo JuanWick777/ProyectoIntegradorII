@@ -108,7 +108,7 @@ fun SPoints(cartViewModel: CartViewModel){
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             GlobalText(
-                                texto = "Realiza una compra mayor a $200",
+                                texto = "Realiza una compra mayor a $100",
                                 peso = FontWeight.Bold,
                                 tamanio = 16,
                                 color = TextColorDark
@@ -125,7 +125,7 @@ fun SPoints(cartViewModel: CartViewModel){
                             ) {
                                 Column {
                                     GlobalText(
-                                        "Por cada compra que supere los $200 pesos:",
+                                        "Por cada compra que supere los $100 pesos:",
                                         color = TextColorGray,
                                         tamanio = 14,
                                         peso = FontWeight.Medium
@@ -243,7 +243,7 @@ fun SPoints(cartViewModel: CartViewModel){
                                 text = buildAnnotatedString {
                                     append("Si realizas una compra de $250, obtienes ")
                                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("1 punto. ")
+                                        append("2 puntos. ")
                                     }
                                     append("Ese punto puedes usarlo en tu próxima orden como ")
                                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

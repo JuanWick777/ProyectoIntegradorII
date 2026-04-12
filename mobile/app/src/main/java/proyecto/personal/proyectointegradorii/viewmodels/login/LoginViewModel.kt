@@ -104,7 +104,12 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
             } catch (e: Exception) {
-                _generalErrorMessage.value = "Error de conexión"
+                _generalErrorMessage.value =
+                    if (e.message?.contains("403") == true || e.message?.contains("401") == true) {
+                        "Credenciales incorrectas"
+                    } else {
+                        "Error de conexión"
+                    }
             }
 
             _isLoading.value = false

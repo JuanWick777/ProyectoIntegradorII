@@ -8,5 +8,7 @@ data class OrdenResponseDTO(
     val mesaNumero: Int?,
     val detalles: List<DetalleOrdenDTO>,
     val subtotal: Double,
+    val montoDescuento: Double,
+    val codigoPromoAplicado: String?,
     val total: Double
 )

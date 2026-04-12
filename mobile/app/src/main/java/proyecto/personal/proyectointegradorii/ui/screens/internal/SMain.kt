@@ -3,11 +3,13 @@ package proyecto.personal.proyectointegradorii.ui.screens.internal
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -29,9 +31,16 @@ import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
 fun SMain(rootNavController: NavHostController) {
 
     val navController = rememberNavController()
+
+    val context = LocalContext.current
+
     var showCategories by remember { mutableStateOf(false) }
 
     val cartViewModel: CartViewModel = remember { CartViewModel() }
+
+    LaunchedEffect(Unit) {
+        cartViewModel.initialize(context)
+    }
 
     Scaffold(
         containerColor = BackgroundColor,
@@ -53,7 +62,7 @@ fun SMain(rootNavController: NavHostController) {
             composable("scan") { SScan(cartViewModel, navController) }
             composable("offers") { SOffers() }
             composable("points") { SPoints(cartViewModel) }
-            composable("account") { SAccount(navController, rootNavController) }
+            composable("account") { SAccount(navController, rootNavController, cartViewModel) }
         }
     }
 }

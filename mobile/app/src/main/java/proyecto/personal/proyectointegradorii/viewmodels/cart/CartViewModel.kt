@@ -1,5 +1,6 @@
 package proyecto.personal.proyectointegradorii.viewmodels.cart
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,8 +10,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import proyecto.personal.proyectointegradorii.data.local.CartStateStorage
 import proyecto.personal.proyectointegradorii.data.remote.api.ApiService
 import proyecto.personal.proyectointegradorii.data.remote.dto.detalleorden.DetalleOrdenRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenPreviewDTO
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenResponseDTO
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
@@ -21,6 +24,9 @@ import retrofit2.Retrofit
 class CartViewModel : ViewModel() {
     private val repository = OrdenRepository(RetrofitClient.api)
 
+    private var appContext: Context? = null
+    private var initialized = false
+
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems = _cartItems.asStateFlow()
 
@@ -30,11 +36,90 @@ class CartViewModel : ViewModel() {
     private val _ordenes = MutableStateFlow<List<OrdenResponseDTO>>(emptyList())
     val ordenes = _ordenes.asStateFlow()
 
+    private val _previewOrden = MutableStateFlow<OrdenPreviewDTO?>(null)
+    val previewOrden = _previewOrden.asStateFlow()
+
+    fun initialize(context: Context) {
+        if (initialized) return
+
+        appContext = context.applicationContext
+        restoreState()
+        initialized = true
+    }
+
+    private fun restoreState() {
+        val context = appContext ?: return
+
+        _cartItems.value = CartStateStorage.getCartItems(context)
+        _ordenActual.value = CartStateStorage.getOrdenActual(context)
+        _ordenes.value = CartStateStorage.getOrdenes(context)
+        _mesaSeleccionada.value = CartStateStorage.getMesaSeleccionada(context)
+
+        if (_ordenActual.value != null) {
+            startPolling()
+        }
+    }
+
+    private fun persistState() {
+        val context = appContext ?: return
+
+        CartStateStorage.saveCartItems(context, _cartItems.value)
+        CartStateStorage.saveOrdenActual(context, _ordenActual.value)
+        CartStateStorage.saveOrdenes(context, _ordenes.value)
+        CartStateStorage.saveMesaSeleccionada(context, _mesaSeleccionada.value)
+    }
+
+    fun clearPersistedState() {
+        val context = appContext ?: return
+
+        _cartItems.value = emptyList()
+        _ordenActual.value = null
+        _ordenes.value = emptyList()
+        _mesaSeleccionada.value = null
+        _usarPuntos.value = false
+
+        pollingJob?.cancel()
+        CartStateStorage.clear(context)
+    }
+
+    fun cargarPreviewOrden() {
+        val mesaId = _mesaSeleccionada.value ?: return
+
+        val detalles = _cartItems.value.map {
+            DetalleOrdenRequest(
+                platilloId = it.platillo.id,
+                cantidad = it.cantidad,
+                nota = it.nota
+            )
+        }
+
+        if (detalles.isEmpty()) {
+            _previewOrden.value = null
+            return
+        }
+
+        val request = OrdenRequest(
+            mesaId = mesaId,
+            detalles = detalles,
+            usarPuntos = _usarPuntos.value
+        )
+
+        previewJob?.cancel()
+        previewJob = viewModelScope.launch {
+            try {
+                _previewOrden.value = RetrofitClient.api.previewOrden(request)
+            } catch (e: Exception) {
+                _previewOrden.value = null
+            }
+        }
+    }
+
     fun cargarMisOrdenes() {
         viewModelScope.launch {
             try {
                 val data = RetrofitClient.api.obtenerMisOrdenes()
                 _ordenes.value = data
+                persistState()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -42,21 +127,31 @@ class CartViewModel : ViewModel() {
     }
 
     fun limpiarOrdenActual() {
+        pollingJob?.cancel()
+        pollingJob = null
         _ordenActual.value = null
+        persistState()
     }
 
     fun setOrdenActual(orden: OrdenResponseDTO) {
         _ordenActual.value = orden
+        persistState()
+        startPolling()
     }
 
-
     private var pollingJob: Job? = null
+
+    private var previewJob: Job? = null
 
     private val _usarPuntos = MutableStateFlow(false)
     val usarPuntos = _usarPuntos.asStateFlow()
 
+    private val _pedidoConfirmado = MutableStateFlow(false)
+    val pedidoConfirmado = _pedidoConfirmado.asStateFlow()
+
     fun togglePuntos() {
         _usarPuntos.value = !_usarPuntos.value
+        cargarPreviewOrden()
     }
 
     private val _puntosUsuario = MutableStateFlow(0)
@@ -64,11 +159,15 @@ class CartViewModel : ViewModel() {
 
     fun cargarUsuario() {
         viewModelScope.launch {
-            val repo = UserRepository()
-            val user = repo.getCurrentUser()
+            try {
+                val repo = UserRepository()
+                val user = repo.getCurrentUser()
 
-            if (user != null) {
-                _puntosUsuario.value = user.puntosLealtad
+                if (user != null) {
+                    _puntosUsuario.value = user.puntosLealtad
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
@@ -78,8 +177,9 @@ class CartViewModel : ViewModel() {
 
     fun setMesaSeleccionada(mesaId: Long) {
         _mesaSeleccionada.value = mesaId
+        persistState()
+        cargarPreviewOrden()
     }
-
 
     fun addToCart(
         platillo: PlatilloDto,
@@ -108,6 +208,8 @@ class CartViewModel : ViewModel() {
         }
 
         _cartItems.value = currentList
+        persistState()
+        cargarPreviewOrden()
     }
 
     fun getTotal(): Double {
@@ -133,16 +235,24 @@ class CartViewModel : ViewModel() {
             try {
                 val orden = repository.crearOrden(request)
                 _ordenActual.value = orden
-                cargarMisOrdenes()
                 _cartItems.value = emptyList()
+                _usarPuntos.value = false
+                _previewOrden.value = null
+                persistState()
+                cargarMisOrdenes()
                 cargarUsuario()
                 startPolling()
+                _pedidoConfirmado.value = true
             } catch (e: Exception) {
+                _pedidoConfirmado.value = false
                 e.printStackTrace()
             }
         }
     }
 
+    fun resetPedidoConfirmado() {
+        _pedidoConfirmado.value = false
+    }
 
     fun startPolling() {
         val ordenId = _ordenActual.value?.id ?: return
@@ -154,6 +264,7 @@ class CartViewModel : ViewModel() {
                 try {
                     val orden = repository.obtenerOrden(ordenId)
                     _ordenActual.value = orden
+                    persistState()
 
                     val estado = orden.estado.lowercase()
 

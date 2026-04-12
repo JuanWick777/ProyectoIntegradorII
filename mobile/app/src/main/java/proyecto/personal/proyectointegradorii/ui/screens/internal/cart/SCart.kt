@@ -44,6 +44,8 @@ fun SCart(
     val usarPuntos by cartViewModel.usarPuntos.collectAsState()
     val mesaId by cartViewModel.mesaSeleccionada.collectAsState()
     val ordenes by cartViewModel.ordenes.collectAsState()
+    val preview by cartViewModel.previewOrden.collectAsState()
+    val pedidoConfirmado by cartViewModel.pedidoConfirmado.collectAsState()
 
     var showSuccessDialog by remember { mutableStateOf(false) }
 
@@ -51,16 +53,28 @@ fun SCart(
         cartViewModel.cargarUsuario()
         cartViewModel.cargarMisOrdenes()
 
-        if (cartViewModel.mesaSeleccionada.value == null) {
-            cartViewModel.setMesaSeleccionada(1)
+        if (cartViewModel.mesaSeleccionada.value != null) {
+            cartViewModel.cargarPreviewOrden()
         }
     }
 
+    LaunchedEffect(pedidoConfirmado) {
+        if (pedidoConfirmado) {
+            showSuccessDialog = true
+            cartViewModel.resetPedidoConfirmado()
+        }
+    }
 
     val subtotal = cartViewModel.getTotal()
     val descuentoEstimado = if (usarPuntos) minOf(puntos.toDouble(), subtotal) else 0.0
     val totalEstimado = subtotal - descuentoEstimado
-    val puntosGanados = (subtotal / 200).toInt()
+    val puntosGanados = (subtotal / 100).toInt()
+
+    val subtotalMostrar = preview?.subtotal ?: subtotal
+    val descuentoPromoMostrar = preview?.descuentoPromo ?: 0.0
+    val descuentoPuntosMostrar = preview?.descuentoPuntos ?: if (usarPuntos) descuentoEstimado else 0.0
+    val totalMostrar = preview?.total ?: totalEstimado
+    val puntosGanadosMostrar = preview?.puntosGanados ?: puntosGanados
 
     Column(
         modifier = Modifier
@@ -117,7 +131,23 @@ fun SCart(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Total: $${pedidoActual.total}")
+                    Text("Subtotal: $${"%.2f".format(pedidoActual.subtotal)}")
+
+                    if (pedidoActual.montoDescuento > 0) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("Descuento aplicado: -$${"%.2f".format(pedidoActual.montoDescuento)}")
+
+                        if (!pedidoActual.codigoPromoAplicado.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Código aplicado: ${pedidoActual.codigoPromoAplicado}")
+                        } else {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Promoción automática aplicada")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("Total: $${"%.2f".format(pedidoActual.total)}")
 
                     GlobalButton(
                         "Hacer otro pedido",
@@ -195,6 +225,19 @@ fun SCart(
                                     Text("Mesa: ${pedido.mesaNumero ?: "-"}")
                                     Text("Total: $${pedido.total}")
 
+                                    if (pedido.montoDescuento > 0) {
+                                        Text("Descuento: -$${"%.2f".format(pedido.montoDescuento)}")
+                                    }
+
+                                    if (pedido.montoDescuento > 0) {
+                                        val promoTexto = if (!pedido.codigoPromoAplicado.isNullOrBlank()) {
+                                            "Código: ${pedido.codigoPromoAplicado}"
+                                        } else {
+                                            "Promoción automática"
+                                        }
+                                        Text(promoTexto)
+                                    }
+
                                     Spacer(modifier = Modifier.height(6.dp))
 
                                     GlobalButton(
@@ -238,7 +281,7 @@ fun SCart(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     GlobalText(
-                        "Subtotal: $${"%.2f".format(subtotal)}",
+                        "Subtotal: $${"%.2f".format(subtotalMostrar)}",
                         18,
                         TextColorDark,
                         Modifier
@@ -272,13 +315,26 @@ fun SCart(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    if (usarPuntos) {
-                        Text("Descuento estimado: $${"%.2f".format(descuentoEstimado)}")
+                    if (descuentoPromoMostrar > 0) {
+                        Text(
+                            text = if (!preview?.tituloPromoAplicada.isNullOrBlank()) {
+                                "Promoción aplicada: ${preview?.tituloPromoAplicada}"
+                            } else {
+                                "Promoción automática aplicada"
+                            }
+                        )
                         Spacer(modifier = Modifier.height(6.dp))
+                        Text("Descuento por promoción: -$${"%.2f".format(descuentoPromoMostrar)}")
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    if (descuentoPuntosMostrar > 0) {
+                        Text("Descuento por puntos: -$${"%.2f".format(descuentoPuntosMostrar)}")
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
 
                     GlobalText(
-                        "Total estimado: $${"%.2f".format(totalEstimado)}",
+                        "Total estimado: $${"%.2f".format(totalMostrar)}",
                         18,
                         TextColorDark,
                         Modifier
@@ -286,7 +342,7 @@ fun SCart(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Text("Ganarás $puntosGanados punto(s) con esta compra")
+                    Text("Ganarás $puntosGanadosMostrar punto(s) con esta compra")
 
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -311,7 +367,6 @@ fun SCart(
                         {
                             if (mesaId != null) {
                                 cartViewModel.confirmarPedido(mesaId!!)
-                                showSuccessDialog = true
                             }
                         },
                         Modifier,

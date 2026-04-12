@@ -1,10 +1,12 @@
 package proyecto.personal.proyectointegradorii.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import proyecto.personal.proyectointegradorii.data.remote.network.SessionEvents
 import proyecto.personal.proyectointegradorii.data.remote.network.SessionManager
 import proyecto.personal.proyectointegradorii.ui.screens.account.ChangePasswordScreen
 import proyecto.personal.proyectointegradorii.ui.screens.account.HistoryScreen
@@ -20,6 +22,16 @@ fun Navigation(){
     val navController = rememberNavController()
 
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        SessionEvents.sessionExpired.collect {
+            navController.navigate("Login") {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
 
     val startDestination = if (SessionManager.isSessionValid(context)) {
         "Main"

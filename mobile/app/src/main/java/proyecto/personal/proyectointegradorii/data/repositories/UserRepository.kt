@@ -8,13 +8,9 @@ import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 
 class UserRepository {
     suspend fun login(email: String, password: String): LoginResponse? {
-        return try {
-            RetrofitClient.api.login(
-                LoginRequest(email, password)
-            )
-        } catch (e: Exception) {
-            null
-        }
+        return RetrofitClient.api.login(
+            LoginRequest(email, password)
+        )
     }
 
     suspend fun register(usuario: Usuario): Boolean {
@@ -34,13 +30,11 @@ class UserRepository {
 
     // PRUEBAS
     suspend fun getCurrentUser(): LoginResponse? {
-        return try {
-            val response = RetrofitClient.api.getCurrentUser()
-            if (response.isSuccessful) {
-                response.body()
-            } else null
-        } catch (e: Exception) {
-            null
+        val response = RetrofitClient.api.getCurrentUser()
+        return if (response.isSuccessful) {
+            response.body()
+        } else {
+            throw RuntimeException("Error ${response.code()}")
         }
     }
 }

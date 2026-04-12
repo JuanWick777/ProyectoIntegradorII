@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import proyecto.personal.proyectointegradorii.data.local.AppStateCleaner
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
 import proyecto.personal.proyectointegradorii.data.remote.network.SessionManager
 import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
@@ -32,11 +33,13 @@ import proyecto.personal.proyectointegradorii.ui.components.buttons.ButtonAccoun
 import proyecto.personal.proyectointegradorii.ui.components.headers.CardHeaderAccount
 import proyecto.personal.proyectointegradorii.ui.components.cards.GlobalCard
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
+import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
 
 @Composable
 fun SAccount(
     navController: NavController,
-    rootNavController: NavController
+    rootNavController: NavController,
+    cartViewModel: CartViewModel
 ) {
     val context = LocalContext.current
 
@@ -94,7 +97,8 @@ fun SAccount(
                         icon = Icons.Default.Logout,
                         text = "Cerrar Sesión",
                         onClick = {
-                            SessionManager.clear(context)
+                            cartViewModel.clearPersistedState()
+                            AppStateCleaner.clearAll(context)
 
                             rootNavController.navigate("Login") {
                                 popUpTo(0) { inclusive = true }
