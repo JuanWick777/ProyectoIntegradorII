@@ -50,6 +50,8 @@ public class OrdenMapper {
                 mesaNumero,
                 items,
                 orden.getSubtotal() != null ? orden.getSubtotal() : BigDecimal.ZERO,
+                orden.getMontoDescuento() != null ? orden.getMontoDescuento() : BigDecimal.ZERO,
+                orden.getCodigoPromoAplicado(),
                 orden.getTotal() != null ? orden.getTotal() : BigDecimal.ZERO,
                 orden.getFechaCreacion()
         );

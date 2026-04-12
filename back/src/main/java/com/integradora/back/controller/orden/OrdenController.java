@@ -1,5 +1,6 @@
 package com.integradora.back.controller.orden;
 
+import com.integradora.back.controller.orden.dto.OrdenPreviewDTO;
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
 import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
 import com.integradora.back.model.orden.Orden;
@@ -75,5 +76,11 @@ public class OrdenController {
     public ResponseEntity<List<OrdenResponseDTO>> misOrdenes(Authentication authentication) {
         return ResponseEntity.ok(service.obtenerOrdenesDelClienteActual(authentication));
     }
+
+    @PostMapping("/preview")
+    public ResponseEntity<OrdenPreviewDTO> preview(@RequestBody OrdenRequestDTO request) {
+        return ResponseEntity.ok(service.previsualizarOrden(request));
+    }
+
 
 }

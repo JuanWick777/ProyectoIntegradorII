@@ -16,6 +16,8 @@ public class OrdenResponseDTO {
     private Integer mesaNumero;
     private List<DetalleOrdenDTO> detalles;
     private BigDecimal subtotal;
+    private BigDecimal montoDescuento;
+    private String codigoPromoAplicado;
     private BigDecimal total;
     private LocalDateTime fechaCreacion;
 }

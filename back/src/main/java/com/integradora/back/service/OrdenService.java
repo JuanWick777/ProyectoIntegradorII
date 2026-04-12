@@ -2,6 +2,7 @@ package com.integradora.back.service;
 
 import com.integradora.back.controller.detalleorden.dto.DetalleOrdenRequestDTO;
 import com.integradora.back.controller.orden.OrdenMapper;
+import com.integradora.back.controller.orden.dto.OrdenPreviewDTO;
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
 import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
 import com.integradora.back.model.detalleorden.DetalleOrden;
@@ -10,6 +11,7 @@ import com.integradora.back.model.mesa.Mesa;
 import com.integradora.back.model.orden.EstadoOrden;
 import com.integradora.back.model.orden.Orden;
 import com.integradora.back.model.platillo.Platillo;
+import com.integradora.back.model.promocion.Promocion;
 import com.integradora.back.model.usuario.Usuario;
 import com.integradora.back.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class OrdenService {
     private final MesaRepository mesaRepository;
     private final PlatilloRepository platilloRepository;
     private final DetalleOrdenRepository detalleRepository;
+    private final PromocionService promocionService;
 
     public Orden crear(Long clienteId, Long mesaId) {
 
@@ -172,32 +175,115 @@ public class OrdenService {
                 .map(DetalleOrden::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        int puntosGanados = subtotalTotal.divide(new BigDecimal(200), RoundingMode.FLOOR).intValue();
+        BigDecimal descuentoPromo = BigDecimal.ZERO;
+        String codigoPromoAplicado = null;
 
-        BigDecimal descuento = BigDecimal.ZERO;
-
-        if (Boolean.TRUE.equals(request.getUsarPuntos())) {
-            int puntosDisponibles = cliente.getPuntosLealtad();
-
-            descuento = new BigDecimal(puntosDisponibles);
-
-            if (descuento.compareTo(subtotalTotal) > 0) {
-                descuento = subtotalTotal;
-            }
-
-            cliente.setPuntosLealtad(0);
+        // 1. Buscar mejor promoción automática vigente
+        var promoAutomatica = promocionService.obtenerMejorPromocionAutomatica(subtotalTotal);
+        if (promoAutomatica != null) {
+            descuentoPromo = promocionService.calcularDescuento(promoAutomatica, subtotalTotal);
+            codigoPromoAplicado = promoAutomatica.getCodigoPromo();
         }
 
-        BigDecimal total = subtotalTotal.subtract(descuento);
+        // 2. Total después de promoción
+        BigDecimal subtotalDespuesPromo = subtotalTotal.subtract(descuentoPromo).max(BigDecimal.ZERO);
 
+        // 3. Aplicar puntos si corresponde
+        BigDecimal descuentoPuntos = BigDecimal.ZERO;
+        if (Boolean.TRUE.equals(request.getUsarPuntos())) {
+            int puntosDisponibles = cliente.getPuntosLealtad();
+            descuentoPuntos = new BigDecimal(puntosDisponibles);
+
+            if (descuentoPuntos.compareTo(subtotalDespuesPromo) > 0) {
+                descuentoPuntos = subtotalDespuesPromo;
+            }
+
+            cliente.setPuntosLealtad(puntosDisponibles - descuentoPuntos.intValue());
+        }
+
+        // 4. Total final
+        BigDecimal descuentoTotal = descuentoPromo.add(descuentoPuntos);
+        BigDecimal total = subtotalTotal.subtract(descuentoTotal).max(BigDecimal.ZERO);
+
+        // 5. Ganar puntos sobre lo realmente pagado
+        int puntosGanados = total.divide(new BigDecimal(100), RoundingMode.FLOOR).intValue();
         cliente.setPuntosLealtad(cliente.getPuntosLealtad() + puntosGanados);
         usuarioRepository.save(cliente);
 
         orden.setSubtotal(subtotalTotal);
+        orden.setMontoDescuento(descuentoTotal);
+        orden.setCodigoPromoAplicado(codigoPromoAplicado);
         orden.setTotal(total);
         orden = ordenRepository.save(orden);
 
+
         return OrdenMapper.toDTO(orden, detalles);
+    }
+
+    public OrdenPreviewDTO previsualizarOrden(OrdenRequestDTO request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        Usuario cliente;
+        if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
+            cliente = usuarioRepository.findByCorreo(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+        } else {
+            cliente = usuarioRepository.findById(1L)
+                    .orElseThrow(() -> new RuntimeException("No se pudo identificar al cliente invitado"));
+        }
+
+        BigDecimal subtotalTotal = BigDecimal.ZERO;
+
+        for (DetalleOrdenRequestDTO det : request.getDetalles()) {
+            Platillo platillo = platilloRepository.findById(det.getPlatilloId())
+                    .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
+
+            if ("AGOTADO".equalsIgnoreCase(platillo.getDisponibilidad())) {
+                throw new RuntimeException("El platillo se encuentra agotado: " + platillo.getNombre());
+            }
+
+            BigDecimal precio = platillo.getPrecio();
+            BigDecimal subtotal = precio.multiply(BigDecimal.valueOf(det.getCantidad()));
+            subtotalTotal = subtotalTotal.add(subtotal);
+        }
+
+        BigDecimal descuentoPromo = BigDecimal.ZERO;
+        String codigoPromoAplicado = null;
+        String tituloPromoAplicada = null;
+
+        Promocion promoAutomatica = promocionService.obtenerMejorPromocionAutomatica(subtotalTotal);
+        if (promoAutomatica != null) {
+            descuentoPromo = promocionService.calcularDescuento(promoAutomatica, subtotalTotal);
+            codigoPromoAplicado = promoAutomatica.getCodigoPromo();
+            tituloPromoAplicada = promoAutomatica.getTitulo();
+        }
+
+        BigDecimal subtotalDespuesPromo = subtotalTotal.subtract(descuentoPromo).max(BigDecimal.ZERO);
+
+        BigDecimal descuentoPuntos = BigDecimal.ZERO;
+        if (Boolean.TRUE.equals(request.getUsarPuntos())) {
+            int puntosDisponibles = cliente.getPuntosLealtad();
+            descuentoPuntos = new BigDecimal(puntosDisponibles);
+
+            if (descuentoPuntos.compareTo(subtotalDespuesPromo) > 0) {
+                descuentoPuntos = subtotalDespuesPromo;
+            }
+        }
+
+        BigDecimal descuentoTotal = descuentoPromo.add(descuentoPuntos);
+        BigDecimal total = subtotalTotal.subtract(descuentoTotal).max(BigDecimal.ZERO);
+        int puntosGanados = total.divide(new BigDecimal(100), RoundingMode.FLOOR).intValue();
+
+        return new OrdenPreviewDTO(
+                subtotalTotal,
+                descuentoPromo,
+                descuentoPuntos,
+                descuentoTotal,
+                codigoPromoAplicado,
+                tituloPromoAplicada,
+                total,
+                puntosGanados
+        );
     }
 
     public List<Orden> obtenerActivas() {

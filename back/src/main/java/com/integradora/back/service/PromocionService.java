@@ -93,4 +93,38 @@ public class PromocionService {
 
         return ordenRepository.save(orden);
     }
+
+    public List<Promocion> listarAutomaticasVigentes() {
+        LocalDate hoy = LocalDate.now();
+
+        return promocionRepository.findByActivaTrue().stream()
+                .filter(p -> (p.getFechaInicio() == null || !hoy.isBefore(p.getFechaInicio()))
+                        && (p.getFechaFin() == null || !hoy.isAfter(p.getFechaFin())))
+                .filter(p -> p.getCodigoPromo() == null || p.getCodigoPromo().isBlank())
+                .toList();
+    }
+
+    public BigDecimal calcularDescuento(Promocion promo, BigDecimal subtotal) {
+        if (promo == null || subtotal == null || subtotal.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal descuento;
+
+        if ("PORCENTAJE".equalsIgnoreCase(promo.getTipoDescuento())) {
+            descuento = subtotal.multiply(promo.getValorDescuento())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        } else {
+            descuento = promo.getValorDescuento().min(subtotal);
+        }
+
+        return descuento.max(BigDecimal.ZERO);
+    }
+
+    public Promocion obtenerMejorPromocionAutomatica(BigDecimal subtotal) {
+        return listarAutomaticasVigentes().stream()
+                .max((a, b) -> calcularDescuento(a, subtotal).compareTo(calcularDescuento(b, subtotal)))
+                .orElse(null);
+    }
+
 }
