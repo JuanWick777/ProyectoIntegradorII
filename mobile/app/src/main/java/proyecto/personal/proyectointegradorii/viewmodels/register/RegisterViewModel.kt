@@ -15,6 +15,7 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     private val dao = AppDatabase.getDatabase(application).usuarioDao()
     private val repository = UserRepository()
 
+    // States para los valores
     private val _name = MutableStateFlow("")
     val name = _name.asStateFlow()
 
@@ -27,15 +28,7 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     private val _confirmPassword = MutableStateFlow("")
     val confirmPassword = _confirmPassword.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
-
-    private val _success = MutableStateFlow(false)
-    val success = _success.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage = _errorMessage.asStateFlow()
-
+    // States para los errores
     private val _errorName = MutableStateFlow<String?>(null)
     val errorName = _errorName.asStateFlow()
 
@@ -48,69 +41,145 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     private val _errorConfirmPassword = MutableStateFlow<String?>(null)
     val errorConfirmPassword = _errorConfirmPassword.asStateFlow()
 
-    fun onNameChange(newName: String){
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    private val _success = MutableStateFlow(false)
+    val success = _success.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage = _errorMessage.asStateFlow()
+
+    // --- FUNCIONES DE CAMBIO (REACCIÓN AL MOMENTO) ---
+
+    fun onNameChange(newName: String) {
         _name.value = newName
-        _errorName.value = null
+        validateName(newName)
     }
 
-    fun onEmailChange(newEmail: String){
+    fun onEmailChange(newEmail: String) {
         _email.value = newEmail
-        _errorEmail.value = null
+        validateEmail(newEmail)
     }
 
-    fun onPasswordChange(newPassword: String){
+    fun onPasswordChange(newPassword: String) {
         _password.value = newPassword
-        _errorPassword.value = null
+        validatePassword(newPassword)
+        // Re-validamos confirmación por si ya había escrito algo
+        validateConfirmPassword(_confirmPassword.value)
     }
 
-    fun onConfirmPasswordChange(newConfirmPassword: String){
+    fun onConfirmPasswordChange(newConfirmPassword: String) {
         _confirmPassword.value = newConfirmPassword
-        _errorConfirmPassword.value = null
+        validateConfirmPassword(newConfirmPassword)
+    }
+
+    private fun validateName(value: String) {
+        // Solo letras (incluyendo acentos y ñ) y espacios sencillos
+        val nameRegex = Regex("^[a-zA-ZñÑáéíóúÁÉÍÓÚ\\s]+$")
+
+        _errorName.value = when {
+            value.isBlank() -> "Este campo es obligatorio."
+            // detectan espacios fantasmas al inicio o final
+            value.startsWith(" ") || value.endsWith(" ") -> "No debe tener espacios al inicio ni al final."
+            // busca si el usuario puso dos espacios juntos
+            value.contains("  ") -> "No se permite más de un espacio entre nombres."
+            // comparamos todo el nombre contra el regex
+            !value.matches(nameRegex) -> "No se permiten números, caracteres especiales ni emojis."
+            // blindaje de longitud
+            value.length !in 2..45 -> "El nombre debe tener entre 2 y 45 caracteres."
+            else -> null
+        }
+    }
+
+    private fun validateEmail(value: String) {
+        // 1. Dividimos el texto en dos partes usando el '@' como referencia
+        val parts = value.split("@")
+
+        // Si hay una parte antes del '@', la guardamos en 'username', si no, queda vacío
+        val username = if (parts.size >= 1) parts[0] else ""
+
+        // Si hay una parte después del '@', le pegamos el '@' y lo guardamos como 'domain'
+        val domain = if (parts.size >= 2) "@" + parts[1] else ""
+
+        // Regex para el usuario: Letras, números, puntos, guiones y guiones bajos
+        val usernameRegex = Regex("^[a-zA-Z0-9._-]+$")
+        val isValidDomain = domain == "@gmail.com" || domain == "@utez.edu.mx"
+
+        _errorEmail.value = when {
+            value.isBlank() -> "El correo electrónico es obligatorio."
+            value.contains(" ") -> "El correo no puede contener espacios."
+            !value.contains("@") -> "El correo debe incluir un '@'."
+            username.isEmpty() -> "El nombre de usuario no puede estar vacío."
+            // Validamos que el usuario (antes del @) no tenga cosas raras
+            !username.matches(usernameRegex) -> "Solo se admiten letras, números, '.', '_' y '-'."
+            // Aquí está tu blindaje de longitud SIN CONTAR el dominio
+            username.length !in 6..30 -> "El correo debe tener entre 6 y 30 caracteres."
+            !isValidDomain -> "Solo se admiten @gmail.com o @utez.edu.mx"
+            else -> null
+        }
+    }
+
+    private fun validatePassword(value: String) {
+        val hasUpperCase = value.any { it.isUpperCase() }
+        val hasLowerCase = value.any { it.isLowerCase() }
+        val hasDigit = value.any { it.isDigit() }
+        val hasSpecial = value.any { !it.isLetterOrDigit() }
+        val noSpaces = !value.contains(" ")
+
+        _errorPassword.value = when {
+            value.isBlank() -> "La contraseña es obligatoria."
+            value.length !in 8..30 -> "Debe tener entre 8 y 30 caracteres."
+            !noSpaces -> "No puede contener espacios."
+            !hasUpperCase -> "Debe incluir al menos una mayúscula."
+            !hasDigit -> "Debe incluir al menos un número."
+            !hasSpecial -> "Debe incluir al menos un carácter especial."
+            !hasLowerCase -> "Debe incluir minúsculas."
+            else -> null
+        }
+    }
+
+    private fun validateConfirmPassword(value: String) {
+        _errorConfirmPassword.value = when {
+            value != _password.value -> "Las contraseñas no coinciden."
+            else -> null
+        }
     }
 
     fun registrar() {
-        var isValid = true
+        // Ejecutamos todas las validaciones una última vez
+        validateName(_name.value)
+        validateEmail(_email.value)
+        validatePassword(_password.value)
+        validateConfirmPassword(_confirmPassword.value)
 
-        if (_name.value.isBlank()) {
-            _errorName.value = "Nombre obligatorio"
-            isValid = false
+        // Si hay algún error activo, no procedemos
+        if (_errorName.value != null || _errorEmail.value != null ||
+            _errorPassword.value != null || _errorConfirmPassword.value != null) {
+            return
         }
-
-        if (_email.value.isBlank()) {
-            _errorEmail.value = "Correo obligatorio"
-            isValid = false
-        }
-
-        if (_password.value.length < 8) {
-            _errorPassword.value = "Mínimo 8 caracteres"
-            isValid = false
-        }
-
-        if (_password.value != _confirmPassword.value) {
-            _errorConfirmPassword.value = "No coinciden"
-            isValid = false
-        }
-
-        if (!isValid) return
 
         viewModelScope.launch {
             _isLoading.value = true
-
-            val successRegister = repository.register(
-                Usuario(
-                    nombre_completo = _name.value,
-                    correo_electronico = _email.value,
-                    contrasena = _password.value
+            try {
+                val successRegister = repository.register(
+                    Usuario(
+                        nombre_completo = _name.value.trim(),
+                        correo_electronico = _email.value.trim(),
+                        contrasena = _password.value
+                    )
                 )
-            )
 
-            if (successRegister) {
-                _success.value = true
-            } else {
-                _errorMessage.value = "El correo ya existe"
+                if (successRegister) {
+                    _success.value = true
+                } else {
+                    _errorMessage.value = "El correo ya existe"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error de conexión"
+            } finally {
+                _isLoading.value = false
             }
-
-            _isLoading.value = false
         }
     }
 }

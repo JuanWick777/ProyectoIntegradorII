@@ -49,16 +49,17 @@ fun ScreenLogin(
     val emailError by viewModel.emailError.collectAsState()
     val password by viewModel.password.collectAsState()
     val passwordError by viewModel.passwordError.collectAsState()
-    val isLoggedIn by viewModel.isLoading.collectAsState()
-    val loginsuccess by viewModel.loginSuccess.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val loginSuccess by viewModel.loginSuccess.collectAsState()
 
-    LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn) {
+    LaunchedEffect(loginSuccess) {
+        if (loginSuccess) {
             navController.navigate("Main") {
                 popUpTo("Login") { inclusive = true }
             }
         }
     }
+
 
     val errorMessage by viewModel.generalErrorMessage.collectAsState()
 
@@ -128,7 +129,7 @@ fun ScreenLogin(
                     )
                     Spacer(modifier = Modifier.height(30.dp))
                     GlobalButton(
-                        if (isLoggedIn) "Cargando..." else "Iniciar Sesión",
+                        if (isLoading) "Cargando..." else "Iniciar Sesión",
                         25,
                         65,
                         275,
@@ -137,15 +138,11 @@ fun ScreenLogin(
                         Color.White,
                         {
                             viewModel.login()
-                            if (loginsuccess) {
-                                navController.navigate("Main") {
-                                    popUpTo("Login") { inclusive = true }
-                                }
-                            }
                         },
                         Modifier,
-                        enabled = !isLoggedIn
+                        enabled = !isLoading
                     )
+
                     ErrorText(error = errorMessage, size = 16, Modifier)
                     Spacer(Modifier.padding(10.dp))
                 }

@@ -37,6 +37,10 @@ interface ApiService {
         @Path("id") id: Long
     ): OrdenResponseDTO
 
+    @GET("api/ordenes/mis-ordenes")
+    suspend fun obtenerMisOrdenes(): List<OrdenResponseDTO>
+
+
     // PRUEBAS
     @GET("api/auth/me")
     suspend fun getCurrentUser(): Response<LoginResponse>

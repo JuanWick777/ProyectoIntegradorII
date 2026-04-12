@@ -27,6 +27,24 @@ class CartViewModel : ViewModel() {
     private val _ordenActual = MutableStateFlow<OrdenResponseDTO?>(null)
     val ordenActual = _ordenActual.asStateFlow()
 
+    private val _ordenes = MutableStateFlow<List<OrdenResponseDTO>>(emptyList())
+    val ordenes = _ordenes.asStateFlow()
+
+    fun cargarMisOrdenes() {
+        viewModelScope.launch {
+            try {
+                val data = RetrofitClient.api.obtenerMisOrdenes()
+                _ordenes.value = data
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun limpiarOrdenActual() {
+        _ordenActual.value = null
+    }
+
     private var pollingJob: Job? = null
 
     private val _usarPuntos = MutableStateFlow(false)
@@ -49,6 +67,14 @@ class CartViewModel : ViewModel() {
             }
         }
     }
+
+    private val _mesaSeleccionada = MutableStateFlow<Long?>(null)
+    val mesaSeleccionada = _mesaSeleccionada.asStateFlow()
+
+    fun setMesaSeleccionada(mesaId: Long) {
+        _mesaSeleccionada.value = mesaId
+    }
+
 
     fun addToCart(
         platillo: PlatilloDto,
@@ -83,8 +109,7 @@ class CartViewModel : ViewModel() {
         return _cartItems.value.sumOf { it.subtotal() }
     }
 
-    fun confirmarPedido(clienteId: Long, mesaId: Long) {
-
+    fun confirmarPedido(mesaId: Long) {
         val detalles = _cartItems.value.map {
             DetalleOrdenRequest(
                 platilloId = it.platillo.id,
@@ -102,18 +127,16 @@ class CartViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val orden = repository.crearOrden(request)
-
                 _ordenActual.value = orden
-
                 _cartItems.value = emptyList()
-
+                cargarUsuario()
                 startPolling()
-
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
+
 
     fun startPolling() {
         val ordenId = _ordenActual.value?.id ?: return

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -55,32 +56,20 @@ fun SPoints(cartViewModel: CartViewModel){
 
     val puntos by cartViewModel.puntosUsuario.collectAsState()
 
+    LaunchedEffect(Unit) {
+        cartViewModel.cargarUsuario()
+    }
+
+
     LazyColumn(
         modifier = Modifier.fillMaxSize()
             .background(BackgroundColor)
     ) {
         item {
-            HeaderPuntos()
-        }
-        item {
-            Column(modifier = Modifier.padding(20.dp)) {
-
-                GlobalText(
-                    "Tus puntos",
-                    16,
-                    TextColorDark,
-                    Modifier
-                )
-
-                Spacer(modifier = Modifier.height(5.dp))
-
-                GlobalText(
-                    "$puntos puntos",
-                    28,
-                    MainColor,
-                    Modifier
-                )
-            }
+            HeaderPuntos(
+                puntos = puntos,
+                equivalencia = puntos
+            )
         }
         item {
             Column(

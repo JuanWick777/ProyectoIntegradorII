@@ -50,7 +50,7 @@ fun SMain(rootNavController: NavHostController) {
             composable("cart") {
                 SCart(cartViewModel, navController)
             }
-            composable("scan") { SScan() }
+            composable("scan") { SScan(cartViewModel, navController) }
             composable("offers") { SOffers() }
             composable("points") { SPoints(cartViewModel) }
             composable("account") { SAccount(navController, rootNavController) }
