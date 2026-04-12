@@ -45,6 +45,11 @@ class CartViewModel : ViewModel() {
         _ordenActual.value = null
     }
 
+    fun setOrdenActual(orden: OrdenResponseDTO) {
+        _ordenActual.value = orden
+    }
+
+
     private var pollingJob: Job? = null
 
     private val _usarPuntos = MutableStateFlow(false)
@@ -128,6 +133,7 @@ class CartViewModel : ViewModel() {
             try {
                 val orden = repository.crearOrden(request)
                 _ordenActual.value = orden
+                cargarMisOrdenes()
                 _cartItems.value = emptyList()
                 cargarUsuario()
                 startPolling()

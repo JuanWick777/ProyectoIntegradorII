@@ -30,6 +30,7 @@ import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
 fun CardHeaderAccount(
     nameUser: String,
     emailUser: String,
+    fotoPerfil: String? = null,
     modifier: Modifier = Modifier
 ) {
     Surface(

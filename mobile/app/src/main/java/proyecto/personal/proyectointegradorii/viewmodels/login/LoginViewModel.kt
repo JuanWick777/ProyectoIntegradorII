@@ -65,6 +65,10 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
         if (!isValid) return
 
+        _generalErrorMessage.value = null
+        _loginSuccess.value = false
+
+
         viewModelScope.launch {
             _isLoading.value = true
 
@@ -87,10 +91,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
                     _usuario.value = response
 
-                    SessionManager.saveToken(
+                    SessionManager.saveSession(
                         getApplication(),
                         response.token
                     )
+
 
                     _loginSuccess.value = true
 

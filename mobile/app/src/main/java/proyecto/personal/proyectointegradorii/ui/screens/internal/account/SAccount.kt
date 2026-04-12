@@ -14,11 +14,20 @@ import androidx.compose.material.icons.filled.PermIdentity
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
+import proyecto.personal.proyectointegradorii.data.remote.network.SessionManager
+import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 import proyecto.personal.proyectointegradorii.ui.components.buttons.ButtonAccount
 import proyecto.personal.proyectointegradorii.ui.components.headers.CardHeaderAccount
 import proyecto.personal.proyectointegradorii.ui.components.cards.GlobalCard
@@ -29,15 +38,25 @@ fun SAccount(
     navController: NavController,
     rootNavController: NavController
 ) {
+    val context = LocalContext.current
+
+    var usuario by remember { mutableStateOf<LoginResponse?>(null) }
+
+    LaunchedEffect(Unit) {
+        usuario = UserRepository().getCurrentUser()
+    }
+
     Column(
         modifier = Modifier
             .background(BackgroundColor)
             .fillMaxSize()
     ) {
         CardHeaderAccount(
-            "Juan Peréz",
-            "juan.perez@email.com",
+            nameUser = usuario?.nombre ?: "Usuario",
+            emailUser = usuario?.correo ?: "Sin correo",
+            fotoPerfil = usuario?.fotoPerfil
         )
+
         GlobalCard(
             modifier = Modifier
                 .padding(horizontal = 20.dp)
@@ -75,12 +94,16 @@ fun SAccount(
                         icon = Icons.Default.Logout,
                         text = "Cerrar Sesión",
                         onClick = {
+                            SessionManager.clear(context)
+
                             rootNavController.navigate("Login") {
-                                popUpTo(0)
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
                             }
                         },
                         isDesctructive = true
                     )
+
                 }
             }
         )

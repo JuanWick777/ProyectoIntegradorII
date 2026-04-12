@@ -1,6 +1,7 @@
 package proyecto.personal.proyectointegradorii.ui.screens.internal.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,8 +38,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
+import proyecto.personal.proyectointegradorii.ui.components.bars.HomeTopBar
+import proyecto.personal.proyectointegradorii.ui.components.buttons.GlobalButton
 import proyecto.personal.proyectointegradorii.ui.components.cards.PlatilloCard
 import proyecto.personal.proyectointegradorii.ui.components.modals.PlatilloModal
+import proyecto.personal.proyectointegradorii.ui.theme.MainColor
+import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
 import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
 import proyecto.personal.proyectointegradorii.viewmodels.home.HomeViewModel
 
@@ -47,8 +54,19 @@ fun SHome(
     viewModel: HomeViewModel = viewModel()
 ) {
 
-    val platillos by viewModel.platillos.collectAsState()
+    val platillos by viewModel.platillosFiltrados.collectAsState()
+    val categorias by viewModel.categorias.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val mesaId by cartViewModel.mesaSeleccionada.collectAsState()
+    val ordenes by cartViewModel.ordenes.collectAsState()
+
+    var showCategories by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        cartViewModel.cargarMisOrdenes()
+    }
 
     var selectedPlatillo by remember { mutableStateOf<PlatilloDto?>(null) }
     var showModal by remember { mutableStateOf(false) }
@@ -58,11 +76,62 @@ fun SHome(
     ) {
 
         // TOP BAR
-        TopBarFake(
+        HomeTopBar(
+            searchQuery = searchQuery,
+            onSearchChange = viewModel::onSearchQueryChange,
+            onToggleCategories = { showCategories = !showCategories },
             onProfileClick = {
                 navController.navigate("account")
+            },
+            mesaActual = mesaId,
+            pedidosActivos = ordenes.count {
+                it.estado.lowercase() !in listOf("cerrada", "cancelada")
             }
         )
+
+        if (showCategories) {
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                item {
+                    GlobalButton(
+                        "Todas",
+                        14,
+                        42,
+                        140,
+                        if (selectedCategory == null) MainColor else Color.LightGray,
+                        if (selectedCategory == null) MainColor else Color.LightGray,
+                        TextColorWhite,
+                        {
+                            viewModel.onCategorySelected(null)
+                        },
+                        Modifier
+                    )
+                }
+
+                items(categorias) { categoria ->
+                    GlobalButton(
+                        categoria,
+                        14,
+                        42,
+                        160,
+                        if (selectedCategory == categoria) MainColor else Color.LightGray,
+                        if (selectedCategory == categoria) MainColor else Color.LightGray,
+                        TextColorWhite,
+                        {
+                            viewModel.onCategorySelected(categoria)
+                        },
+                        Modifier
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
 
         // LISTA
         if (isLoading) {
@@ -98,56 +167,6 @@ fun SHome(
                     }
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun TopBarFake(
-    onProfileClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        // Filtros
-        IconButton(
-            onClick = {},
-            modifier = Modifier
-                .size(50.dp)
-                .background(Color.White, RoundedCornerShape(16.dp))
-        ) {
-            Icon(Icons.Default.Tune, contentDescription = "")
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        // Buscador
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(50.dp)
-                .background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Row(modifier = Modifier.padding(start = 12.dp)) {
-                Icon(Icons.Default.Search, contentDescription = "")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Buscar...")
-            }
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        // Perfil
-        IconButton(onClick = { onProfileClick() }) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Perfil"
-            )
         }
     }
 }

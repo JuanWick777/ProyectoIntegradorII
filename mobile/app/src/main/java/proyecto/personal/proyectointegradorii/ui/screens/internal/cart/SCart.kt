@@ -43,11 +43,13 @@ fun SCart(
     val puntos by cartViewModel.puntosUsuario.collectAsState()
     val usarPuntos by cartViewModel.usarPuntos.collectAsState()
     val mesaId by cartViewModel.mesaSeleccionada.collectAsState()
+    val ordenes by cartViewModel.ordenes.collectAsState()
 
     var showSuccessDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         cartViewModel.cargarUsuario()
+        cartViewModel.cargarMisOrdenes()
 
         if (cartViewModel.mesaSeleccionada.value == null) {
             cartViewModel.setMesaSeleccionada(1)
@@ -75,11 +77,13 @@ fun SCart(
 
         when {
             orden != null -> {
+                val pedidoActual = orden!!
+
                 Column(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
                 ) {
                     GlobalText(
-                        "Pedido #${orden!!.id}",
+                        "Pedido #${pedidoActual.id}",
                         22,
                         TextColorDark,
                         Modifier
@@ -88,7 +92,7 @@ fun SCart(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = when (orden!!.estado.lowercase()) {
+                        text = when (pedidoActual.estado.lowercase()) {
                             "pendiente_confirmacion" -> "Confirmando..."
                             "confirmada" -> "Orden recibida"
                             "en_preparacion" -> "En preparación"
@@ -96,14 +100,14 @@ fun SCart(
                             "entregada" -> "Entregada"
                             "cancelada" -> "Cancelada"
                             "cerrada" -> "Cerrada"
-                            else -> orden!!.estado
+                            else -> pedidoActual.estado
                         }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     LazyColumn {
-                        items(orden!!.detalles) { item ->
+                        items(pedidoActual.detalles) { item ->
                             Column(modifier = Modifier.padding(bottom = 10.dp)) {
                                 Text(item.nombre ?: "Platillo")
                                 Text("Cantidad: ${item.cantidad}")
@@ -113,7 +117,7 @@ fun SCart(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Total: $${orden!!.total}")
+                    Text("Total: $${pedidoActual.total}")
 
                     GlobalButton(
                         "Hacer otro pedido",
@@ -125,32 +129,94 @@ fun SCart(
                         TextColorWhite,
                         {
                             cartViewModel.limpiarOrdenActual()
+                            navController.navigate("home") {
+                                launchSingleTop = true
+                            }
                         },
                         Modifier
                     )
 
-                }
-            }
-
-            items.isEmpty() -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    GlobalText(
-                        "No se ha realizado ningún pedido",
-                        22,
-                        TextColorDark,
+                    GlobalButton(
+                        "Volver a pedidos",
+                        16,
+                        50,
+                        350,
+                        MainColor,
+                        MainColor,
+                        TextColorWhite,
+                        {
+                            cartViewModel.limpiarOrdenActual()
+                        },
                         Modifier
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text("Agrega productos desde el menú para comenzar.")
                 }
             }
+
+
+            items.isEmpty() -> {
+                if (ordenes.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        GlobalText(
+                            "No se ha realizado ningún pedido",
+                            22,
+                            TextColorDark,
+                            Modifier
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text("Agrega productos desde el menú para comenzar.")
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
+                    ) {
+                        GlobalText(
+                            "Pedidos realizados",
+                            22,
+                            TextColorDark,
+                            Modifier
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        LazyColumn {
+                            items(ordenes) { pedido ->
+                                Column(
+                                    modifier = Modifier.padding(bottom = 14.dp)
+                                ) {
+                                    Text("Pedido #${pedido.id}")
+                                    Text("Estado: ${pedido.estado}")
+                                    Text("Mesa: ${pedido.mesaNumero ?: "-"}")
+                                    Text("Total: $${pedido.total}")
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    GlobalButton(
+                                        "Ver seguimiento",
+                                        14,
+                                        45,
+                                        250,
+                                        MainColor,
+                                        MainColor,
+                                        TextColorWhite,
+                                        {
+                                            cartViewModel.setOrdenActual(pedido)
+                                        },
+                                        Modifier
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
 
             else -> {
                 Column(

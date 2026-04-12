@@ -1,9 +1,11 @@
 package proyecto.personal.proyectointegradorii.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import proyecto.personal.proyectointegradorii.data.remote.network.SessionManager
 import proyecto.personal.proyectointegradorii.ui.screens.account.ChangePasswordScreen
 import proyecto.personal.proyectointegradorii.ui.screens.account.HistoryScreen
 import proyecto.personal.proyectointegradorii.ui.screens.account.PersonalDatesScreen
@@ -17,9 +19,17 @@ import proyecto.personal.proyectointegradorii.ui.screens.register.ScreenRegister
 fun Navigation(){
     val navController = rememberNavController()
 
+    val context = LocalContext.current
+
+    val startDestination = if (SessionManager.isSessionValid(context)) {
+        "Main"
+    } else {
+        "Login"
+    }
+
     NavHost(
         navController = navController,
-        startDestination = "Login"
+        startDestination = startDestination
     ){
         composable("Login"){
             ScreenLogin(navController)

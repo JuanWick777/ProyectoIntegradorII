@@ -6,5 +6,9 @@ data class PlatilloDto(
     val descripcion: String?,
     val precio: Double,
     val urlImagen: String?,
+    val disponibilidad: String?,
+    val categoriaId: Long?,
+    val categoriaNombre: String?,
+    val kitchenId: Long?,
     val estado: String?
 )

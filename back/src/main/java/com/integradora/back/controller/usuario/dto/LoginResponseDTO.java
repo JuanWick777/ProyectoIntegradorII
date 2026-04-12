@@ -15,5 +15,6 @@ public class LoginResponseDTO {
     private String correo;
     private String rol;
     private Integer puntosLealtad;
+    private String fotoPerfil;
     private String token;
 }
