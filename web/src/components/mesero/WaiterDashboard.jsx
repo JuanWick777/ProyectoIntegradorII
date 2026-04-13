@@ -46,7 +46,8 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
     const cargarOrdenes = useCallback(async () => {
         try {
             const data = await fetchMeseroOrdenes();
-            setOrdenes(data);
+            // Seguridad: las canceladas no deben mostrarse en el dashboard
+            setOrdenes((data || []).filter(o => o?.estado !== 'cancelada'));
             setUltimaSync(new Date());
             setSesionExpirada(false);       // Todo OK
         } catch (e) {
@@ -93,6 +94,17 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
     const contar = (estado) => ordenes.filter(o => o.estado === estado).length;
     const pendientes = contar('pendiente_confirmacion');
 
+    // Mostrar solo lo útil en la barra, el resto al menú
+    const filtrosVisibles = FILTROS.filter((f) =>
+        f.key === 'todos' || f.key === filtro || contar(f.key) > 0
+    );
+    const filtrosOcultos = FILTROS.filter((f) => !filtrosVisibles.some((v) => v.key === f.key));
+    const navItemsFiltrosOcultos = filtrosOcultos.map((f) => ({
+        id: f.key,
+        icon: <f.Icon size={18} />,
+        label: `${f.label}${contar(f.key) > 0 ? ` (${contar(f.key)})` : ''}`,
+    }));
+
     return (
         <div className="min-vh-100" style={{ background: '#f8f9fa' }}>
 
@@ -131,6 +143,9 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                             loginPath="/login"
                             accentColor="#e67e22"
                             onLogout={onLogout}
+                            navItems={navItemsFiltrosOcultos}
+                            activeItem={filtro}
+                            onNavItemClick={(id) => setFiltro(id)}
                         />
                     </div>
                 </div>
@@ -142,7 +157,7 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                 style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}
             >
                 <div className="d-inline-flex gap-2">
-                    {FILTROS.map(f => (
+                    {filtrosVisibles.map(f => (
                         <button
                             key={f.key}
                             className={`btn btn-sm ${filtro === f.key ? 'btn-primary' : 'btn-outline-secondary'} d-flex align-items-center gap-1`}

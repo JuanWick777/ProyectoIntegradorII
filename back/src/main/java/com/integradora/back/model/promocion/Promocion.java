@@ -37,6 +37,14 @@ public class Promocion {
     @Column(name = "codigo_promo", unique = true)
     private String codigoPromo;
 
+    /**
+     * Categoría objetivo (opcional):
+     * - null  → la promo aplica sin filtrar por categoría (por defecto)
+     * - id    → la promo solo afecta platillos de esa categoría (ej. 2x1 por categoría)
+     */
+    @Column(name = "categoria_id")
+    private Long categoriaId;
+
     @Builder.Default
     @Column(name = "activa")
     private Boolean activa = true;

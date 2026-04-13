@@ -1,5 +1,5 @@
 import React from 'react';
-import { UtensilsCrossed, Edit2 } from 'lucide-react';
+import { UtensilsCrossed, Edit2, Trash2 } from 'lucide-react';
 import {
     getProductImage,
     getProductName,
@@ -10,7 +10,7 @@ import {
 import Badge from '../ui/Badge';
 import { AlertTriangle } from 'lucide-react';
 
-const ProductCard = ({ product, onEdit }) => {
+const ProductCard = ({ product, onEdit, onDelete }) => {
     const disponibilidad = getProductDisponibilidad(product);
     const stockAgotado = disponibilidad === 'AGOTADO';
     const imagen = getProductImage(product);
@@ -68,6 +68,15 @@ const ProductCard = ({ product, onEdit }) => {
                     onClick={() => onEdit(product)}
                 >
                     <Edit2 size={14} /> Editar
+                </button>
+
+                <button
+                    className="btn btn-outline-danger btn-sm mt-2 w-100 fw-semibold d-flex align-items-center justify-content-center gap-1"
+                    style={{ borderRadius: '0.6rem' }}
+                    onClick={() => onDelete && onDelete(product)}
+                    disabled={!onDelete}
+                >
+                    <Trash2 size={14} /> Eliminar
                 </button>
             </div>
         </div>

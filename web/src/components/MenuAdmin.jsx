@@ -11,6 +11,7 @@ import QRCodeGenerator from './QRCodeGenerator';
 import StatCard from './ui/StatCard';
 import { LayoutDashboard, Utensils, ChefHat, Users, User, Info, Settings, QrCode, Tag, Clock, PlusCircle, LogOut, Check, Heart } from 'lucide-react';
 import { getProductCategoryName, getProductName } from './admin/adminConstants';
+import ConfirmModal from './ui/ConfirmModal';
 
 const MenuAdmin = () => {
     const {
@@ -24,6 +25,7 @@ const MenuAdmin = () => {
         fetchOrders,
         uploadPlatilloImage,
         deletePlatilloImage,
+        deleteProduct,
         logout,
         usuario
     } = useAppStore();
@@ -37,6 +39,7 @@ const MenuAdmin = () => {
     const [usuarios, setUsuarios] = useState([]);
     const [orders, setOrders] = useState([]);
     const [loadingDashboard, setLoadingDashboard] = useState(true);
+    const [confirmDelProduct, setConfirmDelProduct] = useState(null);
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -136,6 +139,35 @@ const MenuAdmin = () => {
     const handleLogout = async () => {
         await logout();
         window.location.replace('/admin/login');
+    };
+
+    const eliminarPlatillo = async (product) => {
+        if (!product?.id) return;
+        try {
+            const imagenPathOrUrl =
+                product?.urlImagen ??
+                product?.url_imagen ??
+                product?.imagen_url ??
+                product?.imagenUrl ??
+                null;
+
+            // Intentar eliminar imagen (si existe) antes de eliminar el platillo
+            if (imagenPathOrUrl) {
+                try {
+                    await deletePlatilloImage(imagenPathOrUrl);
+                } catch {
+                    // Si falla el borrado de imagen, no bloqueamos la eliminación
+                }
+            }
+
+            await deleteProduct(product.id);
+            mostrarToast('Platillo eliminado');
+            await fetchAdminProducts();
+        } catch (e) {
+            mostrarToast('❌ No se pudo eliminar: ' + (e?.message || ''));
+        } finally {
+            setConfirmDelProduct(null);
+        }
     };
 
     return (
@@ -307,7 +339,11 @@ const MenuAdmin = () => {
                                 <div className="row g-3">
                                     {productsFiltrados.map((p) => (
                                         <div key={p.id} className="col-6 col-md-4 col-lg-3 col-xl-2">
-                                            <ProductCard product={p} onEdit={setModalProduct} />
+                                            <ProductCard
+                                                product={p}
+                                                onEdit={setModalProduct}
+                                                onDelete={(prod) => setConfirmDelProduct(prod)}
+                                            />
                                         </div>
                                     ))}
                                 </div>
@@ -334,6 +370,22 @@ const MenuAdmin = () => {
                         {toast}
                     </div>
                 )}
+
+                <ConfirmModal
+                    open={!!confirmDelProduct}
+                    title="¿Eliminar platillo?"
+                    subtitle="Esta acción no se puede deshacer."
+                    description={confirmDelProduct ? (
+                        <>
+                            <div className="fw-semibold">{confirmDelProduct.nombre}</div>
+                            <div className="text-muted small">Se eliminará este platillo del menú.</div>
+                        </>
+                    ) : null}
+                    confirmText="Sí, eliminar"
+                    cancelText="Cancelar"
+                    onClose={() => setConfirmDelProduct(null)}
+                    onConfirm={() => eliminarPlatillo(confirmDelProduct)}
+                />
             </div>
         </div>
     );

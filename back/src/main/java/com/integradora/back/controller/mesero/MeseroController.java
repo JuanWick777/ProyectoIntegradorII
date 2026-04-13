@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/mesero")
@@ -27,16 +28,42 @@ public class MeseroController {
     private final OrdenRepository ordenRepository;
 
     @GetMapping("/ordenes")
-    public ResponseEntity<List<OrdenResponseDTO>> listarActivas() {
-        List<OrdenResponseDTO> ordenes = ordenService.obtenerActivas()
-                .stream()
+    public ResponseEntity<List<OrdenResponseDTO>> listarActivas(Authentication auth) {
+        List<Orden> ordenes;
+
+        // ADMIN ve todo lo activo. MESERO ve: pendientes + sus órdenes asignadas (máx 3 activas).
+        if (auth != null && auth.getAuthorities() != null
+                && auth.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()))) {
+            ordenes = ordenService.obtenerActivas();
+        } else {
+            String correo = auth != null ? auth.getName() : null;
+            Usuario mesero = (correo != null)
+                    ? usuarioRepository.findByCorreo(correo).orElseThrow()
+                    : null;
+
+            List<Orden> pendientes = ordenRepository.findByEstadoPreparacion(EstadoOrden.PENDIENTE_CONFIRMACION);
+            List<Orden> asignadas = (mesero == null)
+                    ? List.of()
+                    : ordenRepository.findByMeseroIdAndEstadoPreparacionIn(
+                    mesero.getId(),
+                    List.of(EstadoOrden.CONFIRMADA, EstadoOrden.EN_PREPARACION, EstadoOrden.LISTA)
+            );
+
+            // Unir sin duplicar
+            Map<Long, Orden> uniq = new java.util.LinkedHashMap<>();
+            for (Orden o : pendientes) uniq.put(o.getId(), o);
+            for (Orden o : asignadas) uniq.put(o.getId(), o);
+            ordenes = uniq.values().stream().toList();
+        }
+
+        List<OrdenResponseDTO> dto = ordenes.stream()
                 .map(orden -> OrdenMapper.toDTO(
                         orden,
                         detalleOrdenRepository.findByOrdenId(orden.getId())
                 ))
                 .toList();
 
-        return ResponseEntity.ok(ordenes);
+        return ResponseEntity.ok(dto);
     }
 
     /*@GetMapping("/mesero")

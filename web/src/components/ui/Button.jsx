@@ -1,7 +1,7 @@
 import React from 'react';
 
 const VARIANT_CLASSES = {
-  primary: 'bg-orange-600 text-white hover:bg-orange-700 active:bg-orange-800 shadow-lg',
+  primary: 'ui-btn--primary text-white shadow-lg',
   secondary: 'bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-700',
   outline: 'border border-gray-300 text-gray-700 hover:bg-gray-100',
   danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',

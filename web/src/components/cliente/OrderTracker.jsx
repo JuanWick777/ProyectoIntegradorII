@@ -235,12 +235,18 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
                         </div>
                         <div className="card-body p-0">
                             {orden.detalles.map((det, idx) => {
+                                const estadoDet = (det?.estadoPreparacion || '').toString().toUpperCase();
+                                const estadoDetKey = {
+                                    PENDIENTE: 'pendiente',
+                                    EN_PREPARACION: 'en_preparacion',
+                                    LISTO: 'listo',
+                                }[estadoDet] || 'pendiente';
+
                                 const estadoBadge = {
                                     pendiente: { cls: 'bg-warning text-dark', txt: 'Pendiente' },
                                     en_preparacion: { cls: 'bg-info', txt: 'Preparando...' },
                                     listo: { cls: 'bg-success', txt: 'Listo ✓' },
-                                    entregado: { cls: 'bg-secondary', txt: 'Entregado' },
-                                }[det.estado_preparacion] || { cls: 'bg-light', txt: det.estado_preparacion };
+                                }[estadoDetKey] || { cls: 'bg-light', txt: estadoDetKey };
 
                                 return (
                                     <div
@@ -249,11 +255,11 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
                                         style={{ borderColor: '#F0F0F0' }}
                                     >
                                         <div>
-                                            <span className="fw-semibold small">{det.producto}</span>
+                                            <span className="fw-semibold small">{det.nombre}</span>
                                             <span className="text-muted small ms-2">x{det.cantidad}</span>
-                                            {det.nota_cliente && (
+                                            {det.nota && (
                                                 <p className="text-muted mb-0 d-flex align-items-center gap-1" style={{ fontSize: '0.72rem' }}>
-                                                    <FileText size={12} /> {det.nota_cliente}
+                                                    <FileText size={12} /> {det.nota}
                                                 </p>
                                             )}
                                         </div>
@@ -269,9 +275,11 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
                             <div className="d-flex justify-content-between small text-muted">
                                 <span>Subtotal</span><span>${Number(orden.subtotal).toFixed(2)}</span>
                             </div>
-                            <div className="d-flex justify-content-between small text-muted">
-                                <span>IVA (16%)</span><span>${Number(orden.iva).toFixed(2)}</span>
-                            </div>
+                            {Number(orden.montoDescuento || 0) > 0 && (
+                                <div className="d-flex justify-content-between small text-muted">
+                                    <span>Descuento</span><span>- ${Number(orden.montoDescuento).toFixed(2)}</span>
+                                </div>
+                            )}
                             <div className="d-flex justify-content-between fw-bold mt-1">
                                 <span>Total</span>
                                 <span className="text-primary">${Number(orden.total).toFixed(2)}</span>

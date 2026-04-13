@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { X, FileText, AlertTriangle, Users } from 'lucide-react';
+import { Trash2, FileText, AlertTriangle, Users } from 'lucide-react';
 import AlertMessage from '../ui/AlertMessage';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
@@ -114,7 +114,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                                     style={{ width: 32, height: 32 }}
                                     title="Eliminar"
                                 >
-                                    <X size={16} />
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
 

@@ -260,6 +260,17 @@ export const useAppStore = create(
                 }
             },
 
+            fetchKitchenHistorial: async () => {
+                const { token } = get();
+                try {
+                    const data = await apiFetch('/cocina/historial', { token });
+                    return data || [];
+                } catch (e) {
+                    console.error('Error cargando historial de cocina:', e);
+                    return [];
+                }
+            },
+
             updateDetalleEstado: async (detalleId, nuevoEstado) => {
                 const { token } = get();
                 await apiFetch(`/detalle-orden/${detalleId}/estado`, {

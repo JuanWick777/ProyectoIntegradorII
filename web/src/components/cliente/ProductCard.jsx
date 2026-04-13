@@ -3,6 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { AlertTriangle, UtensilsCrossed, Check } from 'lucide-react';
+import { getProductImage } from '../admin/adminConstants';
 
 /**
  * ProductCard.jsx — Tarjeta de producto para el menú del cliente
@@ -14,6 +15,7 @@ import { AlertTriangle, UtensilsCrossed, Check } from 'lucide-react';
 const ProductCard = ({ product }) => {
     const { carrito, agregarAlCarrito, decrementarCantidad } = useAppStore();
     const [added, setAdded] = useState(false);
+    const imagen = getProductImage(product);
 
     // Buscar si el producto ya está en el carrito
     const itemEnCarrito = carrito.find(i => i.id === product.id);
@@ -38,15 +40,15 @@ const ProductCard = ({ product }) => {
                 className="position-relative"
                 style={{
                     height: 130,
-                    background: product.imagen_url
-                        ? `url(${product.imagen_url}) center/cover`
+                    background: imagen
+                        ? `url(${imagen}) center/cover`
                         : 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                 }}
             >
-                {!product.imagen_url && (
+                {!imagen && (
                     <UtensilsCrossed size={48} style={{ color: 'rgba(0,0,0,0.2)' }} />
                 )}
 

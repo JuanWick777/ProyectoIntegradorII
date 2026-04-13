@@ -10,12 +10,13 @@ const EMPTY_PROMO = {
   tipoDescuento: 'PORCENTAJE',
   valorDescuento: '',
   codigoPromo: '',
+  categoriaId: '',
   activa: true,
   fechaInicio: '',
   fechaFin: '',
 };
 
-const PromoModal = ({ promo, onSave, onClose, saving }) => {
+const PromoModal = ({ promo, categorias = [], onSave, onClose, saving }) => {
   const isNew = !promo?.id;
   const [form, setForm] = useState(promo ? { ...EMPTY_PROMO, ...promo } : EMPTY_PROMO);
 
@@ -24,6 +25,7 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
   }, [promo]);
 
   const set = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
+  const is2x1 = String(form.tipoDescuento || '').toUpperCase() === '2X1';
 
   return (
     <Modal
@@ -44,7 +46,11 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
             className="btn fw-bold px-4 d-flex align-items-center gap-2"
             style={{ background: '#e67e22', color: 'white', borderRadius: '0.75rem' }}
             onClick={() => onSave(form)}
-            disabled={saving || !form.titulo?.trim() || !form.valorDescuento || Number(form.valorDescuento) <= 0}
+            disabled={saving
+              || !form.titulo?.trim()
+              || (is2x1
+                ? (!form.codigoPromo?.trim() || !form.categoriaId)
+                : (!form.valorDescuento || Number(form.valorDescuento) <= 0))}
           >
             {saving
               ? <><LoadingSpinner size="sm" className="me-2" variant="light" />Guardando...</>
@@ -79,10 +85,15 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
             as="select"
             label="Tipo de descuento"
             value={form.tipoDescuento}
-            onChange={(e) => set('tipoDescuento', e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              set('tipoDescuento', next);
+              if (String(next).toUpperCase() === '2X1') set('valorDescuento', 0);
+            }}
             options={[
               { value: 'PORCENTAJE', label: '% Porcentaje' },
               { value: 'MONTO_FIJO', label: '$ Monto fijo' },
+              { value: '2X1', label: '2x1 (por categoría)' },
             ]}
           />
         </div>
@@ -93,6 +104,7 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
             label={`Valor ${form.tipoDescuento === 'PORCENTAJE' ? '(%)' : '($)'}`}
             required
             value={form.valorDescuento}
+            disabled={is2x1}
             onKeyDown={(e) => {
               if (['+', '-', 'e', 'E'].includes(e.key)) e.preventDefault();
             }}
@@ -105,8 +117,23 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
       </div>
 
       <FormInput
+        id="promo-categoria"
+        as="select"
+        label={is2x1 ? 'Categoría (obligatoria para 2x1)' : 'Categoría (opcional)'}
+        value={form.categoriaId ?? ''}
+        onChange={(e) => set('categoriaId', e.target.value)}
+        options={[
+          { value: '', label: '— Sin categoría —' },
+          ...(categorias || []).map((c) => ({ value: String(c.id), label: c.nombre })),
+        ]}
+        helperText={is2x1
+          ? 'La promo 2x1 solo aplica a platillos de esta categoría.'
+          : 'Si eliges una categoría, la promo solo afectará platillos de esa categoría.'}
+      />
+
+      <FormInput
         id="promo-codigo"
-        label="Código (opcional)"
+        label={is2x1 ? 'Código (obligatorio para 2x1)' : 'Código (opcional)'}
         value={form.codigoPromo}
         onKeyDown={(e) => {
           if (['+', '-'].includes(e.key)) e.preventDefault();
@@ -114,7 +141,9 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
         onChange={(e) => set('codigoPromo', e.target.value.toUpperCase())}
         placeholder="Ej. PROMO10"
         style={{ fontFamily: 'monospace', letterSpacing: '0.08em' }}
-        helperText="Si no tiene código, la promo es informativa (el mesero la aplica manualmente)."
+        helperText={is2x1
+          ? 'Para 2x1 se requiere un código; al aplicarlo se calcula el descuento según los platillos de la categoría.'
+          : 'Si no tiene código, la promo es informativa (el mesero la aplica manualmente).'}
       />
 
       <div className="row g-3 mb-3">

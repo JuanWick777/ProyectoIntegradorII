@@ -28,6 +28,10 @@ public interface OrdenRepository extends JpaRepository<Orden, Long> {
     List<Orden> findTop50ByEstadoPreparacionInOrderByIdDesc(
             List<EstadoOrden> estados
     );
+
+    List<Orden> findByEstadoPreparacion(EstadoOrden estado);
+
+    List<Orden> findByMeseroIdAndEstadoPreparacionIn(Long meseroId, List<EstadoOrden> estados);
     
     long countByMeseroIdAndEstadoPreparacionIn(Long meseroId, List<EstadoOrden> estados);
 

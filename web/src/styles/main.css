@@ -48,6 +48,17 @@ body {
     transform: scale(0.98);
 }
 
+/* ── UI Button (React component) ───────────────────────────────── */
+.ui-btn--primary {
+    background-color: var(--color-primary);
+}
+.ui-btn--primary:hover {
+    background-color: var(--color-primary-dk);
+}
+.ui-btn--primary:active {
+    background-color: #cc5f00;
+}
+
 /* ── KDS — Kanban ──────────────────────────────────────────────── */
 .kanban-col-pendiente {
     border-top: 4px solid #DC3545;

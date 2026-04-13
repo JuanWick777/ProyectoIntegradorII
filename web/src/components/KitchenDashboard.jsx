@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, FileText, Flame, Check, ChefHat, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Users, FileText, Flame, Check, ChefHat, RefreshCw, AlertTriangle, History } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import MeseroLogin from './mesero/MeseroLogin';
 import HamburgerMenu from './shared/HamburgerMenu';
@@ -115,7 +115,7 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
             </div>
 
             <div className="card-footer bg-transparent p-3 border-0">
-                {estado === 'PENDIENTE' && (
+                {estado === 'PENDIENTE' && typeof onPreparar === 'function' && (
                     <button
                         className="btn w-100 fw-bold text-white d-flex align-items-center justify-content-center gap-2"
                         style={{ background: '#e67e22', borderRadius: '0.75rem' }}
@@ -130,7 +130,7 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
                     </button>
                 )}
 
-                {estado === 'EN_PREPARACION' && (
+                {estado === 'EN_PREPARACION' && typeof onListo === 'function' && (
                     <button
                         className="btn w-100 fw-bold text-white d-flex align-items-center justify-content-center gap-2"
                         style={{ background: '#27ae60', borderRadius: '0.75rem' }}
@@ -156,12 +156,14 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
 };
 
 const KitchenDashboard = () => {
-    const { usuario, fetchCurrentUser, fetchKitchenTickets, updateDetalleEstado, logoutLocal } = useAppStore();
+    const { usuario, fetchCurrentUser, fetchKitchenTickets, fetchKitchenHistorial, updateDetalleEstado, logoutLocal } = useAppStore();
 
     const [tickets, setTickets] = useState([]);
+    const [historial, setHistorial] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingId, setLoadingId] = useState(null);
     const [ultimaSync, setUltimaSync] = useState(null);
+    const [vista, setVista] = useState('dashboard'); // 'dashboard' | 'historial'
 
     const cargarTickets = useCallback(async () => {
         try {
@@ -175,6 +177,15 @@ const KitchenDashboard = () => {
         }
     }, [fetchKitchenTickets]);
 
+    const cargarHistorial = useCallback(async () => {
+        try {
+            const data = await fetchKitchenHistorial();
+            setHistorial(data || []);
+        } catch (e) {
+            console.error('KDS: Error cargando historial', e);
+        }
+    }, [fetchKitchenHistorial]);
+
     useEffect(() => {
         fetchCurrentUser().catch(() => { });
     }, [fetchCurrentUser]);
@@ -182,10 +193,16 @@ const KitchenDashboard = () => {
     useEffect(() => {
         if (!usuario) return;
 
+        if (vista === 'historial') {
+            cargarHistorial();
+            const interval = setInterval(cargarHistorial, 10_000);
+            return () => clearInterval(interval);
+        }
+
         cargarTickets();
         const interval = setInterval(cargarTickets, 8000);
         return () => clearInterval(interval);
-    }, [usuario, cargarTickets]);
+    }, [usuario, cargarTickets, cargarHistorial, vista]);
 
     const accionEstado = async (detalleId, nuevoEstado) => {
         setLoadingId(detalleId);
@@ -249,6 +266,11 @@ const KitchenDashboard = () => {
     const enPreparacion = tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'EN_PREPARACION');
     const listos = tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'LISTO');
 
+    const navItems = [
+        { id: 'dashboard', icon: <ChefHat size={18} />, label: 'Dashboard' },
+        { id: 'historial', icon: <History size={18} />, label: 'Historial' },
+    ];
+
     return (
         <div className="min-vh-100" style={{ background: '#ffffff' }}>
             <header
@@ -284,12 +306,47 @@ const KitchenDashboard = () => {
                         loginPath="/login"
                         accentColor="#e67e22"
                         onLogout={logoutLocal}
+                        navItems={navItems}
+                        activeItem={vista}
+                        onNavItemClick={setVista}
                     />
                 </div>
             </header>
 
             <div className="container-fluid px-3 py-3">
-                {loading ? (
+                {vista === 'historial' ? (
+                    <div className="row g-3">
+                        <div className="col-12">
+                            <div className="d-flex align-items-center gap-2 mb-2">
+                                <History size={18} style={{ color: '#6c757d' }} />
+                                <h5 className="fw-bold mb-0">Historial de cocina</h5>
+                                <span className="text-muted small ms-2">{historial.length} tickets</span>
+                            </div>
+                        </div>
+
+                        <div className="col-12">
+                            {historial.length === 0 ? (
+                                <div className="text-center py-5 text-muted">
+                                    <p style={{ fontSize: 48 }}>📦</p>
+                                    <p className="fw-semibold">Sin historial por ahora</p>
+                                </div>
+                            ) : (
+                                <div className="row g-3">
+                                    {historial.map((detalle) => (
+                                        <div key={detalle.id} className="col-12 col-md-6 col-xl-4">
+                                            <KitchenTicket
+                                                detalle={detalle}
+                                                loading={false}
+                                                onPreparar={() => { }}
+                                                onListo={() => { }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : loading ? (
                     <div className="text-center py-5" style={{ color: '#b45309' }}>
                         <div className="spinner-border mb-3" style={{ color: '#e67e22' }} />
                         <p>Cargando tickets...</p>
@@ -342,8 +399,17 @@ const KitchenDashboard = () => {
                             </div>
                         </div>
 
+                        {/* Columna "Listo" (listo para recoger por mesero) */}
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#f0fff4', border: '1px solid #abebc6', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
+                            <div
+                                className="rounded-4 p-3 h-100"
+                                style={{
+                                    background: '#f0fff4',
+                                    border: '1px solid #abebc6',
+                                    maxHeight: 'calc(100vh - 110px)',
+                                    overflowY: 'auto'
+                                }}
+                            >
                                 <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#1e8449' }}>
                                     <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#27ae60' }} /> Listo ({listos.length})
                                 </h5>
@@ -364,6 +430,7 @@ const KitchenDashboard = () => {
                                 )}
                             </div>
                         </div>
+
                     </div>
                 )}
             </div>

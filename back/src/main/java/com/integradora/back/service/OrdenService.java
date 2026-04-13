@@ -75,7 +75,9 @@ public class OrdenService {
 
         orden.setEstadoPreparacion(nuevoEstado);
 
-        if (nuevoEstado == EstadoOrden.ENTREGADA || nuevoEstado == EstadoOrden.CANCELADA) {
+        if (nuevoEstado == EstadoOrden.ENTREGADA
+                || nuevoEstado == EstadoOrden.CANCELADA
+                || nuevoEstado == EstadoOrden.CERRADA) {
             orden.setFechaFinalizacion(LocalDateTime.now());
         }
 
@@ -290,6 +292,7 @@ public class OrdenService {
         return ordenRepository.findByEstadoPreparacionNotIn(
                 List.of(
                         EstadoOrden.ENTREGADA,
+                        EstadoOrden.CERRADA,
                         EstadoOrden.CANCELADA
                 )
         );
@@ -299,6 +302,7 @@ public class OrdenService {
         return ordenRepository.findTop50ByEstadoPreparacionInOrderByIdDesc(
                 List.of(
                         EstadoOrden.ENTREGADA,
+                        EstadoOrden.CERRADA,
                         EstadoOrden.CANCELADA
                 )
         );

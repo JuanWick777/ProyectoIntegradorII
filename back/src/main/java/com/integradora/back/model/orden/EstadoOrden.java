@@ -6,5 +6,6 @@ public enum EstadoOrden {
     EN_PREPARACION,
     LISTA,
     ENTREGADA,
+    CERRADA,
     CANCELADA
 }

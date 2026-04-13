@@ -13,12 +13,13 @@ const TIPO_BADGE = {
 };
 
 const PromocionesAdmin = ({ mostrarToast }) => {
-    const { fetchAdminPromociones, createPromocion, updatePromocion, deletePromocion } = useAppStore();
+    const { fetchAdminPromociones, createPromocion, updatePromocion, deletePromocion, fetchCategorias } = useAppStore();
     const [promos, setPromos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState(null);
     const [saving, setSaving] = useState(false);
     const [confirmDel, setConfirmDel] = useState(null);
+    const [categorias, setCategorias] = useState([]);
 
     const cargar = async () => {
         setLoading(true);
@@ -32,15 +33,23 @@ const PromocionesAdmin = ({ mostrarToast }) => {
         }
     };
 
-    useEffect(() => { cargar(); }, []);
+    useEffect(() => {
+        cargar();
+        (async () => {
+            const cats = await fetchCategorias();
+            setCategorias(cats || []);
+        })();
+    }, []);
 
     const handleSave = async (form) => {
         setSaving(true);
         try {
+            const is2x1 = String(form.tipoDescuento || '').toUpperCase() === '2X1';
             const payload = {
                 ...form,
-                valorDescuento: parseFloat(form.valorDescuento) || 0,
+                valorDescuento: is2x1 ? 0 : (parseFloat(form.valorDescuento) || 0),
                 codigoPromo: form.codigoPromo || null,
+                categoriaId: form.categoriaId ? Number(form.categoriaId) : null,
                 fechaInicio: form.fechaInicio || null,
                 fechaFin: form.fechaFin || null,
             };
@@ -115,6 +124,7 @@ const PromocionesAdmin = ({ mostrarToast }) => {
             {modal !== null && (
                 <PromoModal
                     promo={modal}
+                    categorias={categorias}
                     onSave={handleSave}
                     onClose={() => setModal(null)}
                     saving={saving}

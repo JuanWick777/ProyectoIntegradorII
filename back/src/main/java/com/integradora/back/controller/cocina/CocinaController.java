@@ -17,13 +17,13 @@ public class CocinaController {
 
     @GetMapping("/tickets")
     public List<DetalleOrden> tickets() {
-        return detalleOrdenRepository.findByEstadoPreparacionIn(
-                List.of(
-                        EstadoDetalle.PENDIENTE,
-                        EstadoDetalle.EN_PREPARACION,
-                        EstadoDetalle.LISTO
-                )
-        );
+        // Solo tickets de órdenes activas (excluye entregadas/cerradas/canceladas)
+        return detalleOrdenRepository.findTicketsCocina();
+    }
+
+    @GetMapping("/historial")
+    public List<DetalleOrden> historial() {
+        return detalleOrdenRepository.findHistorialCocina();
     }
 
     @GetMapping("/tickets/{cocinaId}")

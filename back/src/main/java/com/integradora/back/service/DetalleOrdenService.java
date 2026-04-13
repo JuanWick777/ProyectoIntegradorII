@@ -81,12 +81,25 @@ public class DetalleOrdenService {
 
         List<DetalleOrden> detalles = detalleRepository.findByOrdenId(orden.getId());
 
+        // Si al menos un detalle entra a preparación, la orden debe reflejarlo.
+        // Esto permite que mesero/cliente vean "en_preparacion" mientras cocina trabaja.
+        boolean algunoEnPreparacion = detalles.stream()
+                .anyMatch(d -> d.getEstadoPreparacion() == EstadoDetalle.EN_PREPARACION);
+
         boolean todosListos = detalles.stream()
                 .allMatch(d -> d.getEstadoPreparacion() == EstadoDetalle.LISTO);
 
         if (todosListos) {
             orden.setEstadoPreparacion(EstadoOrden.LISTA);
             ordenRepository.save(orden);
+        } else if (algunoEnPreparacion) {
+            // Evitar sobreescribir estados finales (por si se extendiera el enum en el futuro)
+            if (orden.getEstadoPreparacion() != EstadoOrden.ENTREGADA
+                    && orden.getEstadoPreparacion() != EstadoOrden.CERRADA
+                    && orden.getEstadoPreparacion() != EstadoOrden.CANCELADA) {
+                orden.setEstadoPreparacion(EstadoOrden.EN_PREPARACION);
+                ordenRepository.save(orden);
+            }
         }
 
         return detalle;
