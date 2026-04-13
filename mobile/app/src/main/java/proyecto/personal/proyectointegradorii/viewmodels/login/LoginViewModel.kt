@@ -78,7 +78,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     _password.value
                 )
 
-                if (response != null && response.token.isNotBlank()) {
+                if (response != null && !response.token.isNullOrBlank()) {
                     if (response.rol.uppercase() != "CLIENTE") {
                         _generalErrorMessage.value = "Esta app solo permite acceso a clientes"
                         _loginSuccess.value = false
@@ -93,9 +93,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
                     SessionManager.saveSession(
                         getApplication(),
-                        response.token
+                        response.token!!
                     )
-
 
                     _loginSuccess.value = true
 

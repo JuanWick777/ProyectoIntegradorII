@@ -88,7 +88,14 @@ public class AuthService {
                 .build();
     }
 
-    public LoginResponseDTO actualizarPerfil(String correoActual, String nombre, String nuevoCorreo, String contrasena) {
+    public LoginResponseDTO actualizarPerfil(
+            String correoActual,
+            String nombre,
+            String nuevoCorreo,
+            String contrasena,
+            String contrasenaActual,
+            String fotoPerfil
+    ) {
         Usuario usuario = usuarioRepository.findByCorreo(correoActual)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -96,10 +103,23 @@ public class AuthService {
             usuario.setNombreCompleto(nombre.trim());
         }
 
-        if (nuevoCorreo != null && !nuevoCorreo.isBlank() && !nuevoCorreo.equalsIgnoreCase(correoActual)) {
-            if (usuarioRepository.findByCorreo(nuevoCorreo).isPresent()) {
+        boolean correoCambio = nuevoCorreo != null
+                && !nuevoCorreo.isBlank()
+                && !nuevoCorreo.trim().equalsIgnoreCase(correoActual);
+
+        if (correoCambio) {
+            if (contrasenaActual == null || contrasenaActual.isBlank()) {
+                throw new RuntimeException("Debes ingresar tu contraseña actual para cambiar el correo");
+            }
+
+            if (!passwordEncoder.matches(contrasenaActual, usuario.getContrasena())) {
+                throw new RuntimeException("La contraseña actual es incorrecta");
+            }
+
+            if (usuarioRepository.findByCorreo(nuevoCorreo.trim()).isPresent()) {
                 throw new RuntimeException("El correo ya está en uso por otro usuario");
             }
+
             usuario.setCorreo(nuevoCorreo.trim());
         }
 
@@ -110,9 +130,12 @@ public class AuthService {
             usuario.setContrasena(passwordEncoder.encode(contrasena));
         }
 
+        if (fotoPerfil != null && !fotoPerfil.isBlank()) {
+            usuario.setFotoPerfil(fotoPerfil.trim());
+        }
+
         usuario = usuarioRepository.save(usuario);
 
-        // Genera un nuevo token con el correo actualizado
         String rol = normalizarRol(usuario);
         String token = jwtService.generateToken(usuario.getCorreo(), rol, usuario.getId());
 

@@ -3,6 +3,7 @@ package com.integradora.back.controller.usuario;
 import com.integradora.back.controller.usuario.dto.LoginRequest;
 import com.integradora.back.controller.usuario.dto.LoginResponseDTO;
 import com.integradora.back.controller.usuario.dto.RegisterRequest;
+import com.integradora.back.controller.usuario.dto.UpdateProfileRequestDTO;
 import com.integradora.back.model.usuario.Usuario;
 import com.integradora.back.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class AuthController {
     @PutMapping("/perfil")
     public ResponseEntity<?> actualizarPerfil(
             Authentication authentication,
-            @RequestBody Map<String, String> body
+            @RequestBody UpdateProfileRequestDTO body
     ) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -58,9 +59,11 @@ public class AuthController {
         try {
             LoginResponseDTO response = authService.actualizarPerfil(
                     authentication.getName(),
-                    body.get("nombre"),
-                    body.get("correo"),
-                    body.get("contrasena")
+                    body.getNombre(),
+                    body.getCorreo(),
+                    body.getContrasena(),
+                    body.getContrasenaActual(),
+                    body.getFotoPerfil()
             );
             return ResponseEntity.ok(response);
         } catch (Exception e) {

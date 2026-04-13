@@ -1,6 +1,5 @@
 package proyecto.personal.proyectointegradorii.ui.screens.internal.account
 
-import android.R.attr.thickness
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,13 +26,19 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import proyecto.personal.proyectointegradorii.data.local.AppStateCleaner
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
-import proyecto.personal.proyectointegradorii.data.remote.network.SessionManager
 import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 import proyecto.personal.proyectointegradorii.ui.components.buttons.ButtonAccount
 import proyecto.personal.proyectointegradorii.ui.components.headers.CardHeaderAccount
 import proyecto.personal.proyectointegradorii.ui.components.cards.GlobalCard
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
 import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun SAccount(
@@ -45,8 +50,22 @@ fun SAccount(
 
     var usuario by remember { mutableStateOf<LoginResponse?>(null) }
 
-    LaunchedEffect(Unit) {
-        usuario = UserRepository().getCurrentUser()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                CoroutineScope(Dispatchers.Main).launch {
+                    usuario = UserRepository().getCurrentUser()
+                }
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Column(

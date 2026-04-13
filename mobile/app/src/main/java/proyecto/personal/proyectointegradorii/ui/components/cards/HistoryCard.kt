@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
+import proyecto.personal.proyectointegradorii.ui.theme.AlertColor
 import proyecto.personal.proyectointegradorii.ui.theme.BorderInputColor
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.SuccessfulColor
@@ -39,6 +40,13 @@ fun HistoryCard(
     total: String,  // Ej: "$427"
     modifier: Modifier = Modifier
 )   {
+    val statusColor = when (status.lowercase()) {
+        "completado" -> SuccessfulColor
+        "cancelado" -> AlertColor
+        "pendiente", "confirmada", "en preparación", "lista" -> MainColor
+        else -> MainColor
+    }
+
     GlobalCard(
         modifier = modifier
             .fillMaxWidth()
@@ -66,7 +74,7 @@ fun HistoryCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
-                            .background(SuccessfulColor)
+                            .background(statusColor)
                             .padding(horizontal = 12.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {

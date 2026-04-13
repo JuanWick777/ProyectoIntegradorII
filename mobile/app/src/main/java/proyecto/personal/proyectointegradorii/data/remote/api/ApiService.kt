@@ -1,5 +1,6 @@
 package proyecto.personal.proyectointegradorii.data.remote.api
 
+import okhttp3.MultipartBody
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.RegisterRequest
 import proyecto.personal.proyectointegradorii.data.model.usuario.Usuario
@@ -9,10 +10,15 @@ import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRespons
 import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
 import proyecto.personal.proyectointegradorii.data.remote.dto.promocion.PromocionDto
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UpdateProfileRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UploadResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface ApiService {
@@ -23,6 +29,17 @@ interface ApiService {
 
     @POST("api/auth/register")
     suspend fun register(@Body request: RegisterRequest): Usuario
+
+    @PUT("api/auth/perfil")
+    suspend fun updateProfile(
+        @Body request: UpdateProfileRequest
+    ): LoginResponse
+
+    @Multipart
+    @POST("api/auth/foto-perfil")
+    suspend fun uploadProfilePhoto(
+        @Part file: MultipartBody.Part
+    ): UploadResponse
 
     // PLATILLOS
     @GET("api/platillos")

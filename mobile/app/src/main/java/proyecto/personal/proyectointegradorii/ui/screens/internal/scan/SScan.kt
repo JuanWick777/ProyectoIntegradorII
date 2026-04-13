@@ -29,6 +29,10 @@ import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
 import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import proyecto.personal.proyectointegradorii.ui.components.inputs.GlobalTextInput
 
 @Composable
 fun SScan(
@@ -38,6 +42,7 @@ fun SScan(
     val context = LocalContext.current
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var mesaDetectada by remember { mutableStateOf<Long?>(null) }
+    var mesaManual by rememberSaveable { mutableStateOf("") }
 
     val options = GmsBarcodeScannerOptions.Builder()
         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -57,6 +62,19 @@ fun SScan(
             uri.getQueryParameter("mesa")?.toLongOrNull()
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun confirmarMesa(mesaId: Long?) {
+        if (mesaId != null && mesaId > 0) {
+            mesaDetectada = mesaId
+            errorMessage = null
+            cartViewModel.setMesaSeleccionada(mesaId)
+            navController.navigate("cart") {
+                launchSingleTop = true
+            }
+        } else {
+            errorMessage = "Ingresa un número de mesa válido"
         }
     }
 
@@ -104,12 +122,17 @@ fun SScan(
                     .addOnSuccessListener { barcode ->
                         val mesaId = extraerMesa(barcode.rawValue)
 
-                        if (mesaId != null) {
+                        /*if (mesaId != null) {
                             mesaDetectada = mesaId
                             cartViewModel.setMesaSeleccionada(mesaId)
                             navController.navigate("cart") {
                                 launchSingleTop = true
                             }
+                        } else {
+                            errorMessage = "El QR no contiene una mesa válida"
+                        }*/
+                        if (mesaId != null) {
+                            confirmarMesa(mesaId)
                         } else {
                             errorMessage = "El QR no contiene una mesa válida"
                         }
@@ -127,5 +150,38 @@ fun SScan(
             },
             Modifier
         )
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text("O selecciona tu mesa manualmente para pruebas")
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        GlobalTextInput(
+            value = mesaManual,
+            onValueChange = { nuevo ->
+                mesaManual = nuevo.filter { it.isDigit() }
+            },
+            placeholder = "Ej. 3",
+            height = 56,
+            width = 280
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        GlobalButton(
+            "Usar mesa manualmente",
+            16,
+            50,
+            280,
+            MainColor,
+            BackgroundColor,
+            MainColor,
+            {
+                confirmarMesa(mesaManual.toLongOrNull())
+            },
+            Modifier
+        )
+        Text("Modo pruebas: también puedes asignar la mesa manualmente")
     }
 }

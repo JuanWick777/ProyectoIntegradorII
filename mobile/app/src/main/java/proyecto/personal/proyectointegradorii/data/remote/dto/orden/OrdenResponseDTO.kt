@@ -10,5 +10,6 @@ data class OrdenResponseDTO(
     val subtotal: Double,
     val montoDescuento: Double,
     val codigoPromoAplicado: String?,
-    val total: Double
+    val total: Double,
+    val fechaCreacion: String?
 )

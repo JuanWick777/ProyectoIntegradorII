@@ -7,5 +7,5 @@ data class LoginResponse(
     val rol: String,
     val puntosLealtad: Int,
     val fotoPerfil: String?,
-    val token: String
+    val token: String?
 )
