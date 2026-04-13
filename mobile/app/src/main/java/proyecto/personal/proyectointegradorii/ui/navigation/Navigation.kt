@@ -55,8 +55,8 @@ fun Navigation(){
         composable("Main"){
             SMain(navController)
         }
-        composable("Configurate"){
-            SConfigurate(navController)
+        composable("Configurate") {
+            SConfigurate(navController, navController)
         }
         composable("personaldates"){
             PersonalDatesScreen(navController)

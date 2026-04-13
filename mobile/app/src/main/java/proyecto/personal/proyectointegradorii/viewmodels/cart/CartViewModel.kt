@@ -39,6 +39,8 @@ class CartViewModel : ViewModel() {
     private val _previewOrden = MutableStateFlow<OrdenPreviewDTO?>(null)
     val previewOrden = _previewOrden.asStateFlow()
 
+    private var lastOrdersLoadAt: Long? = null
+
     fun initialize(context: Context) {
         if (initialized) return
 
@@ -114,11 +116,17 @@ class CartViewModel : ViewModel() {
         }
     }
 
-    fun cargarMisOrdenes() {
+    fun cargarMisOrdenes(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        val recentlyLoaded = lastOrdersLoadAt != null && (now - lastOrdersLoadAt!!) < 10_000
+
+        if (!force && recentlyLoaded) return
+
         viewModelScope.launch {
             try {
                 val data = RetrofitClient.api.obtenerMisOrdenes()
                 _ordenes.value = data
+                lastOrdersLoadAt = System.currentTimeMillis()
                 persistState()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -239,7 +247,7 @@ class CartViewModel : ViewModel() {
                 _usarPuntos.value = false
                 _previewOrden.value = null
                 persistState()
-                cargarMisOrdenes()
+                cargarMisOrdenes(force = true)
                 cargarUsuario()
                 startPolling()
                 _pedidoConfirmado.value = true
