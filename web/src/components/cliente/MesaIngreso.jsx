@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { UtensilsCrossed, Users, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import AlertMessage from '../ui/AlertMessage';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 /**
  * MesaIngreso.jsx — Pantalla de entrada del cliente
@@ -93,12 +95,12 @@ const MesaIngreso = ({ onMesaValida }) => {
                                         autoFocus
                                     />
                                 </div>
-                                {error && (
-                                    <div className="alert alert-danger mt-3 mb-0 py-2 px-3 d-flex align-items-center gap-2" style={{ borderRadius: '0.75rem' }}>
-                                        <AlertTriangle size={18} className="flex-shrink-0" />
-                                        <small>{error}</small>
-                                    </div>
-                                )}
+                                <AlertMessage
+                                    message={error ? <small>{error}</small> : ''}
+                                    className="mt-3 mb-0 py-2 px-3 d-flex align-items-center gap-2"
+                                    icon={<AlertTriangle size={18} className="flex-shrink-0" />}
+                                    showBootstrapIcon={false}
+                                />
                             </div>
 
                             <button
@@ -109,7 +111,7 @@ const MesaIngreso = ({ onMesaValida }) => {
                             >
                                 {loading ? (
                                     <span>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" />
+                                        <LoadingSpinner size="sm" className="me-2" />
                                         Verificando...
                                     </span>
                                 ) : (

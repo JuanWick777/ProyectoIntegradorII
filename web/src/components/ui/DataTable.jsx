@@ -1,4 +1,5 @@
 import React from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 const DataTable = ({
     columns,
@@ -10,9 +11,7 @@ const DataTable = ({
     return (
         <div className={`card border-0 shadow-sm ${className}`} style={{ borderRadius: '1rem', overflow: 'hidden' }}>
             {loading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" />
-                </div>
+                <LoadingSpinner center />
             ) : (
                 <table className="table table-hover mb-0">
                     <thead style={{ background: '#51443B' }}>

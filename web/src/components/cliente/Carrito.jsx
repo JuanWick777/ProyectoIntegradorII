@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { X, FileText, AlertTriangle } from 'lucide-react';
+import { X, FileText, AlertTriangle, Users } from 'lucide-react';
+import AlertMessage from '../ui/AlertMessage';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 const IVA_RATE = 0.16; // 16% IVA México
 
@@ -180,11 +182,12 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                 </div>
 
                 {/* Error de envío */}
-                {error && (
-                    <div className="alert alert-danger py-2 px-3 mb-2 small d-flex gap-2 align-items-center" style={{ borderRadius: '0.75rem' }}>
-                        <AlertTriangle size={16} className="me-2" />{error}
-                    </div>
-                )}
+                <AlertMessage
+                    message={error}
+                    className="py-2 px-3 mb-2 small d-flex gap-2 align-items-center"
+                    icon={<AlertTriangle size={16} className="me-2" />}
+                    showBootstrapIcon={false}
+                />
 
                 <button
                     className="btn btn-primary w-100 fw-bold py-3"
@@ -194,7 +197,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                 >
                     {loading ? (
                         <span>
-                            <span className="spinner-border spinner-border-sm me-2" role="status" />
+                            <LoadingSpinner size="sm" className="me-2" />
                             Enviando pedido...
                         </span>
                     ) : (

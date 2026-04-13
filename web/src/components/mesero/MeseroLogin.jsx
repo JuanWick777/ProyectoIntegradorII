@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useNavigate } from 'react-router-dom';
 import { ChefHat, Mail, Lock, LogIn } from 'lucide-react';
+import FormInput from '../ui/FormInput';
+import AlertMessage from '../ui/AlertMessage';
+import LoadingSpinner from '../ui/LoadingSpinner';
+import AuthLayout from '../auth/AuthLayout';
+import AuthCard from '../auth/AuthCard';
 
 const MeseroLogin = ({
     onLoginExitoso,
@@ -57,61 +62,37 @@ const MeseroLogin = ({
     };
 
     return (
-        <div
-            className="min-vh-100 d-flex align-items-center justify-content-center"
-            style={{ background: '#F5F5F5' }}
-        >
-            <div className="card border-0 shadow-lg p-4" style={{ width: '100%', maxWidth: 400, borderRadius: '1.25rem' }}>
-                <div className="text-center mb-4">
-                    <div
-                        className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                        style={{ width: 64, height: 64, background: '#FFF5F0', color: '#FF7043', fontSize: 28 }}
-                    >
-                        {icono}
-                    </div>
-                    <h1 className="fs-4 fw-bold mb-0">{titulo}</h1>
-                    <p className="text-muted small mt-1">Sistema de Gestión de Restaurante</p>
-                </div>
-
+        <AuthLayout>
+            <AuthCard
+                icon={icono}
+                title={titulo}
+                subtitle="Sistema de Gestión de Restaurante"
+            >
                 <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold small">
-                            <Mail size={16} className="me-2" />
-                            Correo electrónico
-                        </label>
-                        <input
-                            type="email"
-                            className="form-control"
-                            style={{ borderRadius: '0.75rem' }}
-                            placeholder="mesero@rest.com"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            required
-                            autoFocus
-                        />
-                    </div>
+                    <FormInput
+                        id="staff-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="mesero@rest.com"
+                        required
+                        autoFocus
+                        style={{ borderRadius: '0.75rem' }}
+                        label={<><Mail size={16} className="me-2" />Correo electrónico</>}
+                    />
 
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold small">
-                            <Lock size={16} className="me-2" />
-                            Contraseña
-                        </label>
-                        <input
-                            type="password"
-                            className="form-control"
-                            style={{ borderRadius: '0.75rem' }}
-                            placeholder="••••••"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                    <FormInput
+                        id="staff-password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••"
+                        required
+                        style={{ borderRadius: '0.75rem' }}
+                        label={<><Lock size={16} className="me-2" />Contraseña</>}
+                    />
 
-                    {error && (
-                        <div className="alert alert-danger py-2 small" style={{ borderRadius: '0.75rem' }}>
-                            <i className="bi bi-exclamation-triangle me-2"></i>{error}
-                        </div>
-                    )}
+                    <AlertMessage message={error} className="mb-3" />
 
                     <button
                         type="submit"
@@ -120,7 +101,7 @@ const MeseroLogin = ({
                         disabled={loading}
                     >
                         {loading
-                            ? <><span className="spinner-border spinner-border-sm me-2" />Ingresando...</>
+                            ? <><LoadingSpinner size="sm" className="me-2" />Ingresando...</>
                             : <><LogIn size={18} className="me-2" />Iniciar Sesión</>}
                     </button>
                 </form>
@@ -128,8 +109,8 @@ const MeseroLogin = ({
                 <p className="text-center text-muted small mt-3 mb-0">
                     Demo: <code>{demoEmail}</code> / <code>123456</code>
                 </p>
-            </div>
-        </div>
+            </AuthCard>
+        </AuthLayout>
     );
 };
 
