@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -19,8 +20,9 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public Usuario register(@RequestBody RegisterRequest request) {
-        return authService.register(request);
+    public UsuarioResponseDTO register(@Valid @RequestBody RegisterRequest request) {
+        Usuario usuario = authService.register(request);
+        return UsuarioResponseDTO.from(usuario);
     }
 
     @GetMapping("/test")
@@ -29,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponseDTO login(@RequestBody LoginRequest request) {
+    public LoginResponseDTO login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 

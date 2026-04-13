@@ -1,5 +1,6 @@
 package com.integradora.back.controller.mesa;
 
+import com.integradora.back.controller.mesa.dto.MesaResponseDTO;
 import com.integradora.back.model.mesa.Mesa;
 import com.integradora.back.repository.MesaRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,9 @@ public class MesaController {
      * GET /api/mesas/{numero}
      */
     @GetMapping("/{numero}")
-    public ResponseEntity<Mesa> obtenerPorNumero(@PathVariable Integer numero) {
+    public ResponseEntity<MesaResponseDTO> obtenerPorNumero(@PathVariable Integer numero) {
         return mesaRepository.findByNumero(numero)
+                .map(MesaResponseDTO::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

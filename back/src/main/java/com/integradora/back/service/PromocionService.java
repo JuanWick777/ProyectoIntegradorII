@@ -7,6 +7,7 @@ import com.integradora.back.repository.OrdenRepository;
 import com.integradora.back.repository.PromocionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -66,6 +67,7 @@ public class PromocionService {
      * Modifica: orden.montoDescuento, orden.codigoPromoAplicado, orden.total
      * @return la orden actualizada
      */
+    @Transactional
     public Orden aplicarPromocion(Long ordenId, String codigoPromo) {
         Orden orden = ordenRepository.findById(ordenId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));

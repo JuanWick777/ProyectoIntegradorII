@@ -62,6 +62,7 @@ public class OrdenService {
         return ordenRepository.findByClienteIdOrderByIdDesc(clienteId);
     }
 
+    @Transactional
     public Orden actualizarEstado(Long ordenId, String estado) {
         Orden orden = ordenRepository.findById(ordenId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
