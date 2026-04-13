@@ -31,10 +31,18 @@ async function apiFetch(endpoint, options = {}) {
         console.log('📤 Sending with Authorization:', headers.Authorization.substring(0, 30) + '...');
     }
 
-    const res = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
-    });
+    let res;
+    try {
+        res = await fetch(`${API_URL}${endpoint}`, {
+            ...options,
+            headers,
+        });
+    } catch (e) {
+        const err = new Error('Error de red: no se pudo conectar con el servidor');
+        err.isNetworkError = true;
+        err.cause = e;
+        throw err;
+    }
 
     let data = {};
     try {
@@ -262,10 +270,28 @@ export const useAppStore = create(
             },
 
             login: async (email, password) => {
-                const data = await apiFetch('/auth/login', {
-                    method: 'POST',
-                    body: JSON.stringify({ correo: email, contrasena: password }),
-                });
+                let data;
+                try {
+                    data = await apiFetch('/auth/login', {
+                        method: 'POST',
+                        body: JSON.stringify({ correo: email, contrasena: password }),
+                    });
+                } catch (err) {
+                    const status = err?.status;
+                    const backendMsg = err?.data?.error;
+                    const isGenericStatusMsg =
+                        typeof err?.message === 'string' && /^Error\s+\d+$/.test(err.message.trim());
+
+                    if (status === 401 || status === 403) {
+                        throw new Error('Correo o contraseña incorrectos.');
+                    }
+
+                    if (backendMsg && !isGenericStatusMsg) {
+                        throw new Error(backendMsg);
+                    }
+
+                    throw err;
+                }
 
                 const usuarioNormalizado = {
                     ...data,
