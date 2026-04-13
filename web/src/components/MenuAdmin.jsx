@@ -75,7 +75,7 @@ const MenuAdmin = () => {
             let imagenUrlFinal = form.imagenRemoved ? null : (form.imagenUrl || null);
             if (form.imagenFile instanceof File) {
                 const up = await uploadPlatilloImage(form.imagenFile);
-                imagenUrlFinal = up?.url || up?.path || null;
+                imagenUrlFinal = up?.path || up?.url || null;
             }
 
             if (debeEliminarAnterior && imagenUrlAnterior) {

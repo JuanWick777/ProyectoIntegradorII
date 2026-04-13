@@ -26,6 +26,7 @@ import proyecto.personal.proyectointegradorii.ui.theme.CommentTextColor
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
 import coil.compose.AsyncImage
+import proyecto.personal.proyectointegradorii.utils.ImageUrlResolver
 
 @Composable
 fun CardHeaderAccount(
@@ -68,7 +69,7 @@ fun CardHeaderAccount(
             ) {
                 if (!fotoPerfil.isNullOrBlank()) {
                     AsyncImage(
-                        model = fotoPerfil,
+                        model = ImageUrlResolver.resolve(fotoPerfil),
                         contentDescription = "Foto de perfil",
                         modifier = Modifier
                             .matchParentSize()
