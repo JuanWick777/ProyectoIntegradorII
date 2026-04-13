@@ -1,11 +1,28 @@
 package proyecto.personal.proyectointegradorii.ui.screens.internal.scan
 
+import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import proyecto.personal.proyectointegradorii.ui.components.buttons.GlobalButton
 import proyecto.personal.proyectointegradorii.ui.components.headers.InternalHeader
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
@@ -17,11 +34,38 @@ import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
 fun SScan(
     cartViewModel: CartViewModel,
     navController: NavController
-){
+) {
+    val context = LocalContext.current
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var mesaDetectada by remember { mutableStateOf<Long?>(null) }
+
+    val options = GmsBarcodeScannerOptions.Builder()
+        .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+        .build()
+
+    val scanner = remember {
+        GmsBarcodeScanning.getClient(context, options)
+    }
+
+    fun extraerMesa(rawValue: String?): Long? {
+        if (rawValue.isNullOrBlank()) return null
+
+        rawValue.toLongOrNull()?.let { return it }
+
+        return try {
+            val uri = Uri.parse(rawValue)
+            uri.getQueryParameter("mesa")?.toLongOrNull()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundColor)
+            .padding(horizontal = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         InternalHeader(
             "Escanear QR",
@@ -29,20 +73,59 @@ fun SScan(
             Modifier
         )
 
+        Spacer(modifier = Modifier.height(40.dp))
+
+        Text("Escanea el código QR de tu mesa para asignarla automáticamente.")
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        mesaDetectada?.let {
+            Text("Mesa detectada: $it")
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        errorMessage?.let {
+            Text(it)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         GlobalButton(
-            "Asignar mesa 1",
+            "Escanear código QR",
             16,
             50,
-            250,
+            280,
             MainColor,
             MainColor,
             TextColorWhite,
             {
-                cartViewModel.setMesaSeleccionada(1)
-                navController.navigate("cart")
+                errorMessage = null
+
+                scanner.startScan()
+                    .addOnSuccessListener { barcode ->
+                        val mesaId = extraerMesa(barcode.rawValue)
+
+                        if (mesaId != null) {
+                            mesaDetectada = mesaId
+                            cartViewModel.setMesaSeleccionada(mesaId)
+                            navController.navigate("cart") {
+                                launchSingleTop = true
+                            }
+                        } else {
+                            errorMessage = "El QR no contiene una mesa válida"
+                        }
+                    }
+                    .addOnCanceledListener {
+                        errorMessage = "Escaneo cancelado"
+                    }
+                    .addOnFailureListener { e ->
+                        errorMessage = if ((e.message ?: "").contains(CommonStatusCodes.CANCELED.toString())) {
+                            "Escaneo cancelado"
+                        } else {
+                            "No se pudo leer el código QR"
+                        }
+                    }
             },
             Modifier
         )
-
     }
 }
