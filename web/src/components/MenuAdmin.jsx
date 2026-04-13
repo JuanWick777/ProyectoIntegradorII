@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import AdminSidebar from './admin/AdminSidebar';
 import PersonalAdmin from './admin/PersonalAdmin';
+import ClientesAdmin from './admin/ClientesAdmin';
+import ConfiguracionAdmin from './admin/ConfiguracionAdmin';
 import ProductCard from './admin/ProductCard';
 import ProductModal from './admin/ProductModal';
 import PromocionesAdmin from './PromocionesAdmin';
 import QRCodeGenerator from './QRCodeGenerator';
 import StatCard from './ui/StatCard';
-import { LayoutDashboard, Utensils, ChefHat, Users, User, Info, Settings, QrCode, Tag, Clock, PlusCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Utensils, ChefHat, Users, User, Info, Settings, QrCode, Tag, Clock, PlusCircle, LogOut, Check, Heart } from 'lucide-react';
 import { getProductCategoryName, getProductName } from './admin/adminConstants';
 
 const MenuAdmin = () => {
@@ -83,10 +85,10 @@ const MenuAdmin = () => {
 
             if (form.id) {
                 await updateProduct(form.id, payload);
-                mostrarToast('✅ Producto actualizado');
+                mostrarToast('Producto actualizado');
             } else {
                 await createProduct(payload);
-                mostrarToast('✅ Producto creado');
+                mostrarToast('Producto creado');
             }
 
             await fetchAdminProducts();
@@ -115,10 +117,7 @@ const MenuAdmin = () => {
     const totalPlatillos = products.length;
     const totalCocineros = usuarios.filter((u) => ['cocinero', 'chef'].includes((u.rol || '').toLowerCase())).length;
     const totalMeseros = usuarios.filter((u) => (u.rol || '').toLowerCase() === 'mesero').length;
-    const totalClientes = (() => {
-        const uniqueMesas = new Set(orders.map((o) => o.mesaId || o.mesa_id || o.mesaNumero || o.mesa));
-        return uniqueMesas.size > 0 ? uniqueMesas.size : orders.length;
-    })();
+    const totalClientes = usuarios.filter((u) => (u.rol || '').toLowerCase() === 'cliente').length;
 
     const handleLogout = async () => {
         await logout();
@@ -136,6 +135,7 @@ const MenuAdmin = () => {
                     { id: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
                     { id: 'menu', icon: <Utensils size={18} />, label: 'Platillos' },
                     { id: 'personal', icon: <Users size={18} />, label: 'Personal' },
+                    { id: 'clientes', icon: <Heart size={18} />, label: 'Clientes' },
                     { id: 'promociones', icon: <Tag size={18} />, label: 'Promociones' },
                     { id: 'qr', icon: <QrCode size={18} />, label: 'QR' },
                     { id: 'historial', icon: <Clock size={18} />, label: 'Historial' },
@@ -223,6 +223,8 @@ const MenuAdmin = () => {
                         </>
                     ) : vistaActual === 'personal' ? (
                         <PersonalAdmin mostrarToast={mostrarToast} />
+                    ) : vistaActual === 'clientes' ? (
+                        <ClientesAdmin mostrarToast={mostrarToast} />
                     ) : vistaActual === 'promociones' ? (
                         <PromocionesAdmin mostrarToast={mostrarToast} />
                     ) : vistaActual === 'qr' ? (
@@ -233,12 +235,14 @@ const MenuAdmin = () => {
                             <h4 className="fw-bold text-dark">Historial de Órdenes</h4>
                             <p>Plataforma de historial en construcción</p>
                         </div>
-                    ) : vistaActual === 'informacion' || vistaActual === 'configuracion' ? (
+                    ) : vistaActual === 'informacion' ? (
                         <div className="text-center py-5 text-muted">
                             <p style={{ fontSize: 48 }}>🔨</p>
                             <h4 className="fw-bold text-dark">Sección en construcción</h4>
                             <p>Esta funcionalidad está siendo desarrollada</p>
                         </div>
+                    ) : vistaActual === 'configuracion' ? (
+                        <ConfiguracionAdmin />
                     ) : (
                         <>
                             <div className="d-flex flex-wrap gap-3 align-items-center mb-4">

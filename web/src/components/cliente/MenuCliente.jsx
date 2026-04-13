@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { UtensilsCrossed, Search, Tag } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import ProductCard from './ProductCard';
 
@@ -80,14 +81,12 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
                         </span>
                         <h1 className="fs-5 fw-bold mb-0 text-white">Nuestro Menú</h1>
                     </div>
-                    <span style={{ fontSize: 32 }}>🍽️</span>
+                    <UtensilsCrossed size={32} className="text-white" />
                 </div>
 
                 {/* Buscador */}
                 <div className="position-relative mb-3">
-                    <span className="position-absolute top-50 translate-middle-y ms-2" style={{ left: 8, zIndex: 1 }}>
-                        🔍
-                    </span>
+                    <Search size={18} className="position-absolute top-50 translate-middle-y ms-2 text-muted" style={{ left: 8, zIndex: 1, top: '50%', marginTop: '-0.5rem' }} />
                     <input
                         type="search"
                         className="form-control bg-white border-0 shadow-sm ps-5"
@@ -110,7 +109,7 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
                             style={{ borderRadius: '2rem', minWidth: 80 }}
                             onClick={() => setCategoriaActiva(cat)}
                         >
-                            {cat === 'todos' ? '🍴 Todo' : cat}
+                            {cat === 'todos' ? <><UtensilsCrossed size={14} className="me-1" style={{ display: 'inline' }} /> Todo</> : cat}
                         </button>
                     ))}
                 </div>
@@ -119,8 +118,8 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
             {/* ── Banner de Promociones del día ────────────────────────── */}
             {promos.length > 0 && (
                 <div style={{ padding: '0.75rem 0.75rem 0.25rem', background: '#fff' }}>
-                    <p className="fw-bold mb-2 text-dark" style={{ fontSize: '0.9rem' }}>
-                        🏷️ Promociones del día
+                    <p className="fw-bold mb-2 text-dark d-flex align-items-center gap-2" style={{ fontSize: '0.9rem' }}>
+                        <Tag size={18} /> Promociones del día
                     </p>
                     <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
                         {promos.map(p => (
@@ -170,7 +169,7 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
             <main className="flex-grow-1 p-3">
                 {productosFiltrados.length === 0 ? (
                     <div className="text-center py-5 text-muted">
-                        <p style={{ fontSize: 48 }}>🔍</p>
+                        <Search size={48} style={{ color: '#cbd5e0' }} className="mx-auto d-block mb-3" />
                         <p className="fw-semibold">Sin resultados para "{busqueda}"</p>
                         <button
                             className="btn btn-link text-primary"

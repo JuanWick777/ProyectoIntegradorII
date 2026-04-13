@@ -26,10 +26,13 @@ const DataTable = ({
                     </thead>
                     <tbody>
                         {data.map((item, index) => (
-                            <tr key={item.id || index}>
+                            <tr key={item.id || index} className="align-middle">
                                 {columns.map(col => (
-                                    <td key={col.key} className={col.className || ''}>
-                                        {col.render ? col.render(item) : item[col.key]}
+                                    <td key={col.key} className={col.className || ''} style={{ verticalAlign: 'middle' }}>
+                                        <div className="d-flex flex-column">
+                                            <span className="text-muted small d-md-none">{col.label}</span>
+                                            <div>{col.render ? col.render(item) : item[col.key]}</div>
+                                        </div>
                                     </td>
                                 ))}
                             </tr>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Tag, Edit2, Plus, Save, Trash2, AlertTriangle, Check } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import SectionHeader from './ui/SectionHeader';
 import PromoCard from './ui/PromoCard';
@@ -24,8 +25,8 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
             <div className="modal-dialog modal-dialog-centered" onClick={e => e.stopPropagation()}>
                 <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.25rem' }}>
                     <div className="modal-header border-0 pb-0">
-                        <h5 className="modal-title fw-bold">
-                            {isNew ? '🏷️ Nueva Promoción' : '✏️ Editar Promoción'}
+                        <h5 className="modal-title fw-bold d-flex align-items-center gap-2">
+                            {isNew ? <><Tag size={20} /> Nueva Promoción</> : <><Edit2 size={20} /> Editar Promoción</>}
                         </h5>
                         <button type="button" className="btn-close" onClick={onClose} />
                     </div>
@@ -128,14 +129,14 @@ const PromoModal = ({ promo, onSave, onClose, saving }) => {
                     <div className="modal-footer border-0 pt-0">
                         <button className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
                         <button
-                            className="btn fw-bold px-4"
+                            className="btn fw-bold px-4 d-flex align-items-center gap-2"
                             style={{ background: '#e67e22', color: 'white', borderRadius: '0.75rem' }}
                             onClick={() => onSave(form)}
                             disabled={saving || !form.titulo?.trim() || !form.valorDescuento || Number(form.valorDescuento) <= 0}
                         >
                             {saving
-                                ? <><span className="spinner-border spinner-border-sm me-2" />Guardando...</>
-                                : isNew ? '➕ Crear' : '💾 Guardar'}
+                                ? <><span className="spinner-border spinner-border-sm" />Guardando...</>
+                                : isNew ? <><Plus size={18} /> Crear</> : <><Save size={18} /> Guardar</>}
                         </button>
                     </div>
                 </div>
@@ -155,6 +156,7 @@ const PromocionesAdmin = ({ mostrarToast }) => {
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [confirmDel, setConfirmDel] = useState(null);
 
     const cargar = async () => {
         setLoading(true);
@@ -162,7 +164,7 @@ const PromocionesAdmin = ({ mostrarToast }) => {
             const data = await fetchAdminPromociones();
             setPromos(data || []);
         } catch {
-            mostrarToast('❌ Error al cargar promociones');
+            mostrarToast('Error al cargar promociones');
         } finally {
             setLoading(false);
         }
@@ -182,39 +184,45 @@ const PromocionesAdmin = ({ mostrarToast }) => {
             };
             if (form.id) {
                 await updatePromocion(form.id, payload);
-                mostrarToast('✅ Promoción actualizada');
+                mostrarToast('Promoción actualizada');
             } else {
                 await createPromocion(payload);
-                mostrarToast('✅ Promoción creada');
+                mostrarToast('Promoción creada');
             }
             setModal(null);
             await cargar();
         } catch {
-            mostrarToast('❌ Error al guardar');
+            mostrarToast('Error al guardar');
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('¿Eliminar esta promoción?')) return;
-        await deletePromocion(id);
-        mostrarToast('🗑️ Promoción eliminada');
+        const promo = promos.find(p => p.id === id) || { id, titulo: 'esta promoción' };
+        setConfirmDel(promo);
+    };
+
+    const confirmarEliminar = async () => {
+        if (!confirmDel) return;
+        await deletePromocion(confirmDel.id);
+        mostrarToast('Promoción eliminada');
+        setConfirmDel(null);
         await cargar();
     };
 
     return (
         <div className="bg-white rounded-4 shadow-sm p-4">
             <SectionHeader
-                title="🏷️ Gestión de Promociones"
+                title="Gestión de Promociones"
                 subtitle="El mesero puede aplicar el código en el pedido del cliente"
                 actions={(
                     <button
-                        className="btn btn-primary fw-bold px-4 shadow-sm"
+                        className="btn btn-primary fw-bold px-4 shadow-sm d-flex align-items-center gap-2"
                         style={{ borderRadius: '2rem' }}
                         onClick={() => setModal({})}
                     >
-                        <i className="bi bi-plus-circle me-2"></i>Nueva Promoción
+                        <Plus size={18} />Nueva Promoción
                     </button>
                 )}
             />
@@ -228,7 +236,7 @@ const PromocionesAdmin = ({ mostrarToast }) => {
                     className="text-center py-5 rounded-4 border border-dashed border-secondary"
                     style={{ background: '#fafafa', borderStyle: 'dashed' }}
                 >
-                    <div style={{ fontSize: 48 }}>🏷️</div>
+                    <Tag size={48} className="mx-auto mb-3" style={{ color: '#a8a9ad' }} />
                     <p className="text-muted mt-2">No hay promociones. ¡Crea la primera!</p>
                 </div>
             ) : (
@@ -251,6 +259,57 @@ const PromocionesAdmin = ({ mostrarToast }) => {
                     onClose={() => setModal(null)}
                     saving={saving}
                 />
+            )}
+
+            {confirmDel && (
+                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.35)' }}>
+                    <div className="modal-dialog modal-dialog-centered modal-sm">
+                        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.5rem', overflow: 'hidden' }}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #fff4e6 0%, #fff7f0 100%)',
+                                padding: '1.6rem 1.4rem',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{
+                                    width: 64,
+                                    height: 64,
+                                    borderRadius: '50%',
+                                    background: 'rgba(255, 221, 178, 0.45)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginBottom: 14,
+                                }}>
+                                    <AlertTriangle size={28} className="text-warning" />
+                                </div>
+                                <h5 className="fw-bold mb-2">¿Eliminar promoción?</h5>
+                                <p className="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+                            </div>
+                            <div className="p-4">
+                                <div className="text-center mb-3">
+                                    <div className="fw-semibold">{confirmDel.titulo}</div>
+                                    <div className="text-muted small">Se borrará definitivamente esta promoción.</div>
+                                </div>
+                                <div className="d-flex gap-2">
+                                    <button
+                                        className="btn btn-outline-secondary flex-fill"
+                                        style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
+                                        onClick={() => setConfirmDel(null)}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        className="btn btn-danger flex-fill fw-bold"
+                                        style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
+                                        onClick={confirmarEliminar}
+                                    >
+                                        Sí, eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

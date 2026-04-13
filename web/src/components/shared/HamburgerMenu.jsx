@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { User, Edit2, X, Shield, ChefHat, Flame, Coffee, Cake, LogOut, AlertTriangle, Check, Loader } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,8 +78,9 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                         width: 44, height: 44, borderRadius: '50%',
                         background: 'rgba(230,126,34,0.25)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 22,
-                    }}>👤</div>
+                    }}>
+                        <User size={22} style={{ color: 'rgba(230,126,34,0.8)' }} />
+                    </div>
                     <div>
                         <div style={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>
                             Mi Perfil
@@ -91,23 +93,33 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                         onClick={onClose}
                         style={{
                             marginLeft: 'auto', background: 'none', border: 'none',
-                            color: 'rgba(255,255,255,0.6)', fontSize: 22, cursor: 'pointer',
+                            color: 'rgba(255,255,255,0.6)', cursor: 'pointer', lineHeight: 1,
                         }}
-                    >✕</button>
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
                 {/* Body */}
                 <div style={{ padding: '1.5rem' }}>
                     {error && (
                         <div style={{
-                            background: '#fff5f5', border: '1px solid #feb2b2',
-                            borderRadius: '0.75rem', padding: '0.75rem 1rem',
-                            color: '#c53030', fontSize: '0.875rem', marginBottom: 16,
-                        }}>⚠️ {error}</div>
+                            display: 'flex', alignItems: 'flex-start', gap: 8,
+                        }}>
+                            <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span>{error}</span>
+                        </div>
                     )}
                     {ok && (
                         <div style={{
                             background: '#f0fff4', border: '1px solid #9ae6b4',
+                            borderRadius: '0.75rem', padding: '0.75rem 1rem',
+                            color: '#276749', fontSize: '0.875rem', marginBottom: 16,
+                            display: 'flex', alignItems: 'flex-start', gap: 8,
+                        }}>
+                            <Check size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span>{ok}</span>
+                        kground: '#f0fff4', border: '1px solid #9ae6b4',
                             borderRadius: '0.75rem', padding: '0.75rem 1rem',
                             color: '#276749', fontSize: '0.875rem', marginBottom: 16,
                         }}>{ok}</div>
@@ -166,16 +178,31 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                         onClick={handleGuardar}
                         disabled={loading}
                         style={{
-                            flex: 2, padding: '0.7rem',
+                            flex: 1, padding: '0.7rem',
                             borderRadius: '0.75rem',
                             border: 'none',
                             background: loading ? '#cbd5e0' : 'linear-gradient(135deg, #e67e22, #d35400)',
                             color: 'white',
-                            fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+                            fontWeight: 700,
+                            cursor: loading ? 'not-allowed' : 'pointer',
                             fontSize: '0.95rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
                         }}
                     >
-                        {loading ? '⏳ Guardando...' : '💾 Guardar cambios'}
+                        {loading ? (
+                            <>
+                                <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                                Guardando...
+                            </>
+                        ) : (
+                            <>
+                                <Check size={18} />
+                                Guardar cambios
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
@@ -199,13 +226,18 @@ const HamburgerMenu = ({
     onLogout,
     loginPath = '/login',
     accentColor = '#e67e22',
-    title = 'Panel',
-    subtitle = 'Empleado',
-}) => {
-    const { usuario, logout, fetchCurrentUser } = useAppStore();
-    const [abierto,      setAbierto]      = useState(false);
-    const [perfilAbierto, setPerfilAbierto] = useState(false);
-
+} = {}) => {
+    const rolLabel = {
+        ADMIN: { icon: Shield, label: 'Administrador' },
+        MESERO: { icon: User, label: 'Mesero' },
+        COCINERO: { icon: ChefHat, label: 'Cocinero' },
+        CHEF: { icon: ChefHat, label: 'Chef' },
+        PARRILLERO: { icon: Flame, label: 'Parrillero' },
+        BARISTA: { icon: Coffee, label: 'Barista' },
+        REPOSTERO: { icon: Cake, label: 'Repostero' },
+    }[usuario?.rol] || { icon: User, label: 'Empleado' };
+    
+    const RolIcon = rolLabel.icon
     const handleLogout = async () => {
         setAbierto(false);
         if (onLogout) {
@@ -215,16 +247,6 @@ const HamburgerMenu = ({
             window.location.replace(loginPath);
         }
     };
-
-    const rolLabel = {
-        ADMIN: '🛡️ Administrador',
-        MESERO: '🧑‍🍽️ Mesero',
-        COCINERO: '👨‍🍳 Cocinero',
-        CHEF: '👨‍🍳 Chef',
-        PARRILLERO: '🔥 Parrillero',
-        BARISTA: '☕ Barista',
-        REPOSTERO: '🍰 Repostero',
-    }[usuario?.rol] || '👤 Empleado';
 
     return (
         <>
@@ -267,6 +289,24 @@ const HamburgerMenu = ({
                 display: 'flex', flexDirection: 'column',
                 boxShadow: '4px 0 24px rgba(0,0,0,.35)',
             }}>
+                {/* Header del panel - Cierre */}
+                <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '1rem',
+                    borderBottom: `1px solid rgba(${hexToRgb(accentColor)},0.2)`,
+                }}>
+                    <User size={20} style={{ color: accentColor }} />
+                    <button
+                        onClick={() => setAbierto(false)}
+                        style={{
+                            background: 'none', border: 'none',
+                            color: 'rgba(255,255,255,0.5)', fontSize: 18,
+                            cursor: 'pointer', lineHeight: 1, flexShrink: 0,
+                        }}
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
 
                 {/* Header del panel */}
                 <div style={{
@@ -276,11 +316,14 @@ const HamburgerMenu = ({
                     {/* Info del usuario */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                         <div style={{
-                            width: 42, height: 42, borderRadius: '50%',
+                            width: 42, height: 42,
+                            borderRadius: '50%',
                             background: `rgba(${hexToRgb(accentColor)},0.2)`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 20, flexShrink: 0,
-                        }}>👤</div>
+                        }}>
+                            <RolIcon size={14} style={{ display: 'inline', marginRight: 4 }} />
+                        </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{
                                 color: 'white', fontWeight: 700,
@@ -290,17 +333,9 @@ const HamburgerMenu = ({
                                 {usuario?.nombre || 'Usuario'}
                             </div>
                             <div style={{ color: accentColor, fontSize: '0.75rem' }}>
-                                {rolLabel}
+                                {rolLabel.label}
                             </div>
                         </div>
-                        <button
-                            onClick={() => setAbierto(false)}
-                            style={{
-                                background: 'none', border: 'none',
-                                color: 'rgba(255,255,255,0.5)', fontSize: 18,
-                                cursor: 'pointer', lineHeight: 1, flexShrink: 0,
-                            }}
-                        >✕</button>
                     </div>
 
                     {/* Botón editar perfil */}
@@ -318,7 +353,7 @@ const HamburgerMenu = ({
                             cursor: 'pointer',
                         }}
                     >
-                        <span>✏️</span> Editar mi perfil
+                        <Edit2 size={16} /> Editar mi perfil
                     </button>
                 </div>
 
@@ -374,12 +409,11 @@ const HamburgerMenu = ({
                             fontWeight: 600, fontSize: '0.9rem',
                             background: 'rgba(220,53,69,0.12)',
                             color: '#ff6b6b',
-                            transition: 'background 0.15s',
                         }}
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(220,53,69,0.28)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'rgba(220,53,69,0.12)'}
                     >
-                        <span style={{ fontSize: 18 }}>🚪</span>
+                        <LogOut size={18} />
                         Cerrar Sesión
                     </button>
                 </div>

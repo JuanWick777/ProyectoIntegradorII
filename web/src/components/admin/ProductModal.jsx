@@ -9,6 +9,7 @@ import {
 } from './adminConstants';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
+import { Plus, Edit, Save } from 'lucide-react';
 
 const ProductModal = ({ product, onSave, onClose, saving }) => {
     const isNew = !product?.id;
@@ -57,7 +58,7 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
 
     return (
         <Modal
-            title={isNew ? '➕ Nuevo Platillo' : '✏️ Editar Platillo'}
+            title={isNew ? <><Plus size={18} className="me-2" />Nuevo Platillo</> : <><Edit size={18} className="me-2" />Editar Platillo</>}
             onClose={onClose}
             className="border-0"
             bodyClassName="pt-2"
@@ -78,7 +79,7 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                                 <span className="spinner-border spinner-border-sm me-2" />
                                 Guardando...
                             </>
-                        ) : isNew ? '➕ Crear' : '💾 Guardar'}
+                        ) : isNew ? <><Plus size={16} className="me-2" />Crear</> : <><Save size={16} className="me-2" />Guardar</>}
                     </button>
                 </>
             )}
@@ -110,8 +111,8 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                         value={form.disponibilidad}
                         onChange={(e) => set('disponibilidad', e.target.value)}
                         options={[
-                            { value: 'DISPONIBLE', label: '🟢 Disponible' },
-                            { value: 'AGOTADO', label: '🔴 Agotado' },
+                            { value: 'DISPONIBLE', label: 'Disponible' },
+                            { value: 'AGOTADO', label: 'Agotado' },
                         ]}
                     />
                 </div>

@@ -2,20 +2,25 @@ import React, { useState } from 'react';
 import { MESAS_OPCIONES } from './adminConstants';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
+import { Plus, Edit, Save, UserCheck, ChefHat, Shield, Flame, Coffee, Cake, User } from 'lucide-react';
 
 const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
     const isNew = !usuario?.id;
 
-    const [form, setForm] = useState(
-        usuario || {
-            nombre: '',
-            email: '',
-            password: '',
-            rol: 'mesero',
-            especialidad: '',
-            mesaId: null,
-        }
-    );
+    const normalizeUsuarioForm = (user) => ({
+        nombre: user?.nombre ?? '',
+        email: user?.email ?? user?.correo ?? '',
+        password: '',
+        rol: user?.rol ?? 'mesero',
+        especialidad: user?.especialidad ?? '',
+        mesaId: user?.mesaId ?? user?.mesa_id ?? null,
+    });
+
+    const [form, setForm] = useState(normalizeUsuarioForm(usuario));
+
+    React.useEffect(() => {
+        setForm(normalizeUsuarioForm(usuario));
+    }, [usuario]);
 
     const set = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
 
@@ -25,7 +30,7 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
 
     return (
         <Modal
-            title={isNew ? '➕ Nuevo Empleado' : '✏️ Editar Empleado'}
+            title={isNew ? <><Plus size={18} className="me-2" />Nuevo Empleado</> : <><Edit size={18} className="me-2" />Editar Empleado</>}
             onClose={onClose}
             className="border-0"
             bodyClassName="pt-2"
@@ -52,7 +57,7 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
                                 <span className="spinner-border spinner-border-sm me-2" />
                                 Guardando...
                             </>
-                        ) : isNew ? '➕ Crear' : '💾 Guardar'}
+                        ) : isNew ? <><Plus size={16} className="me-2" />Crear</> : <><Save size={16} className="me-2" />Guardar</>}
                     </button>
                 </>
             )}
@@ -96,10 +101,10 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
                         value={rolForm}
                         onChange={(e) => set('rol', e.target.value)}
                         options={[
-                            { value: 'mesero', label: '🧑‍🍽️ Mesero' },
-                            { value: 'cocinero', label: '👨‍🍳 Cocinero' },
-                            { value: 'chef', label: '👨‍🍳 Chef' },
-                            { value: 'admin', label: '🛡️ Administrador' },
+                            { value: 'mesero', label: 'Mesero' },
+                            { value: 'cocinero', label: 'Cocinero' },
+                            { value: 'chef', label: 'Chef' },
+                            { value: 'admin', label: 'Administrador' },
                         ]}
                     />
                 </div>
@@ -114,9 +119,9 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
                             onChange={(e) => set('especialidad', e.target.value)}
                             options={[
                                 { value: '', label: '— Sin especialidad —' },
-                                { value: 'parrillero', label: '🔥 Parrillero' },
-                                { value: 'barista', label: '☕ Barista' },
-                                { value: 'repostero', label: '🍰 Repostero' },
+                                { value: 'parrillero', label: 'Parrillero' },
+                                { value: 'barista', label: 'Barista' },
+                                { value: 'repostero', label: 'Repostero' },
                             ]}
                         />
                     </div>
@@ -126,7 +131,7 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
             {esMesero && (
                 <FormInput
                     id="mesaId"
-                    label="🪑 Mesa asignada"
+                    label="Mesa asignada"
                     as="select"
                     value={form.mesaId || ''}
                     onChange={(e) => set('mesaId', e.target.value ? Number(e.target.value) : null)}

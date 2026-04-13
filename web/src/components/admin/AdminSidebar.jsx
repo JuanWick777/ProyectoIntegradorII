@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { User, X, AlertTriangle, Loader, Save, Shield, UserCheck, ChefHat, Flame, Coffee, Cake, Settings, LogOut, Edit2 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Modal de edición de perfil (Adaptado de HamburgerMenu)
@@ -37,7 +38,7 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                 correo: form.correo,
                 contrasena: form.contrasena || undefined,
             });
-            setOk('✅ Perfil actualizado correctamente');
+            setOk('Perfil actualizado correctamente');
             setTimeout(() => { onGuardado(); onClose(); }, 1200);
         } catch (e) {
             setError(e.message || 'Error al guardar');
@@ -78,13 +79,16 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                         background: 'rgba(230,126,34,0.25)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 22,
-                    }}>👤</div>
+                    }}><User size={20} /></div>
                     <div>
                         <div style={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>
                             Mi Perfil
                         </div>
-                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>
-                            {usuario?.rol || 'Empleado'}
+                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            {(() => {
+                                const { Icon, label } = getRolDisplay(usuario?.rol);
+                                return <><Icon size={12} />{label}</>;
+                            })()}
                         </div>
                     </div>
                     <button
@@ -93,7 +97,7 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                             marginLeft: 'auto', background: 'none', border: 'none',
                             color: 'rgba(255,255,255,0.6)', fontSize: 22, cursor: 'pointer',
                         }}
-                    >✕</button>
+                    ><X size={16} /></button>
                 </div>
 
                 {/* Body */}
@@ -103,7 +107,7 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                             background: '#fff5f5', border: '1px solid #feb2b2',
                             borderRadius: '0.75rem', padding: '0.75rem 1rem',
                             color: '#c53030', fontSize: '0.875rem', marginBottom: 16,
-                        }}>⚠️ {error}</div>
+                        }}><AlertTriangle size={16} className="me-2" />{error}</div>
                     )}
                     {ok && (
                         <div style={{
@@ -175,7 +179,7 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                             fontSize: '0.95rem',
                         }}
                     >
-                        {loading ? '⏳ Guardando...' : '💾 Guardar cambios'}
+                        {loading ? <><Loader size={16} className="me-2" />Guardando...</> : <><Save size={16} className="me-2" />Guardar cambios</>}
                     </button>
                 </div>
             </div>
@@ -212,15 +216,28 @@ const AdminSidebar = ({
         }
     };
 
-    const rolLabel = {
-        ADMIN: '🛡️ Administrador',
-        MESERO: '🧑‍🍽️ Mesero',
-        COCINERO: '👨‍🍳 Cocinero',
-        CHEF: '👨‍🍳 Chef',
-        PARRILLERO: '🔥 Parrillero',
-        BARISTA: '☕ Barista',
-        REPOSTERO: '🍰 Repostero',
-    }[usuario?.rol] || '👤 Empleado';
+    const getRolDisplay = (rol) => {
+        const roleIcons = {
+            ADMIN: Shield,
+            MESERO: UserCheck,
+            COCINERO: ChefHat,
+            CHEF: ChefHat,
+            PARRILLERO: Flame,
+            BARISTA: Coffee,
+            REPOSTERO: Cake,
+        };
+        const IconComponent = roleIcons[rol] || User;
+        const roleLabels = {
+            ADMIN: 'Administrador',
+            MESERO: 'Mesero',
+            COCINERO: 'Cocinero',
+            CHEF: 'Chef',
+            PARRILLERO: 'Parrillero',
+            BARISTA: 'Barista',
+            REPOSTERO: 'Repostero',
+        };
+        return { Icon: IconComponent, label: roleLabels[rol] || 'Empleado' };
+    };
 
     const isOpen = isPinned || isHovered;
     const sidebarWidth = isOpen ? 260 : 70;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { X, FileText, AlertTriangle } from 'lucide-react';
 
 const IVA_RATE = 0.16; // 16% IVA México
 
@@ -83,8 +84,8 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
             {/* ── Lista de ítems ────────────────────────────────────── */}
             <div className="flex-grow-1 p-3 d-flex flex-column gap-3">
 
-                <p className="text-muted small mb-0">
-                    🪑 Mesa #{numeroMesa} &nbsp;·&nbsp;
+                <p className="text-muted small mb-0 d-flex align-items-center gap-2">
+                    <Users size={16} /> Mesa #{numeroMesa} &nbsp;·&nbsp;
                     <span className="fw-semibold text-dark">{carrito.reduce((s, i) => s + i.cantidad, 0)} items</span>
                 </p>
 
@@ -111,7 +112,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                                     style={{ width: 32, height: 32 }}
                                     title="Eliminar"
                                 >
-                                    ✕
+                                    <X size={16} />
                                 </button>
                             </div>
 
@@ -142,7 +143,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
 
                             {/* Notas / instrucciones especiales */}
                             <label className="form-label small text-muted mb-1">
-                                📝 Instrucciones especiales
+                                <FileText size={16} className="me-2" />Instrucciones especiales
                             </label>
                             <textarea
                                 className="form-control form-control-sm"
@@ -181,7 +182,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                 {/* Error de envío */}
                 {error && (
                     <div className="alert alert-danger py-2 px-3 mb-2 small d-flex gap-2 align-items-center" style={{ borderRadius: '0.75rem' }}>
-                        <span>⚠️</span>{error}
+                        <AlertTriangle size={16} className="me-2" />{error}
                     </div>
                 )}
 

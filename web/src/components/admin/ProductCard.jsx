@@ -1,4 +1,5 @@
 import React from 'react';
+import { UtensilsCrossed, Edit2 } from 'lucide-react';
 import {
     getProductImage,
     getProductName,
@@ -7,6 +8,7 @@ import {
     getProductDisponibilidad
 } from './adminConstants';
 import Badge from '../ui/Badge';
+import { AlertTriangle } from 'lucide-react';
 
 const ProductCard = ({ product, onEdit }) => {
     const disponibilidad = getProductDisponibilidad(product);
@@ -26,13 +28,13 @@ const ProductCard = ({ product, onEdit }) => {
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                 ) : (
-                    <div className="d-flex align-items-center justify-content-center h-100 text-muted" style={{ fontSize: 48 }}>
-                        🍽️
+                    <div className="d-flex align-items-center justify-content-center h-100 text-muted">
+                        <UtensilsCrossed size={48} style={{ color: '#cbd5e0' }} />
                     </div>
                 )}
                 {stockAgotado && (
                     <Badge className="position-absolute top-0 end-0 m-2" variant="danger">
-                        ⚠️ Agotado
+                        <AlertTriangle size={14} className="me-1" />Agotado
                     </Badge>
                 )}
             </div>
@@ -61,11 +63,11 @@ const ProductCard = ({ product, onEdit }) => {
                 </div>
 
                 <button
-                    className="btn btn-outline-primary btn-sm mt-2 w-100 fw-semibold"
+                    className="btn btn-outline-primary btn-sm mt-2 w-100 fw-semibold d-flex align-items-center justify-content-center gap-1"
                     style={{ borderRadius: '0.6rem' }}
                     onClick={() => onEdit(product)}
                 >
-                    ✏️ Editar
+                    <Edit2 size={14} /> Editar
                 </button>
             </div>
         </div>

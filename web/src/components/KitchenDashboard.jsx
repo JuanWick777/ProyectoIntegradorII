@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Users, FileText, Flame, Check, ChefHat, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import MeseroLogin from './mesero/MeseroLogin';
 import HamburgerMenu from './shared/HamburgerMenu';
@@ -55,8 +56,8 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
                     borderRadius: '1rem 1rem 0 0',
                 }}
             >
-                <div className="fw-bold" style={{ color: '#8e4b10' }}>
-                    🪑 Mesa {mesaNumero}
+                <div className="fw-bold d-flex align-items-center gap-2" style={{ color: '#8e4b10' }}>
+                    <Users size={18} /> Mesa {mesaNumero}
                 </div>
                 <div className="d-flex align-items-center gap-2">
                     <span className="badge text-dark" style={{ background: '#ffe0b2' }}>
@@ -94,14 +95,14 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
 
                 {detalle.notaCliente && detalle.notaCliente.trim() !== '' && (
                     <div
-                        className="mt-2 px-2 py-2 rounded-3 small"
+                        className="mt-2 px-2 py-2 rounded-3 small d-flex align-items-center gap-2"
                         style={{
                             background: '#fff8e1',
                             color: '#8a5a00',
                             border: '1px solid #ffd54f',
                         }}
                     >
-                        📝 {detalle.notaCliente}
+                        <FileText size={14} /> {detalle.notaCliente}
                     </div>
                 )}
 
@@ -116,37 +117,37 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
             <div className="card-footer bg-transparent p-3 border-0">
                 {estado === 'PENDIENTE' && (
                     <button
-                        className="btn w-100 fw-bold text-white"
+                        className="btn w-100 fw-bold text-white d-flex align-items-center justify-content-center gap-2"
                         style={{ background: '#e67e22', borderRadius: '0.75rem' }}
                         onClick={onPreparar}
                         disabled={loading}
                     >
                         {loading ? (
-                            <span className="spinner-border spinner-border-sm me-2" />
+                            <span className="spinner-border spinner-border-sm" />
                         ) : (
-                            '🔥 Iniciar preparación'
+                            <><Flame size={18} /> Iniciar preparación</>
                         )}
                     </button>
                 )}
 
                 {estado === 'EN_PREPARACION' && (
                     <button
-                        className="btn w-100 fw-bold text-white"
+                        className="btn w-100 fw-bold text-white d-flex align-items-center justify-content-center gap-2"
                         style={{ background: '#27ae60', borderRadius: '0.75rem' }}
                         onClick={onListo}
                         disabled={loading}
                     >
                         {loading ? (
-                            <span className="spinner-border spinner-border-sm me-2" />
+                            <span className="spinner-border spinner-border-sm" />
                         ) : (
-                            '✅ Marcar como listo'
+                            <><Check size={18} /> Marcar como listo</>
                         )}
                     </button>
                 )}
 
                 {estado === 'LISTO' && (
-                    <div className="text-center fw-semibold" style={{ color: '#27ae60' }}>
-                        🟢 Ticket listo para entrega
+                    <div className="text-center fw-semibold d-flex align-items-center justify-content-center gap-2" style={{ color: '#27ae60' }}>
+                        <Check size={20} /> Ticket listo para entrega
                     </div>
                 )}
             </div>
@@ -205,7 +206,8 @@ const KitchenDashboard = () => {
             return (
                 <div className="min-vh-100 d-flex align-items-center justify-content-center">
                     <div className="text-center">
-                        <h2>🚫 Acceso denegado</h2>
+                        <AlertTriangle size={48} className="mx-auto mb-3" style={{ color: '#dc3545' }} />
+                        <h2>Acceso denegado</h2>
                         <p>No tienes permisos para entrar a cocina</p>
                         <button className="btn btn-primary mt-3" onClick={logoutLocal}>
                             Volver
@@ -219,7 +221,7 @@ const KitchenDashboard = () => {
             <MeseroLogin
                 onLoginExitoso={() => fetchCurrentUser()}
                 titulo="Portal de Cocina"
-                icono="👨‍🍳"
+                icono={<ChefHat size={32} />}
                 demoEmail="chef1@rest.com"
             />
         );
@@ -239,7 +241,7 @@ const KitchenDashboard = () => {
                 }}
             >
                 <div className="d-flex align-items-center gap-3">
-                    <span style={{ fontSize: 30 }}>👨‍🍳</span>
+                    <ChefHat size={32} style={{ color: '#b45309' }} />
                     <div>
                         <h1 className="fw-bold mb-0" style={{ fontSize: '1.15rem', color: '#b45309' }}>
                             KDS - Cocina en Vivo
@@ -252,8 +254,8 @@ const KitchenDashboard = () => {
 
                 <div className="d-flex align-items-center gap-2">
                     {ultimaSync && (
-                        <span className="text-muted d-none d-md-inline" style={{ fontSize: '0.75rem' }}>
-                            🔄 {ultimaSync.toLocaleTimeString('es-MX', {
+                        <span className="text-muted d-none d-md-inline d-flex align-items-center gap-1" style={{ fontSize: '0.75rem' }}>
+                            <RefreshCw size={14} /> {ultimaSync.toLocaleTimeString('es-MX', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 second: '2-digit',
@@ -277,9 +279,9 @@ const KitchenDashboard = () => {
                 ) : (
                     <div className="row g-3">
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#fff5f5', border: '1px solid #f5b7b1', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
-                                <h5 className="fw-bold mb-3" style={{ color: '#c0392b' }}>
-                                    🔴 Pendiente ({pendientes.length})
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#ffe5e5', border: '1px solid #ffcccc', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
+                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#c0392b' }}>
+                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#c0392b' }} /> Pendiente ({pendientes.length})
                                 </h5>
                                 {pendientes.length === 0 ? (
                                     <p className="text-center text-muted py-4">Sin tickets pendientes</p>
@@ -301,8 +303,8 @@ const KitchenDashboard = () => {
 
                         <div className="col-12 col-lg-4">
                             <div className="rounded-4 p-3 h-100" style={{ background: '#fffbea', border: '1px solid #f9e79f', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
-                                <h5 className="fw-bold mb-3" style={{ color: '#b9770e' }}>
-                                    🟡 En preparación ({enPreparacion.length})
+                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#b9770e' }}>
+                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#f1c40f' }} /> En preparación ({enPreparacion.length})
                                 </h5>
                                 {enPreparacion.length === 0 ? (
                                     <p className="text-center text-muted py-4">Nada en preparación</p>
@@ -324,8 +326,8 @@ const KitchenDashboard = () => {
 
                         <div className="col-12 col-lg-4">
                             <div className="rounded-4 p-3 h-100" style={{ background: '#f0fff4', border: '1px solid #abebc6', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
-                                <h5 className="fw-bold mb-3" style={{ color: '#1e8449' }}>
-                                    🟢 Listo ({listos.length})
+                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#1e8449' }}>
+                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#27ae60' }} /> Listo ({listos.length})
                                 </h5>
                                 {listos.length === 0 ? (
                                     <p className="text-center text-muted py-4">Sin tickets listos</p>

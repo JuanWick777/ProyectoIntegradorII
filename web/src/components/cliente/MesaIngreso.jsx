@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { UtensilsCrossed, Users, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 /**
@@ -58,7 +59,7 @@ const MesaIngreso = ({ onMesaValida }) => {
                         className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
                         style={{ width: 80, height: 80, background: 'rgba(255,255,255,0.2)' }}
                     >
-                        <span style={{ fontSize: 40 }}>🍽️</span>
+                        <UtensilsCrossed size={40} className="text-white" />
                     </div>
                     <h1 className="text-white fw-bold fs-2 mb-1">Bienvenido</h1>
                     <p className="text-white-50 mb-0">Ingresa el número de tu mesa para comenzar</p>
@@ -74,7 +75,7 @@ const MesaIngreso = ({ onMesaValida }) => {
                                 </label>
                                 <div className="input-group input-group-lg">
                                     <span className="input-group-text border-end-0 bg-light">
-                                        <span style={{ fontSize: 20 }}>🪑</span>
+                                        <Users size={20} className="text-secondary" />
                                     </span>
                                     <input
                                         type="number"
@@ -94,7 +95,7 @@ const MesaIngreso = ({ onMesaValida }) => {
                                 </div>
                                 {error && (
                                     <div className="alert alert-danger mt-3 mb-0 py-2 px-3 d-flex align-items-center gap-2" style={{ borderRadius: '0.75rem' }}>
-                                        <span>⚠️</span>
+                                        <AlertTriangle size={18} className="flex-shrink-0" />
                                         <small>{error}</small>
                                     </div>
                                 )}

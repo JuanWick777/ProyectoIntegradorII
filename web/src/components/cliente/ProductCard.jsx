@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+import { AlertTriangle, UtensilsCrossed, Check } from 'lucide-react';
 
 /**
  * ProductCard.jsx — Tarjeta de producto para el menú del cliente
@@ -46,7 +47,7 @@ const ProductCard = ({ product }) => {
                 }}
             >
                 {!product.imagen_url && (
-                    <span style={{ fontSize: 48, opacity: 0.4 }}>🍽️</span>
+                    <UtensilsCrossed size={48} style={{ color: 'rgba(0,0,0,0.2)' }} />
                 )}
 
                 {/* Badge de stock */}
@@ -80,7 +81,7 @@ const ProductCard = ({ product }) => {
                 {product.alergenos && product.alergenos !== 'ninguno' && (
                     <div className="mb-2">
                         <Badge variant="warning" className="text-dark" pill={false}>
-                            ⚠️ {product.alergenos}
+                            <AlertTriangle size={14} className="me-1" />{product.alergenos}
                         </Badge>
                     </div>
                 )}
@@ -99,9 +100,9 @@ const ProductCard = ({ product }) => {
                             variant={added ? 'success' : 'primary'}
                             size="sm"
                             disabled={sinStock}
-                            className="rounded-xl"
+                            className="rounded-xl d-flex align-items-center justify-content-center gap-1"
                         >
-                            {added ? '✓ Agregado' : sinStock ? 'Agotado' : '+ Agregar'}
+                            {added ? <><Check size={16} /> Agregado</> : sinStock ? 'Agotado' : '+ Agregar'}
                         </Button>
                     ) : (
                         <div className="d-flex align-items-center justify-content-between bg-light rounded-pill px-2">

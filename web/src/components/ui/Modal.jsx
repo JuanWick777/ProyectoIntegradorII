@@ -1,10 +1,10 @@
 import React from 'react';
 
-const SIZE_CLASSES = {
-  sm: 'max-w-xl',
-  md: 'max-w-2xl',
-  lg: 'max-w-3xl',
-  xl: 'max-w-5xl',
+const SIZE_STYLES = {
+  sm: { maxWidth: '28rem' },
+  md: { maxWidth: '42rem' },
+  lg: { maxWidth: '56rem' },
+  xl: { maxWidth: '72rem' },
 };
 
 const Modal = ({
@@ -21,24 +21,67 @@ const Modal = ({
   footerClassName = '',
   ...props
 }) => {
-  const containerClass = SIZE_CLASSES[size] || SIZE_CLASSES.md;
+  const containerStyle = SIZE_STYLES[size] || SIZE_STYLES.md;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1050,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+        padding: '1rem',
+      }}
       onClick={closeOnBackdrop ? onClose : undefined}
       role="dialog"
       aria-modal="true"
     >
-      <div className={`w-full ${containerClass}`} onClick={(e) => e.stopPropagation()}>
-        <div className={`bg-white rounded-[1.25rem] shadow-2xl overflow-hidden ${className}`} {...props}>
+      <div
+        style={{
+          width: '100%',
+          ...containerStyle,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '1.25rem',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden',
+          }}
+          className={className}
+          {...props}
+        >
           {(title || showCloseButton) && (
-            <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-200 ${headerClassName}`}>
-              {title ? <h5 className="text-lg font-semibold text-gray-900">{title}</h5> : <div />}
+            <div
+              className={headerClassName}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1rem 1.5rem',
+                borderBottom: '1px solid #e5e7eb',
+              }}
+            >
+              {title ? (
+                <h5 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>{title}</h5>
+              ) : (
+                <div />
+              )}
               {showCloseButton && (
                 <button
                   type="button"
-                  className="text-gray-500 hover:text-gray-900 transition"
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#6b7280',
+                    fontSize: '1.25rem',
+                    cursor: 'pointer',
+                  }}
                   onClick={onClose}
                   aria-label="Cerrar modal"
                 >
@@ -48,12 +91,19 @@ const Modal = ({
             </div>
           )}
 
-          <div className={`px-6 py-4 ${bodyClassName}`}>
+          <div className={bodyClassName} style={{ padding: '1.5rem' }}>
             {children}
           </div>
 
           {footer && (
-            <div className={`px-6 py-4 border-t border-gray-200 bg-gray-50 ${footerClassName}`}>
+            <div
+              className={footerClassName}
+              style={{
+                padding: '1rem 1.5rem',
+                borderTop: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb',
+              }}
+            >
               {footer}
             </div>
           )}

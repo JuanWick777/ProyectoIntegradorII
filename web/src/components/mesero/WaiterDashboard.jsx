@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ClipboardList, Clock, CheckCircle, ChefHat, UtensilsCrossed, Handshake, RefreshCw, User, Check, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import OrderCard from './OrderCard';
 import HamburgerMenu from '../shared/HamburgerMenu';
 
 const FILTROS = [
-    { key: 'todos', label: 'Todos', icono: '📋' },
-    { key: 'pendiente_confirmacion', label: 'Pendientes', icono: '🕐' },
-    { key: 'confirmada', label: 'Confirmadas', icono: '✅' },
-    { key: 'en_preparacion', label: 'En cocina', icono: '👨‍🍳' },
-    { key: 'lista', label: 'Listas', icono: '🍽️' },
-    { key: 'entregada', label: 'Entregadas', icono: '🤝' },
+    { key: 'todos', label: 'Todos', Icon: ClipboardList },
+    { key: 'pendiente_confirmacion', label: 'Pendientes', Icon: Clock },
+    { key: 'confirmada', label: 'Confirmadas', Icon: CheckCircle },
+    { key: 'en_preparacion', label: 'En cocina', Icon: ChefHat },
+    { key: 'lista', label: 'Listas', Icon: UtensilsCrossed },
+    { key: 'entregada', label: 'Entregadas', Icon: Handshake },
 ];
 
 /**
@@ -74,9 +75,9 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
         } catch (e) {
             console.error('Error actualizando estado:', e);
             if (e.message?.includes('Límite alcanzado')) {
-                alert('⚠️ Límite de mesas: ' + e.message);
+                alert('Límite de mesas: ' + e.message);
             } else {
-                alert('❌ Error: ' + (e.message || 'No se pudo actualizar la orden'));
+                alert('Error: ' + (e.message || 'No se pudo actualizar la orden'));
             }
         } finally {
             setLoadingId(null);
@@ -102,7 +103,7 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
             >
                 <div className="container-fluid px-3 py-2 d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center gap-2">
-                        <span className="fs-5">🧑‍🍽️</span>
+                        <User size={20} className="text-white" />
                         <div>
                             <div className="fw-bold text-white lh-1" style={{ fontSize: '0.95rem' }}>
                                 Panel Mesero
@@ -122,8 +123,8 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                     </div>
                     <div className="d-flex align-items-center gap-2">
                         {ultimaSync && (
-                            <span className="text-white-50 d-none d-md-inline" style={{ fontSize: '0.7rem' }}>
-                                🔄 {ultimaSync.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            <span className="text-white-50 d-none d-md-inline d-flex align-items-center gap-1" style={{ fontSize: '0.7rem' }}>
+                                <RefreshCw size={14} /> {ultimaSync.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </span>
                         )}
                         <HamburgerMenu
@@ -144,11 +145,11 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                     {FILTROS.map(f => (
                         <button
                             key={f.key}
-                            className={`btn btn-sm ${filtro === f.key ? 'btn-primary' : 'btn-outline-secondary'}`}
+                            className={`btn btn-sm ${filtro === f.key ? 'btn-primary' : 'btn-outline-secondary'} d-flex align-items-center gap-1`}
                             style={{ borderRadius: '2rem', fontSize: '0.8rem' }}
                             onClick={() => setFiltro(f.key)}
                         >
-                            {f.icono} {f.label}
+                            <f.Icon size={16} /> {f.label}
                             {f.key !== 'todos' && contar(f.key) > 0 && (
                                 <span className="badge rounded-pill bg-danger ms-1" style={{ fontSize: '0.65rem' }}>
                                     {contar(f.key)}
@@ -200,11 +201,11 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                             onClick={async () => {
                                 try {
                                     await aplicarPromocion(Number(promoOrdenId), promoCodigo);
-                                    setPromoMsg({ ok: true, txt: '✅ Descuento aplicado con éxito' });
+                                    setPromoMsg({ ok: true, txt: 'Descuento aplicado con éxito' });
                                     setPromoCodigo(''); setPromoOrdenId('');
                                     await cargarOrdenes();
                                 } catch (e) {
-                                    setPromoMsg({ ok: false, txt: '❌ ' + (e?.error || e?.message || 'Código inválido') });
+                                    setPromoMsg({ ok: false, txt: (e?.error || e?.message || 'Código inválido') });
                                 }
                             }}
                         >
@@ -240,7 +241,7 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                     </div>
                 ) : ordenesFiltradas.length === 0 ? (
                     <div className="text-center py-5 text-muted">
-                        <p style={{ fontSize: 56 }}>🎉</p>
+                        <UtensilsCrossed size={56} className="mx-auto mb-3" style={{ color: '#a8a9ad' }} />
                         <p className="fw-semibold fs-5">Sin órdenes {filtro !== 'todos' ? 'en este estado' : 'activas'}</p>
                         <p className="small">Las nuevas órdenes aparecerán automáticamente.</p>
                     </div>

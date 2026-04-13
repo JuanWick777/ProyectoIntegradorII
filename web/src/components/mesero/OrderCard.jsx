@@ -1,4 +1,5 @@
 import React from 'react';
+import { Users, FileText, UtensilsCrossed, DollarSign, Check, X } from 'lucide-react';
 import Badge from '../ui/Badge';
 
 const ESTADO_BADGE = {
@@ -49,7 +50,7 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
                 {/* HEADER */}
                 <div className="d-flex justify-content-between align-items-start">
                     <div>
-                        <span className="fs-4 fw-bold">🪑 Mesa {orden.mesaNumero}</span>
+                        <span className="fs-4 fw-bold d-flex align-items-center gap-2"><Users size={20} /> Mesa {orden.mesaNumero}</span>
                         <div className="text-muted small">
                             #{orden.id} · hace {minutosTranscurridos} min
                         </div>
@@ -82,10 +83,10 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
 
                             {d.nota && (
                                 <div
-                                    className="small text-warning mt-1 px-2 py-1 rounded-2"
+                                    className="small text-warning mt-1 px-2 py-1 rounded-2 d-flex align-items-center gap-1"
                                     style={{ background: 'rgba(230,126,34,0.1)', fontSize: '0.78rem' }}
                                 >
-                                    📝 {d.nota}
+                                    <FileText size={14} /> {d.nota}
                                 </div>
                             )}
                         </div>
@@ -105,42 +106,42 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
                         {esPendiente && (
                             <>
                                 <button
-                                    className="btn btn-success btn-sm flex-grow-1 fw-semibold"
+                                    className="btn btn-success btn-sm flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-1"
                                     onClick={onAceptar}
                                     disabled={loading}
                                 >
                                     {loading
                                         ? <span className="spinner-border spinner-border-sm" />
-                                        : '✓ Aceptar'}
+                                        : <><Check size={16} /> Aceptar</>}
                                 </button>
 
                                 <button
-                                    className="btn btn-outline-danger btn-sm fw-semibold"
+                                    className="btn btn-outline-danger btn-sm fw-semibold d-flex align-items-center justify-content-center gap-1"
                                     onClick={onCancelar}
                                     disabled={loading}
                                 >
-                                    ✕ Cancelar
+                                    <X size={16} /> Cancelar
                                 </button>
                             </>
                         )}
 
                         {esLista && (
                             <button
-                                className="btn btn-primary btn-sm w-100 fw-semibold"
+                                className="btn btn-primary btn-sm w-100 fw-semibold d-flex align-items-center justify-content-center gap-1"
                                 onClick={onEntregar}
                                 disabled={loading}
                             >
-                                🍽️ Marcar entregada
+                                <UtensilsCrossed size={16} /> Marcar entregada
                             </button>
                         )}
 
                         {esEntregada && (
                             <button
-                                className="btn btn-warning btn-sm w-100 fw-bold"
+                                className="btn btn-warning btn-sm w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
                                 onClick={onCobrar}
                                 disabled={loading}
                             >
-                                💰 Cobrar y cerrar mesa
+                                <DollarSign size={16} /> Cobrar y cerrar mesa
                             </button>
                         )}
                     </div>

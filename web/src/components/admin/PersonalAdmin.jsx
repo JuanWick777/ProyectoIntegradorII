@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import SectionHeader from '../ui/SectionHeader';
 import DataTable from '../ui/DataTable';
 import UsuarioModal from './UsuarioModal';
-import { ForkKnife, Table, PlusCircle, Edit2, Trash2, AlertTriangle } from 'lucide-react';
+import { ForkKnife, Table, PlusCircle, Edit2, Trash2, AlertTriangle, Shield, UserCheck, User, ChefHat, Coffee, Flame, Cake, Search, SlidersHorizontal } from 'lucide-react';
 import { normalizeRole, getUserEmail, getUserRole, ROL_BADGE } from './adminConstants';
 
 const PersonalAdmin = ({ mostrarToast }) => {
@@ -13,12 +13,18 @@ const PersonalAdmin = ({ mostrarToast }) => {
     const [modal, setModal] = useState(null);
     const [saving, setSaving] = useState(false);
     const [confirmDel, setConfirmDel] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [roleFilter, setRoleFilter] = useState('todos');
+    const [statusFilter, setStatusFilter] = useState('todos');
+    const [sortBy, setSortBy] = useState('nombre');
 
     const cargar = async () => {
         setLoading(true);
         try {
             const uList = await fetchUsuarios();
-            setUsuarios(uList);
+            // Filtrar solo empleados (excluyendo clientes)
+            const empleadosList = uList.filter((u) => u.rol && u.rol.toLowerCase() !== 'cliente');
+            setUsuarios(empleadosList);
         } finally {
             setLoading(false);
         }
@@ -27,6 +33,40 @@ const PersonalAdmin = ({ mostrarToast }) => {
     useEffect(() => {
         cargar();
     }, []);
+
+    const roleOptions = useMemo(() => (
+        [{ value: 'todos', label: 'Todos los roles' }]
+            .concat(Object.entries(ROL_BADGE).map(([key, value]) => ({ value: key, label: value.label })))
+    ), []);
+
+    const sortedUsuarios = useMemo(() => {
+        const filtered = usuarios.filter((u) => {
+            const nombre = (u.nombre || '').toString().toLowerCase();
+            const email = getUserEmail(u).toLowerCase();
+            const rol = getUserRole(u);
+            const estado = u.activo ? 'activo' : 'inactivo';
+            const query = searchQuery.toLowerCase().trim();
+
+            if (query && !(nombre.includes(query) || email.includes(query))) {
+                return false;
+            }
+            if (roleFilter !== 'todos' && rol !== roleFilter) {
+                return false;
+            }
+            if (statusFilter !== 'todos' && estado !== statusFilter) {
+                return false;
+            }
+            return true;
+        });
+
+        return filtered.sort((a, b) => {
+            const aValue = (sortBy === 'rol' ? getUserRole(a) : (a.nombre || '')).toString().toLowerCase();
+            const bValue = (sortBy === 'rol' ? getUserRole(b) : (b.nombre || '')).toString().toLowerCase();
+            if (aValue < bValue) return -1;
+            if (aValue > bValue) return 1;
+            return 0;
+        });
+    }, [usuarios, searchQuery, roleFilter, statusFilter, sortBy]);
 
     const handleSave = async (form) => {
         setSaving(true);
@@ -87,11 +127,24 @@ const PersonalAdmin = ({ mostrarToast }) => {
             render: (u) => {
                 const rol = getUserRole(u);
                 const badge = ROL_BADGE[rol] || { color: '#aaa', label: rol || '—' };
+                const ROLE_ICONS = {
+                    admin: Shield,
+                    mesero: UserCheck,
+                    cocinero: ChefHat,
+                    chef: ChefHat,
+                    parrillero: Flame,
+                    barista: Coffee,
+                    repostero: Cake,
+                    cliente: User,
+                };
+                const IconComponent = ROLE_ICONS[rol] || User;
+
                 return (
                     <span
-                        className="badge fw-semibold"
+                        className="badge fw-semibold d-inline-flex align-items-center gap-1"
                         style={{ background: badge.color, borderRadius: '2rem', fontSize: '0.8rem' }}
                     >
+                        <IconComponent size={14} />
                         {badge.label}
                     </span>
                 );
@@ -189,9 +242,82 @@ const PersonalAdmin = ({ mostrarToast }) => {
                 )}
             />
 
+            <div className="row g-3 mb-4 align-items-center">
+                <div className="col-12 col-md-5">
+                    <div className="input-group shadow-sm" style={{ borderRadius: '1rem', overflow: 'hidden' }}>
+                        <span className="input-group-text bg-white border-end-0" style={{ borderRadius: '1rem 0 0 1rem' }}>
+                            <Search size={18} />
+                        </span>
+                        <input
+                            type="text"
+                            className="form-control border-start-0"
+                            style={{ borderRadius: '0 1rem 1rem 0' }}
+                            placeholder="Buscar personal por nombre o email..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className="col-12 col-md-3">
+                    <div className="form-floating">
+                        <select
+                            className="form-select"
+                            id="roleFilter"
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                            style={{ borderRadius: '1rem' }}
+                        >
+                            {roleOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        <label htmlFor="roleFilter">Todos los roles</label>
+                    </div>
+                </div>
+                <div className="col-12 col-md-2">
+                    <div className="form-floating">
+                        <select
+                            className="form-select"
+                            id="statusFilter"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            style={{ borderRadius: '1rem' }}
+                        >
+                            <option value="todos">Todos los estados</option>
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                        <label htmlFor="statusFilter">Estado</label>
+                    </div>
+                </div>
+                <div className="col-12 col-md-2">
+                    <div className="form-floating">
+                        <select
+                            className="form-select"
+                            id="sortBy"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            style={{ borderRadius: '1rem' }}
+                        >
+                            <option value="nombre">Nombre</option>
+                            <option value="rol">Rol</option>
+                        </select>
+                        <label htmlFor="sortBy">Ordenar por</label>
+                    </div>
+                </div>
+                <div className="col-12 col-md-12 text-muted small">
+                    <div className="d-flex align-items-center gap-2">
+                        <SlidersHorizontal size={16} />
+                        <span>{sortedUsuarios.length} resultados</span>
+                    </div>
+                </div>
+            </div>
+
             <DataTable
                 columns={columns}
-                data={usuarios}
+                data={sortedUsuarios}
                 emptyMessage="Sin empleados registrados"
                 loading={loading}
             />
@@ -206,19 +332,50 @@ const PersonalAdmin = ({ mostrarToast }) => {
             )}
 
             {confirmDel && (
-                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }}>
+                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.35)' }}>
                     <div className="modal-dialog modal-dialog-centered modal-sm">
-                        <div className="modal-content border-0 shadow-lg text-center p-4" style={{ borderRadius: '1.25rem' }}>
-                            <AlertTriangle size={40} className="text-warning mb-3" />
-                            <h5 className="fw-bold">¿Eliminar empleado?</h5>
-                            <p className="text-muted small mb-3">{confirmDel.nombre}</p>
-                            <div className="d-flex gap-2 justify-content-center">
-                                <button className="btn btn-secondary" onClick={() => setConfirmDel(null)}>
-                                    Cancelar
-                                </button>
-                                <button className="btn btn-danger fw-bold" onClick={() => handleDelete(confirmDel.id)}>
-                                    Sí, eliminar
-                                </button>
+                        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.5rem', overflow: 'hidden' }}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #fff4e6 0%, #fff7f0 100%)',
+                                padding: '1.6rem 1.4rem',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{
+                                    width: 64,
+                                    height: 64,
+                                    borderRadius: '50%',
+                                    background: 'rgba(255, 221, 178, 0.45)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginBottom: 14,
+                                }}>
+                                    <AlertTriangle size={28} className="text-warning" />
+                                </div>
+                                <h5 className="fw-bold mb-2">¿Eliminar empleado?</h5>
+                                <p className="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+                            </div>
+                            <div className="p-4">
+                                <div className="text-center mb-3">
+                                    <div className="fw-semibold">{confirmDel.nombre}</div>
+                                    <div className="text-muted small">Se borrará toda la información del empleado.</div>
+                                </div>
+                                <div className="d-flex gap-2">
+                                    <button
+                                        className="btn btn-outline-secondary flex-fill"
+                                        style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
+                                        onClick={() => setConfirmDel(null)}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        className="btn btn-danger flex-fill fw-bold"
+                                        style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
+                                        onClick={() => handleDelete(confirmDel.id)}
+                                    >
+                                        Sí, eliminar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

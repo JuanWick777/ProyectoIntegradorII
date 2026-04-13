@@ -1,4 +1,5 @@
 import React from 'react';
+import { Gift, Pizza, Smartphone, Bell, Apple, Bot } from 'lucide-react';
 import Modal from '../ui/Modal';
 
 /**
@@ -50,16 +51,19 @@ const FidelidadModal = ({ onContinue }) => {
                         <h6 className="fw-bold text-dark mb-3">Con la App obtienes:</h6>
                         <ul className="list-unstyled mb-0">
                             {[
-                                { icon: '🎁', text: '1 punto por cada $10 consumidos' },
-                                { icon: '🍕', text: 'Platillo gratis al acumular 100 pts' },
-                                { icon: '📱', text: 'Ordena desde tu celular' },
-                                { icon: '🔔', text: 'Notificaciones de promociones' },
-                            ].map((item, idx) => (
+                                { Icon: Gift, text: '1 punto por cada $10 consumidos' },
+                                { Icon: Pizza, text: 'Platillo gratis al acumular 100 pts' },
+                                { Icon: Smartphone, text: 'Ordena desde tu celular' },
+                                { Icon: Bell, text: 'Notificaciones de promociones' },
+                            ].map((item, idx) => {
+                                const IconComp = item.Icon;
+                                return (
                                 <li key={idx} className="d-flex align-items-center gap-2 py-1">
-                                    <span style={{ fontSize: 20, minWidth: 28 }}>{item.icon}</span>
+                                    <IconComp size={20} className="flex-shrink-0" style={{ color: '#e67e22' }} />
                                     <span className="text-secondary small">{item.text}</span>
                                 </li>
-                            ))}
+                            );
+                            })}
                         </ul>
                     </div>
                 </div>
@@ -69,10 +73,10 @@ const FidelidadModal = ({ onContinue }) => {
                 </p>
                 <div className="d-flex justify-content-center gap-3 mb-1">
                     <span className="badge bg-dark px-3 py-2 d-flex align-items-center gap-1">
-                        <span>🍎</span> App Store
+                        <Apple size={16} /> App Store
                     </span>
                     <span className="badge bg-dark px-3 py-2 d-flex align-items-center gap-1">
-                        <span>🤖</span> Google Play
+                        <Bot size={16} /> Google Play
                     </span>
                 </div>
             </div>

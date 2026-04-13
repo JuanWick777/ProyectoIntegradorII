@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useRef } from 'react';
+import { Clock, Check, ChefHat, UtensilsCrossed, PartyPopper, CreditCard, X, ClipboardList, FileText } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 const POLL_INTERVAL_MS = 8000; // 8 segundos — balance entre reactividad y carga al servidor
@@ -10,7 +11,7 @@ const ESTADOS_CONFIG = {
     pendiente_confirmacion: {
         label: 'Pendiente de Confirmación',
         sublabel: 'Tu pedido está esperando ser aceptado por el mesero.',
-        icon: '⏳',
+        Icon: Clock,
         color: '#856404',
         bg: '#FFF3CD',
         step: 1,
@@ -18,7 +19,7 @@ const ESTADOS_CONFIG = {
     confirmada: {
         label: 'Pedido Confirmado',
         sublabel: 'El mesero aceptó tu pedido, pronto lo prepararemos.',
-        icon: '✅',
+        Icon: Check,
         color: '#0C5460',
         bg: '#D1ECF1',
         step: 2,
@@ -26,7 +27,7 @@ const ESTADOS_CONFIG = {
     en_preparacion: {
         label: 'En Preparación',
         sublabel: 'Nuestros chefs están trabajando en tu pedido.',
-        icon: '👨‍🍳',
+        Icon: ChefHat,
         color: '#004085',
         bg: '#CCE5FF',
         step: 3,
@@ -34,7 +35,7 @@ const ESTADOS_CONFIG = {
     lista: {
         label: '¡Listo para servir!',
         sublabel: 'Tu pedido está listo. El mesero lo llevará a tu mesa.',
-        icon: '🍽️',
+        Icon: UtensilsCrossed,
         color: '#155724',
         bg: '#D4EDDA',
         step: 4,
@@ -42,7 +43,7 @@ const ESTADOS_CONFIG = {
     entregada: {
         label: 'Orden Entregada',
         sublabel: '¡Buen provecho! Disfruta tu comida.',
-        icon: '🎉',
+        Icon: PartyPopper,
         color: '#383D41',
         bg: '#E2E3E5',
         step: 5,
@@ -50,7 +51,7 @@ const ESTADOS_CONFIG = {
     cerrada: {
         label: 'Cuenta Cerrada',
         sublabel: '¡Gracias por tu visita! Esperamos verte pronto.',
-        icon: '💳',
+        Icon: CreditCard,
         color: '#383D41',
         bg: '#E2E3E5',
         step: 6,
@@ -58,7 +59,7 @@ const ESTADOS_CONFIG = {
     cancelada: {
         label: 'Pedido Cancelado',
         sublabel: 'El pedido fue cancelado. Por favor, contacta al mesero.',
-        icon: '❌',
+        Icon: X,
         color: '#721C24',
         bg: '#F8D7DA',
         step: 0,
@@ -92,6 +93,7 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
     const orden = ordenActual;
     const estado = orden?.estado || 'pendiente_confirmacion';
     const config = ESTADOS_CONFIG[estado] || ESTADOS_CONFIG['pendiente_confirmacion'];
+    const IconComponent = config.Icon;
     const esFinal = ['cerrada', 'cancelada', 'entregada'].includes(estado);
 
     // Iniciar polling al montar, limpiar al desmontar
@@ -131,11 +133,10 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
                             className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
                             style={{
                                 width: 80, height: 80,
-                                background: config.bg,
-                                fontSize: 40,
                                 transition: 'all 0.5s ease',
                             }}
                         >
+                            <IconComponent size={40} style={{ color: config.color }} />
                             {config.icon}
                         </div>
 
@@ -207,7 +208,7 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
                                                 }}
                                             >
                                                 {completado && !activo ? '✓' : paso.step}
-                                            </div>
+                                            </div><Check size={14} />
                                             <span
                                                 style={{
                                                     fontSize: '0.65rem',
@@ -228,8 +229,9 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
                 {/* ── Resumen de la orden ───────────────────────────── */}
                 {orden?.detalles?.length > 0 && (
                     <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '1rem' }}>
-                        <div className="card-header bg-transparent border-bottom py-3">
-                            <h6 className="fw-bold mb-0">📋 Detalle del Pedido</h6>
+                        <div className="card-header bg-transparent border-bottom py-3 d-flex align-items-center gap-2">
+                            <ClipboardList size={18} />
+                            <h6 className="fw-bold mb-0">Detalle del Pedido</h6>
                         </div>
                         <div className="card-body p-0">
                             {orden.detalles.map((det, idx) => {
@@ -250,8 +252,8 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
                                             <span className="fw-semibold small">{det.producto}</span>
                                             <span className="text-muted small ms-2">x{det.cantidad}</span>
                                             {det.nota_cliente && (
-                                                <p className="text-muted mb-0" style={{ fontSize: '0.72rem' }}>
-                                                    📝 {det.nota_cliente}
+                                                <p className="text-muted mb-0 d-flex align-items-center gap-1" style={{ fontSize: '0.72rem' }}>
+                                                    <FileText size={12} /> {det.nota_cliente}
                                                 </p>
                                             )}
                                         </div>
