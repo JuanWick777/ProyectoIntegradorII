@@ -35,10 +35,8 @@ function App() {
   const rol = (usuario?.rol || '').toUpperCase();
 
   useEffect(() => {
-    if (token) {
-      fetchCurrentUser().catch(() => {});
-    }
-  }, [token, fetchCurrentUser]);
+    fetchCurrentUser().catch(() => {});
+  }, []);
 
   return (
     <Routes>

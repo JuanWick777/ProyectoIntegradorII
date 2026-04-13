@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { Shield, Mail, Lock, LogIn } from 'lucide-react';
 
 const AdminLogin = ({ onLoginExitoso }) => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -39,16 +40,16 @@ const AdminLogin = ({ onLoginExitoso }) => {
     return (
         <div
             className="min-vh-100 d-flex align-items-center justify-content-center"
-            style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%)' }}
+            style={{ background: '#F5F5F5' }}
         >
             <div className="card border-0 shadow-lg p-4" style={{ width: '100%', maxWidth: 400, borderRadius: '1.25rem' }}>
                 <div className="card-body">
                     <div className="text-center mb-4">
                         <div
                             className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                            style={{ width: 64, height: 64, background: '#e67e22', fontSize: 28 }}
+                            style={{ width: 64, height: 64, background: '#FFF5F0', color: '#FF7043', fontSize: 28 }}
                         >
-                            🔐
+                            <Shield size={32} />
                         </div>
                         <h1 className="fs-4 fw-bold mb-0">Acceso Administrativo</h1>
                         <p className="text-muted small mt-1">Gestión de Restaurante</p>
@@ -56,13 +57,16 @@ const AdminLogin = ({ onLoginExitoso }) => {
 
                     {error && (
                         <div className="alert alert-danger py-2 small" style={{ borderRadius: '0.75rem' }}>
-                            ⚠️ {error}
+                            <i className="bi bi-exclamation-triangle me-2"></i>{error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit}>
                         <div className="mb-3">
-                            <label className="form-label fw-semibold small">Correo electrónico</label>
+                            <label className="form-label fw-semibold small">
+                                <Mail size={16} className="me-2" />
+                                Correo electrónico
+                            </label>
                             <input
                                 type="email"
                                 name="email"
@@ -76,7 +80,10 @@ const AdminLogin = ({ onLoginExitoso }) => {
                         </div>
 
                         <div className="mb-4">
-                            <label className="form-label fw-semibold small">Contraseña</label>
+                            <label className="form-label fw-semibold small">
+                                <Lock size={16} className="me-2" />
+                                Contraseña
+                            </label>
                             <input
                                 type="password"
                                 name="password"
@@ -92,12 +99,14 @@ const AdminLogin = ({ onLoginExitoso }) => {
                         <button
                             type="submit"
                             className="btn btn-primary w-100 fw-bold py-2 mt-1"
-                            style={{ background: '#e67e22', borderRadius: '0.75rem', border: 'none' }}
+                            style={{ background: '#FF7043', borderRadius: '0.75rem', border: 'none' }}
                             disabled={loading}
                         >
                             {loading ? (
                                 <span className="spinner-border spinner-border-sm me-2" />
-                            ) : null}
+                            ) : (
+                                <LogIn size={18} className="me-2" />
+                            )}
                             Ingresar
                         </button>
                     </form>

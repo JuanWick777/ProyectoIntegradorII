@@ -6,6 +6,7 @@ import {
     getProductPrice,
     getProductDisponibilidad
 } from './adminConstants';
+import Badge from '../ui/Badge';
 
 const ProductCard = ({ product, onEdit }) => {
     const disponibilidad = getProductDisponibilidad(product);
@@ -30,9 +31,9 @@ const ProductCard = ({ product, onEdit }) => {
                     </div>
                 )}
                 {stockAgotado && (
-                    <span className="badge bg-danger position-absolute top-0 end-0 m-2">
+                    <Badge className="position-absolute top-0 end-0 m-2" variant="danger">
                         ⚠️ Agotado
-                    </span>
+                    </Badge>
                 )}
             </div>
 

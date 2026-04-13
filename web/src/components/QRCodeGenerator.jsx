@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react'; // Using SVG for better print quality
+import SectionHeader from './ui/SectionHeader';
 
 const QRGenerator = () => {
     const [baseUrl, setBaseUrl] = useState(() => {
@@ -81,27 +82,34 @@ const QRGenerator = () => {
 
     return (
         <div className="container py-5 print-container">
-            <header className="d-print-none mb-4 pb-3 border-bottom">
-                <div className="d-flex justify-content-between align-items-start mb-4">
-                    <div>
-                        <h2 className="fw-bold mb-1">Generador de Códigos QR</h2>
-                        <p className="text-muted small mb-0">Configura y elige qué mesas imprimir para ahorrar papel.</p>
-                    </div>
-                    <div className="d-flex gap-2">
-                        <button
-                            onClick={generarMesas}
-                            disabled={generando}
-                            className="btn btn-outline-success btn-sm fw-bold shadow-sm"
-                        >
-                            {generando ? '⏳ Generando...' : '🏗️ Sincronizar Mesas en BD'}
-                        </button>
-                        <button onClick={printPage} className="btn btn-primary btn-sm fw-bold shadow-sm px-4">
-                            🖨️ Imprimir Selección
-                        </button>
-                    </div>
-                </div>
+            <header className="d-print-none mb-4">
+                <div className="bg-white rounded-4 shadow-sm p-4 mb-4 border">
+                    <SectionHeader
+                        title="Generador de Códigos QR"
+                        subtitle="Configura y elige qué mesas imprimir para ahorrar papel."
+                        actions={(
+                            <div className="d-flex flex-wrap gap-2">
+                                <button
+                                    onClick={generarMesas}
+                                    disabled={generando}
+                                    className="btn btn-outline-success btn-sm fw-bold shadow-sm"
+                                    style={{ borderRadius: '1rem' }}
+                                >
+                                    <i className="bi bi-arrow-repeat me-2"></i>{generando ? 'Generando...' : 'Sincronizar Mesas en BD'}
+                                </button>
+                                <button
+                                    onClick={printPage}
+                                    className="btn btn-primary btn-sm fw-bold shadow-sm px-4"
+                                    style={{ borderRadius: '1rem' }}
+                                >
+                                    <i className="bi bi-printer me-2"></i>Imprimir Selección
+                                </button>
+                            </div>
+                        )}
+                        className="mb-3"
+                    />
 
-                <div className="bg-light p-3 rounded-4 shadow-sm border">
+                    <div className="bg-white p-4 rounded-4 shadow-sm border">
                     <div className="row g-3 align-items-center">
                         {/* URL BASE Y TOTAL */}
                         <div className="col-12 col-xl-4 d-flex gap-2">
@@ -205,6 +213,7 @@ const QRGenerator = () => {
                         </div>
                     </div>
                 </div>
+            </div>
             </header>
             {genMsg && (
                 <div className="alert alert-success alert-dismissible d-print-none mb-3" role="alert">
@@ -217,7 +226,7 @@ const QRGenerator = () => {
                 {/* QR COCINA */}
                 {includeStaff && (
                     <div className="col-sm-6 col-md-4 col-lg-3 page-break-avoid">
-                        <div className="card h-100 shadow-sm border-0" style={{ borderTop: '4px solid #0d6efd', backgroundColor: '#f8fbfc' }}>
+                        <div className="card h-100 shadow-sm border-0" style={{ borderTop: '4px solid #0d6efd', borderRadius: '1.2rem', backgroundColor: '#ffffff', overflow: 'hidden' }}>
                             <div className="card-body d-flex flex-column align-items-center text-center">
                                 <h5 className="card-title fw-bold text-uppercase text-primary mb-3">Cocina</h5>
                                 <QRCodeSVG
@@ -239,7 +248,7 @@ const QRGenerator = () => {
                 {/* QR MESERO */}
                 {includeStaff && (
                     <div className="col-sm-6 col-md-4 col-lg-3 page-break-avoid">
-                        <div className="card h-100 shadow-sm border-0" style={{ borderTop: '4px solid #198754', backgroundColor: '#f8fdf9' }}>
+                        <div className="card h-100 shadow-sm border-0" style={{ borderTop: '4px solid #198754', borderRadius: '1.2rem', backgroundColor: '#ffffff', overflow: 'hidden' }}>
                             <div className="card-body d-flex flex-column align-items-center text-center">
                                 <h5 className="card-title fw-bold text-uppercase text-success mb-3">Panel Mesero</h5>
                                 <QRCodeSVG
@@ -261,7 +270,7 @@ const QRGenerator = () => {
                 {/* QR MESA 1-10 */}
                 {tables.map(num => (
                     <div key={num} className="col-sm-6 col-md-4 col-lg-3 page-break-avoid">
-                        <div className="card h-100 shadow-sm border-0" style={{ borderTop: '4px solid #fd7e14' }}>
+                        <div className="card h-100 shadow-sm border-0" style={{ borderTop: '4px solid #fd7e14', borderRadius: '1.2rem', backgroundColor: '#ffffff', overflow: 'hidden' }}>
                             <div className="card-body d-flex flex-column align-items-center text-center">
                                 <h5 className="card-title fw-bold text-uppercase text-secondary mb-3">Mesa {num}</h5>
                                 <QRCodeSVG

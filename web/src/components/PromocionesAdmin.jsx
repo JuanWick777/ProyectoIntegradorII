@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import SectionHeader from './ui/SectionHeader';
+import PromoCard from './ui/PromoCard';
 
 const EMPTY_PROMO = {
     titulo: '',
@@ -202,116 +204,43 @@ const PromocionesAdmin = ({ mostrarToast }) => {
     };
 
     return (
-        <div>
-            {/* Header */}
-            <div className="d-flex align-items-center justify-content-between mb-4">
-                <div>
-                    <h2 className="fw-bold mb-0">🏷️ Gestión de Promociones</h2>
-                    <p className="text-muted small mb-0">
-                        El mesero puede aplicar el código en el pedido del cliente
-                    </p>
-                </div>
-                <button
-                    className="btn fw-bold px-4"
-                    style={{ background: '#e67e22', color: 'white', borderRadius: '2rem' }}
-                    onClick={() => setModal({})}
-                >
-                    ➕ Nueva Promoción
-                </button>
-            </div>
+        <div className="bg-white rounded-4 shadow-sm p-4">
+            <SectionHeader
+                title="🏷️ Gestión de Promociones"
+                subtitle="El mesero puede aplicar el código en el pedido del cliente"
+                actions={(
+                    <button
+                        className="btn btn-primary fw-bold px-4 shadow-sm"
+                        style={{ borderRadius: '2rem' }}
+                        onClick={() => setModal({})}
+                    >
+                        <i className="bi bi-plus-circle me-2"></i>Nueva Promoción
+                    </button>
+                )}
+            />
 
             {loading ? (
                 <div className="text-center py-5">
-                    <div className="spinner-border" style={{ color: '#e67e22' }} />
+                    <div className="spinner-border text-primary" />
                 </div>
             ) : promos.length === 0 ? (
                 <div
-                    className="text-center py-5 rounded-4"
-                    style={{ background: '#fff', border: '2px dashed #dee2e6' }}
+                    className="text-center py-5 rounded-4 border border-dashed border-secondary"
+                    style={{ background: '#fafafa', borderStyle: 'dashed' }}
                 >
                     <div style={{ fontSize: 48 }}>🏷️</div>
                     <p className="text-muted mt-2">No hay promociones. ¡Crea la primera!</p>
                 </div>
             ) : (
                 <div className="row g-3">
-                    {promos.map(p => {
-                        const badge = TIPO_BADGE[p.tipoDescuento] || TIPO_BADGE.PORCENTAJE;
-                        return (
-                            <div key={p.id} className="col-12 col-md-6 col-xl-4">
-                                <div
-                                    className="card border-0 shadow-sm h-100"
-                                    style={{
-                                        borderRadius: '1rem',
-                                        borderLeft: `5px solid ${p.activa ? badge.color : '#adb5bd'}`,
-                                        opacity: p.activa ? 1 : 0.65,
-                                    }}
-                                >
-                                    <div className="card-body">
-                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 className="fw-bold mb-0">{p.titulo}</h6>
-                                            <span
-                                                className="badge"
-                                                style={{ background: badge.color, fontSize: '0.78rem' }}
-                                            >
-                                                {p.tipoDescuento === 'PORCENTAJE'
-                                                    ? `${p.valorDescuento}% OFF`
-                                                    : `$${p.valorDescuento} OFF`}
-                                            </span>
-                                        </div>
-
-                                        {p.descripcion && (
-                                            <p className="text-muted small mb-2">{p.descripcion}</p>
-                                        )}
-
-                                        {p.codigoPromo && (
-                                            <div
-                                                className="mb-2 px-2 py-1 rounded-2 d-inline-flex align-items-center gap-1"
-                                                style={{ background: '#f8f9fa', border: '1px solid #dee2e6' }}
-                                            >
-                                                <span style={{ fontSize: '0.7rem', color: '#6c757d' }}>Código:</span>
-                                                <span
-                                                    className="fw-bold"
-                                                    style={{ fontFamily: 'monospace', fontSize: '0.85rem', letterSpacing: '0.05em' }}
-                                                >
-                                                    {p.codigoPromo}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        <div className="d-flex align-items-center justify-content-between mt-3">
-                                            <span
-                                                className="badge"
-                                                style={{
-                                                    background: p.activa ? 'rgba(25,135,84,0.15)' : 'rgba(173,181,189,0.3)',
-                                                    color: p.activa ? '#198754' : '#6c757d',
-                                                }}
-                                            >
-                                                {p.activa ? '● Activa' : '○ Inactiva'}
-                                            </span>
-                                            <div className="d-flex gap-2">
-                                                <button
-                                                    className="btn btn-sm btn-outline-secondary"
-                                                    style={{ borderRadius: '0.5rem' }}
-                                                    onClick={() => setModal(p)}
-                                                >✏️</button>
-                                                <button
-                                                    className="btn btn-sm btn-outline-danger"
-                                                    style={{ borderRadius: '0.5rem' }}
-                                                    onClick={() => handleDelete(p.id)}
-                                                >🗑️</button>
-                                            </div>
-                                        </div>
-
-                                        {(p.fechaInicio || p.fechaFin) && (
-                                            <div className="mt-2" style={{ fontSize: '0.72rem', color: '#6c757d' }}>
-                                                📅 {p.fechaInicio || '?'} → {p.fechaFin || 'Sin fin'}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {promos.map(p => (
+                        <PromoCard
+                            key={p.id}
+                            promo={p}
+                            onEdit={setModal}
+                            onDelete={handleDelete}
+                        />
+                    ))}
                 </div>
             )}
 

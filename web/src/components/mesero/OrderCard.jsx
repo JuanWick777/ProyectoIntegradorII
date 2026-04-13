@@ -1,4 +1,5 @@
 import React from 'react';
+import Badge from '../ui/Badge';
 
 const ESTADO_BADGE = {
     pendiente_confirmacion: { label: 'Pendiente', color: '#e67e22' },
@@ -54,12 +55,13 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
                         </div>
                     </div>
 
-                    <span
-                        className="badge rounded-pill px-3 py-2 fw-semibold"
+                    <Badge
+                        pill={true}
+                        className="px-3 py-2"
                         style={{ background: badge.color, color: '#fff', fontSize: '0.75rem' }}
                     >
                         {icono} {badge.label}
-                    </span>
+                    </Badge>
                 </div>
 
                 {/* ITEMS */}

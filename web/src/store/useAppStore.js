@@ -28,6 +28,7 @@ async function apiFetch(endpoint, options = {}) {
 
     if (token) {
         headers.Authorization = `Bearer ${token}`;
+        console.log('📤 Sending with Authorization:', headers.Authorization.substring(0, 30) + '...');
     }
 
     const res = await fetch(`${API_URL}${endpoint}`, {
