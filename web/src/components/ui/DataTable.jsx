@@ -1,0 +1,51 @@
+import React from 'react';
+
+const DataTable = ({
+    columns,
+    data,
+    emptyMessage = 'No data',
+    loading = false,
+    className = '',
+}) => {
+    return (
+        <div className={`card border-0 shadow-sm ${className}`} style={{ borderRadius: '1rem', overflow: 'hidden' }}>
+            {loading ? (
+                <div className="text-center py-5">
+                    <div className="spinner-border text-primary" />
+                </div>
+            ) : (
+                <table className="table table-hover mb-0">
+                    <thead style={{ background: '#51443B' }}>
+                        <tr>
+                            {columns.map(col => (
+                                <th key={col.key} className={col.className || ''} style={{ color: '#FFFFFF' }}>
+                                    {col.label}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.map((item, index) => (
+                            <tr key={item.id || index}>
+                                {columns.map(col => (
+                                    <td key={col.key} className={col.className || ''}>
+                                        {col.render ? col.render(item) : item[col.key]}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                        {data.length === 0 && (
+                            <tr>
+                                <td colSpan={columns.length} className="text-center py-5 text-muted">
+                                    {emptyMessage}
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            )}
+        </div>
+    );
+};
+
+export default DataTable;

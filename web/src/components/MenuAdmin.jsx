@@ -6,21 +6,44 @@ import ProductCard from './admin/ProductCard';
 import ProductModal from './admin/ProductModal';
 import PromocionesAdmin from './PromocionesAdmin';
 import QRCodeGenerator from './QRCodeGenerator';
+import StatCard from './ui/StatCard';
+import { LayoutDashboard, Utensils, ChefHat, Users, User, Info, Settings, QrCode, Tag, Clock, PlusCircle, LogOut } from 'lucide-react';
 import { getProductCategoryName, getProductName } from './admin/adminConstants';
 
 const MenuAdmin = () => {
-    const { products, updateProduct, createProduct, fetchAdminProducts, uploadPlatilloImage, deletePlatilloImage, logout } = useAppStore();
+    const { products, updateProduct, createProduct, fetchAdminProducts, fetchUsuarios, fetchOrders, uploadPlatilloImage, deletePlatilloImage, logout, usuario } = useAppStore();
     const [modalProduct, setModalProduct] = useState(null);
     const [saving, setSaving] = useState(false);
     const [busqueda, setBusqueda] = useState('');
     const [filtroCategoria, setFiltroCategoria] = useState('Todos');
     const [toast, setToast] = useState('');
-    const [vistaActual, setVistaActual] = useState('menu');
+    const [vistaActual, setVistaActual] = useState('dashboard');
     const [isSidebarPinned, setIsSidebarPinned] = useState(true);
+    const [usuarios, setUsuarios] = useState([]);
+    const [orders, setOrders] = useState([]);
+    const [loadingDashboard, setLoadingDashboard] = useState(true);
 
     useEffect(() => {
-        fetchAdminProducts();
-    }, [fetchAdminProducts]);
+        const cargarDatos = async () => {
+            try {
+                await fetchAdminProducts().catch(() => console.error('Error cargando productos'));
+
+                setLoadingDashboard(true);
+                const [u, o] = await Promise.all([
+                    fetchUsuarios().catch(() => []),
+                    fetchOrders().catch(() => [])
+                ]);
+                setUsuarios(u || []);
+                setOrders(o || []);
+            } catch (e) {
+                console.error('Error cargando datos:', e);
+            } finally {
+                setLoadingDashboard(false);
+            }
+        };
+
+        cargarDatos();
+    }, []);
 
     const mostrarToast = (msg) => {
         setToast(msg);
@@ -89,25 +112,39 @@ const MenuAdmin = () => {
         return coincideCat && coincideBusqueda;
     });
 
+    const totalPlatillos = products.length;
+    const totalCocineros = usuarios.filter((u) => ['cocinero', 'chef'].includes((u.rol || '').toLowerCase())).length;
+    const totalMeseros = usuarios.filter((u) => (u.rol || '').toLowerCase() === 'mesero').length;
+    const totalClientes = (() => {
+        const uniqueMesas = new Set(orders.map((o) => o.mesaId || o.mesa_id || o.mesaNumero || o.mesa));
+        return uniqueMesas.size > 0 ? uniqueMesas.size : orders.length;
+    })();
+
+    const handleLogout = async () => {
+        await logout();
+        window.location.replace('/admin/login');
+    };
+
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', background: '#f4f6fb' }}>
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#F5F5F5' }}>
             <AdminSidebar
                 loginPath="/admin/login"
-                accentColor="#0f3460"
+                accentColor="#FF7043"
                 isPinned={isSidebarPinned}
                 setIsPinned={setIsSidebarPinned}
                 navItems={[
-                    { id: 'menu', icon: '🍽️', label: 'Gestión del Menú' },
-                    { id: 'personal', icon: '👥', label: 'Personal' },
-                    { id: 'promociones', icon: '🏷️', label: 'Promociones' },
-                    { id: 'qr', icon: '🖨️', label: 'Códigos QR' },
-                    { id: 'historial', icon: '📜', label: 'Historial' }
+                    { id: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
+                    { id: 'menu', icon: <Utensils size={18} />, label: 'Platillos' },
+                    { id: 'personal', icon: <Users size={18} />, label: 'Personal' },
+                    { id: 'promociones', icon: <Tag size={18} />, label: 'Promociones' },
+                    { id: 'qr', icon: <QrCode size={18} />, label: 'QR' },
+                    { id: 'historial', icon: <Clock size={18} />, label: 'Historial' },
+                    { id: 'informacion', icon: <Info size={18} />, label: 'Información' },
+                    { id: 'configuracion', icon: <Settings size={18} />, label: 'Configuración' },
                 ]}
                 activeItem={vistaActual}
                 onNavItemClick={setVistaActual}
             />
-
-            {/* MAIN CONTENT AREA */}
             <div style={{
                 flex: 1,
                 marginLeft: isSidebarPinned ? 260 : 70,
@@ -116,37 +153,75 @@ const MenuAdmin = () => {
 
                 {/* ── NAVBAR SUPERIOR ────────────────────────────────────── */}
                 <nav
-                    className="navbar sticky-top shadow-sm px-4 py-2"
+                    className="navbar sticky-top shadow-sm px-4 py-3"
                     style={{
-                        background: 'linear-gradient(90deg,#ffffff,#f8f9fa)',
-                        borderBottom: '1px solid #e2e8f0',
+                        background: '#FFFFFF',
+                        borderBottom: '1px solid #E8E8E8',
                         display: 'flex', alignItems: 'center'
                     }}
                 >
-                    <div className="d-flex align-items-center gap-2 me-auto">
-                        <span style={{ fontSize: 22 }}>🍴</span>
-                        <span className="fw-bold text-dark fs-5">Panel Administrador</span>
-                    </div>
+                    <div className="d-flex gap-3 align-items-center ms-auto">
+                        {/* Perfil del usuario */}
+                        <div className="d-flex align-items-center gap-2" style={{ borderRight: '1px solid #E8E8E8', paddingRight: 16 }}>
+                            <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: 40, height: 40, background: '#FFF5F0', color: '#FF7043', fontSize: 14 }}>
+                                {(usuario?.nombre || 'AD').split(' ').slice(0, 2).map(p => p[0]).join('')}
+                            </div>
+                            <div style={{ lineHeight: 1.2 }}>
+                                <div className="fw-bold text-dark" style={{ fontSize: '0.9rem' }}>{usuario?.nombre || 'Admin'}</div>
+                                <div className="text-muted" style={{ fontSize: '0.75rem' }}>Administrador</div>
+                            </div>
+                        </div>
 
-                    <div className="d-flex gap-3 align-items-center">
+                        {/* Cerrar sesión */}
                         <button
-                            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
-                            style={{ borderRadius: '0.75rem', fontWeight: 600 }}
-                            onClick={() => setVistaActual('historial')}
+                            className="btn btn-link text-decoration-none text-dark fw-bold"
+                            style={{ fontSize: '0.9rem' }}
+                            onClick={handleLogout}
                         >
-                            <span style={{ fontSize: 16 }}>📜</span> Historial
+                            <LogOut size={18} className="me-2" />Cerrar sesión
                         </button>
-                        <span
-                            className="badge fw-semibold px-3 py-2"
-                            style={{ background: 'rgba(15,52,96,0.1)', color: '#0f3460', borderRadius: '2rem', fontSize: '0.8rem' }}
-                        >
-                            {{ menu: '🍽️ Menú', personal: '👥 Personal', qr: '🖨️ QRs', promociones: '🏷️ Promociones', historial: '📜 Historial' }[vistaActual]}
-                        </span>
                     </div>
                 </nav>
 
                 <div className="container-fluid px-4 py-4">
-                    {vistaActual === 'personal' ? (
+                    {vistaActual === 'dashboard' ? (
+                        <>
+                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+                                <div>
+                                    <p className="text-muted mb-2">Dashboard</p>
+                                    <h1 className="fw-bold mb-0">¡Bienvenido de nuevo, Admin!</h1>
+                                </div>
+                                <div className="text-muted">
+                                    Aquí está un resumen de tu restaurante
+                                </div>
+                            </div>
+
+                            <div className="row g-3">
+                                {loadingDashboard ? (
+                                    [1, 2, 3, 4].map((index) => (
+                                        <div key={index} className="col-12 col-md-6 col-xl-3">
+                                            <div className="bg-white rounded-3 shadow-sm p-4 h-100 animate-pulse" style={{ minHeight: 140 }} />
+                                        </div>
+                                    ))
+                                ) : (
+                                    [
+                                        { title: 'Total de Platillos', value: totalPlatillos, icon: <Utensils size={20} color="white" />, color: '#FFB3A5' },
+                                        { title: 'Total de Cocineros', value: totalCocineros, icon: <ChefHat size={20} color="white" />, color: '#B3D9FF' },
+                                        { title: 'Total de Meseros', value: totalMeseros, icon: <Users size={20} color="white" />, color: '#B3F0D6' },
+                                        { title: 'Total de Clientes', value: totalClientes, icon: <User size={20} color="white" />, color: '#D9C7F0' },
+                                    ].map((card) => (
+                                        <StatCard
+                                            key={card.title}
+                                            title={card.title}
+                                            value={card.value}
+                                            icon={card.icon}
+                                            color={card.color}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </>
+                    ) : vistaActual === 'personal' ? (
                         <PersonalAdmin mostrarToast={mostrarToast} />
                     ) : vistaActual === 'promociones' ? (
                         <PromocionesAdmin mostrarToast={mostrarToast} />
@@ -157,6 +232,12 @@ const MenuAdmin = () => {
                             <p style={{ fontSize: 48 }}>📜</p>
                             <h4 className="fw-bold text-dark">Historial de Órdenes</h4>
                             <p>Plataforma de historial en construcción</p>
+                        </div>
+                    ) : vistaActual === 'informacion' || vistaActual === 'configuracion' ? (
+                        <div className="text-center py-5 text-muted">
+                            <p style={{ fontSize: 48 }}>🔨</p>
+                            <h4 className="fw-bold text-dark">Sección en construcción</h4>
+                            <p>Esta funcionalidad está siendo desarrollada</p>
                         </div>
                     ) : (
                         <>
@@ -171,7 +252,7 @@ const MenuAdmin = () => {
                                 <input
                                     className="form-control form-control-sm"
                                     style={{ maxWidth: 220, borderRadius: '2rem' }}
-                                    placeholder="🔍 Buscar platillo..."
+                                    placeholder="Buscar platillo..."
                                     value={busqueda}
                                     onChange={(e) => setBusqueda(e.target.value)}
                                 />
@@ -181,7 +262,7 @@ const MenuAdmin = () => {
                                     style={{ borderRadius: '2rem' }}
                                     onClick={() => setModalProduct({})}
                                 >
-                                    ➕ Nuevo Platillo
+                                    <PlusCircle size={18} className="me-2" />Nuevo Platillo
                                 </button>
                             </div>
 

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
 
 /**
  * ProductCard.jsx — Tarjeta de producto para el menú del cliente
@@ -49,14 +51,14 @@ const ProductCard = ({ product }) => {
 
                 {/* Badge de stock */}
                 {sinStock && (
-                    <span className="position-absolute top-0 end-0 m-2 badge bg-danger">
+                    <Badge className="position-absolute top-0 end-0 m-2" variant="danger">
                         Agotado
-                    </span>
+                    </Badge>
                 )}
                 {stockBajo && !sinStock && (
-                    <span className="position-absolute top-0 end-0 m-2 badge bg-warning text-dark">
+                    <Badge className="position-absolute top-0 end-0 m-2" variant="warning">
                         ¡Últimos {product.stock_disponible}!
-                    </span>
+                    </Badge>
                 )}
             </div>
 
@@ -77,12 +79,9 @@ const ProductCard = ({ product }) => {
                 {/* Alérgenos */}
                 {product.alergenos && product.alergenos !== 'ninguno' && (
                     <div className="mb-2">
-                        <span
-                            className="badge text-bg-warning fw-normal"
-                            style={{ fontSize: '0.65rem', borderRadius: '0.4rem' }}
-                        >
+                        <Badge variant="warning" className="text-dark" pill={false}>
                             ⚠️ {product.alergenos}
-                        </span>
+                        </Badge>
                     </div>
                 )}
 
@@ -94,14 +93,16 @@ const ProductCard = ({ product }) => {
 
                     {/* Botón / Contador */}
                     {cantidad === 0 ? (
-                        <button
-                            className={`btn btn-primary w-100 py-1 fw-semibold ${added ? 'btn-success' : ''}`}
-                            style={{ borderRadius: '0.6rem', fontSize: '0.8rem', transition: 'all 0.3s' }}
+                        <Button
                             onClick={handleAgregar}
+                            fullWidth
+                            variant={added ? 'success' : 'primary'}
+                            size="sm"
                             disabled={sinStock}
+                            className="rounded-xl"
                         >
                             {added ? '✓ Agregado' : sinStock ? 'Agotado' : '+ Agregar'}
-                        </button>
+                        </Button>
                     ) : (
                         <div className="d-flex align-items-center justify-content-between bg-light rounded-pill px-2">
                             <button
