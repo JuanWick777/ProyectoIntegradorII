@@ -1,14 +1,3 @@
-export const CATEGORIAS = [
-    { id: 21, nombre: 'Entradas y Snacks' },
-    { id: 24, nombre: 'Platos Fuertes' },
-    { id: 27, nombre: 'Coctelería' },
-    { id: 23, nombre: 'Postres Gourmet' },
-    { id: 2, nombre: 'Bebidas Frías' },
-    { id: 22, nombre: 'Pizzas Artesanales' },
-    { id: 25, nombre: 'Ensaladas y Bowls' },
-    { id: 26, nombre: 'Mariscos y Pescados' },
-];
-
 export const COCINAS = [
     { id: 1, nombre: 'Cocina Caliente' },
     { id: 2, nombre: 'Parrilla' },
@@ -53,7 +42,7 @@ export const getProductCategoryId = (p) => {
     if (p?.categoria?.id) return Number(p.categoria.id);
     if (p?.categoria_id) return Number(p.categoria_id);
     if (p?.categoriaId) return Number(p.categoriaId);
-    return CATEGORIAS?.[0]?.id ?? 21;
+    return null;
 };
 
 export const getProductKitchenId = (p) => {
@@ -90,7 +79,7 @@ export const EMPTY_NEW = {
     imagenUrl: '',
     imagenFile: null,
     imagenRemoved: false,
-    categoria_id: CATEGORIAS?.[0]?.id ?? 21,
+    categoria_id: '',
     kitchen_id: COCINAS?.[0]?.id ?? 1,
     disponibilidad: 'DISPONIBLE',
 };

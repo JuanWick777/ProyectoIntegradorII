@@ -82,6 +82,7 @@ export const useAppStore = create(
             numeroMesa: null,
             carrito: [],
             products: [],
+            categorias: [],
             loadingProducts: true,
             orders: [],
             ordenActual: null,
@@ -329,6 +330,19 @@ export const useAppStore = create(
                 const data = await apiFetch('/admin/platillos', { token });
                 set({ products: data });
                 return data;
+            },
+
+            fetchCategorias: async () => {
+                const { token } = get();
+                try {
+                    const data = await apiFetch('/categorias', { token });
+                    set({ categorias: data || [] });
+                    return data || [];
+                } catch (e) {
+                    console.error('Error cargando categorías:', e);
+                    set({ categorias: [] });
+                    return [];
+                }
             },
 
             updateProduct: async (id, productData) => {

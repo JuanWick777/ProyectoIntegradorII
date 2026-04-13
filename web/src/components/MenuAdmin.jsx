@@ -13,7 +13,20 @@ import { LayoutDashboard, Utensils, ChefHat, Users, User, Info, Settings, QrCode
 import { getProductCategoryName, getProductName } from './admin/adminConstants';
 
 const MenuAdmin = () => {
-    const { products, updateProduct, createProduct, fetchAdminProducts, fetchUsuarios, fetchOrders, uploadPlatilloImage, deletePlatilloImage, logout, usuario } = useAppStore();
+    const {
+        products,
+        categorias,
+        updateProduct,
+        createProduct,
+        fetchAdminProducts,
+        fetchCategorias,
+        fetchUsuarios,
+        fetchOrders,
+        uploadPlatilloImage,
+        deletePlatilloImage,
+        logout,
+        usuario
+    } = useAppStore();
     const [modalProduct, setModalProduct] = useState(null);
     const [saving, setSaving] = useState(false);
     const [busqueda, setBusqueda] = useState('');
@@ -29,6 +42,7 @@ const MenuAdmin = () => {
         const cargarDatos = async () => {
             try {
                 await fetchAdminProducts().catch(() => console.error('Error cargando productos'));
+                await fetchCategorias().catch(() => console.error('Error cargando categorías'));
 
                 setLoadingDashboard(true);
                 const [u, o] = await Promise.all([
@@ -105,7 +119,7 @@ const MenuAdmin = () => {
         categoriaTexto: getProductCategoryName(p),
     }));
 
-    const categorias = ['Todos', ...new Set(productsNormalizados.map((p) => p.categoriaTexto || 'Otros'))];
+    const categoriasFiltro = ['Todos', ...new Set(productsNormalizados.map((p) => p.categoriaTexto || 'Otros'))];
 
     const productsFiltrados = productsNormalizados.filter((p) => {
         const coincideCat =
@@ -271,7 +285,7 @@ const MenuAdmin = () => {
                             </div>
 
                             <div className="d-flex gap-2 flex-wrap mb-4">
-                                {categorias.map((cat) => (
+                                {categoriasFiltro.map((cat) => (
                                     <button
                                         key={cat}
                                         className={`btn btn-sm ${filtroCategoria === cat ? 'btn-dark' : 'btn-outline-secondary'
@@ -308,6 +322,7 @@ const MenuAdmin = () => {
                         onSave={handleSave}
                         onClose={() => setModalProduct(null)}
                         saving={saving}
+                        categorias={categorias}
                     />
                 )}
 

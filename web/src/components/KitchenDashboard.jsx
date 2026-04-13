@@ -200,7 +200,6 @@ const KitchenDashboard = () => {
     const rolesCocina = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
 
     if (!usuario) {
-<<<<<<< HEAD
         const rol = (usuario?.rol || '').toUpperCase();
 
         const rolesCocina = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
@@ -220,8 +219,6 @@ const KitchenDashboard = () => {
             );
         }
 
-=======
->>>>>>> 9f8d3f52cc72b84a77e72246371277e71b31640b
         return (
             <MeseroLogin
                 onLoginExitoso={() => fetchCurrentUser()}

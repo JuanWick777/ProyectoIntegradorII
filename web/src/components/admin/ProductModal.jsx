@@ -4,14 +4,13 @@ import {
     getProductImage,
     getProductDisponibilidad,
     MAPA_COCINAS_POR_CATEGORIA,
-    COCINAS,
-    CATEGORIAS
+    COCINAS
 } from './adminConstants';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
 import { Plus, Edit, Save } from 'lucide-react';
 
-const ProductModal = ({ product, onSave, onClose, saving }) => {
+const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => {
     const isNew = !product?.id;
     const [form, setForm] = useState(
         product
@@ -25,8 +24,20 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                 categoria_id: product.categoria?.id ?? product.categoria_id ?? product.categoriaId ?? EMPTY_NEW.categoria_id,
                 kitchen_id: product.cocina?.id ?? product.kitchen_id ?? product.kitchenId ?? EMPTY_NEW.kitchen_id,
             }
-            : EMPTY_NEW
+            : {
+                ...EMPTY_NEW,
+                categoria_id: categorias?.[0]?.id ?? '',
+            }
     );
+
+    React.useEffect(() => {
+        if (!product?.id && !form.categoria_id && categorias.length > 0) {
+            setForm(prev => ({
+                ...prev,
+                categoria_id: categorias[0].id
+            }));
+        }
+    }, [categorias, product, form.categoria_id]);
 
     const set = (field, val) => setForm((prev) => ({ ...prev, [field]: val }));
     const imgPreview = useMemo(() => {
@@ -126,7 +137,7 @@ const ProductModal = ({ product, onSave, onClose, saving }) => {
                         as="select"
                         value={form.categoria_id}
                         onChange={handleCategoriaChange}
-                        options={CATEGORIAS.map((c) => ({ value: c.id, label: c.nombre }))}
+                        options={categorias.map((c) => ({ value: c.id, label: c.nombre }))}
                     />
                 </div>
                 <div className="col-6">

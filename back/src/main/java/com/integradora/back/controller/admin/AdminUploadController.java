@@ -19,7 +19,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/uploads")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AdminUploadController {
 
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(

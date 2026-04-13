@@ -111,19 +111,25 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
                         </div>
                     )}
                     {ok && (
-                        <div style={{
-                            background: '#f0fff4', border: '1px solid #9ae6b4',
-                            borderRadius: '0.75rem', padding: '0.75rem 1rem',
-                            color: '#276749', fontSize: '0.875rem', marginBottom: 16,
-                            display: 'flex', alignItems: 'flex-start', gap: 8,
-                        }}>
+                        <div
+                            style={{
+                                background: '#f0fff4',
+                                border: '1px solid #9ae6b4',
+                                borderRadius: '0.75rem',
+                                padding: '0.75rem 1rem',
+                                color: '#276749',
+                                fontSize: '0.875rem',
+                                marginBottom: 16,
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 8,
+                            }}
+                        >
                             <Check size={18} style={{ flexShrink: 0, marginTop: 2 }} />
                             <span>{ok}</span>
-                        kground: '#f0fff4', border: '1px solid #9ae6b4',
-                            borderRadius: '0.75rem', padding: '0.75rem 1rem',
-                            color: '#276749', fontSize: '0.875rem', marginBottom: 16,
-                        }}>{ok}</div>
+                        </div>
                     )}
+
 
                     {[
                         { label: 'Nombre completo', key: 'nombre',    type: 'text',     placeholder: 'Tu nombre' },
@@ -227,6 +233,11 @@ const HamburgerMenu = ({
     loginPath = '/login',
     accentColor = '#e67e22',
 } = {}) => {
+
+    const { usuario, logout, fetchCurrentUser } = useAppStore();
+
+    const [abierto, setAbierto] = useState(false);
+    const [perfilAbierto, setPerfilAbierto] = useState(false);
     const rolLabel = {
         ADMIN: { icon: Shield, label: 'Administrador' },
         MESERO: { icon: User, label: 'Mesero' },
