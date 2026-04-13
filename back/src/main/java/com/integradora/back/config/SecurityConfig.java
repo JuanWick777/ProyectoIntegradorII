@@ -44,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/mis-ordenes").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.PUT, "/api/auth/perfil").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/auth/foto-perfil").hasRole("CLIENTE")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/cocina/**").hasAnyRole("COCINERO", "CHEF", "PARRILLERO", "BARISTA", "REPOSTERO", "ADMIN")
                         .requestMatchers("/api/detalle-orden/**").hasAnyRole("COCINERO", "CHEF", "PARRILLERO", "BARISTA", "REPOSTERO", "ADMIN")
