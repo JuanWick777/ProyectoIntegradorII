@@ -3,12 +3,16 @@ package com.integradora.back.service;
 import com.integradora.back.controller.usuario.dto.LoginRequest;
 import com.integradora.back.controller.usuario.dto.LoginResponseDTO;
 import com.integradora.back.controller.usuario.dto.RegisterRequest;
+import com.integradora.back.model.orden.EstadoOrden;
 import com.integradora.back.model.usuario.Usuario;
+import com.integradora.back.repository.OrdenRepository;
 import com.integradora.back.repository.UsuarioRepository;
 import com.integradora.back.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +21,7 @@ public class AuthService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final OrdenRepository ordenRepository;
 
     public Usuario register(RegisterRequest request) {
         if (usuarioRepository.findByCorreo(request.getCorreo()).isPresent()) {
@@ -44,6 +49,11 @@ public class AuthService {
 
         Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
                 .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
+
+        if ("ELIMINADO".equalsIgnoreCase(usuario.getEstado()) ||
+                "INACTIVO".equalsIgnoreCase(usuario.getEstado())) {
+            throw new RuntimeException("Esta cuenta ya no está disponible");
+        }
 
         String raw = request.getContrasena();
         String stored = usuario.getContrasena();
@@ -148,6 +158,39 @@ public class AuthService {
                 .fotoPerfil(usuario.getFotoPerfil())
                 .token(token)
                 .build();
+    }
+
+    public void eliminarCuenta(String correoActual, String contrasenaActual) {
+        Usuario usuario = usuarioRepository.findByCorreo(correoActual)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (contrasenaActual == null || contrasenaActual.isBlank()) {
+            throw new RuntimeException("Debes ingresar tu contraseña actual");
+        }
+
+        if (!passwordEncoder.matches(contrasenaActual, usuario.getContrasena())) {
+            throw new RuntimeException("La contraseña actual es incorrecta");
+        }
+
+        long ordenesActivas = ordenRepository.countByClienteIdAndEstadoPreparacionIn(
+                usuario.getId(),
+                List.of(
+                        EstadoOrden.PENDIENTE_CONFIRMACION,
+                        EstadoOrden.CONFIRMADA,
+                        EstadoOrden.EN_PREPARACION,
+                        EstadoOrden.LISTA
+                )
+        );
+
+        if (ordenesActivas > 0) {
+            throw new RuntimeException("No puedes eliminar tu cuenta mientras tengas pedidos activos");
+        }
+
+        usuario.setEstado("ELIMINADO");
+        usuario.setCorreo("cuenta.eliminada." + usuario.getId() + "@gmail.com");
+        usuario.setFotoPerfil(null);
+
+        usuarioRepository.save(usuario);
     }
 
     private String normalizarRol(Usuario usuario) {
