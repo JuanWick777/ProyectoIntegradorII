@@ -309,14 +309,19 @@ export const useAppStore = create(
                     return null;
                 }
 
-                const data = await apiFetch('/auth/me', { token });
-                const usuarioNormalizado = {
-                    ...data,
-                    rol: (data?.rol || '').toUpperCase(),
-                };
+                try {
+                    const data = await apiFetch('/auth/me', { token });
+                    const usuarioNormalizado = {
+                        ...data,
+                        rol: (data?.rol || '').toUpperCase(),
+                    };
 
-                set({ usuario: usuarioNormalizado });
-                return usuarioNormalizado;
+                    set({ usuario: usuarioNormalizado });
+                    return usuarioNormalizado;
+                } catch (e) {
+                    set({ usuario: null, token: null, ordenActual: null, carrito: [] });
+                    throw e;
+                }
             },
 
             fetchAdminProducts: async () => {

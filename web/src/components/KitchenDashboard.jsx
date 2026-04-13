@@ -196,25 +196,9 @@ const KitchenDashboard = () => {
         }
     };
 
+    const rolesCocina = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
+
     if (!usuario) {
-        const rol = (usuario?.rol || '').toUpperCase();
-
-        const rolesCocina = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
-
-        if (!rolesCocina.includes(rol)) {
-            return (
-                <div className="min-vh-100 d-flex align-items-center justify-content-center">
-                    <div className="text-center">
-                        <h2>🚫 Acceso denegado</h2>
-                        <p>No tienes permisos para entrar a cocina</p>
-                        <button className="btn btn-primary mt-3" onClick={logoutLocal}>
-                            Volver
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
         return (
             <MeseroLogin
                 onLoginExitoso={() => fetchCurrentUser()}
@@ -222,6 +206,22 @@ const KitchenDashboard = () => {
                 icono="👨‍🍳"
                 demoEmail="chef1@rest.com"
             />
+        );
+    }
+
+    const rol = (usuario?.rol || '').toUpperCase();
+
+    if (!rolesCocina.includes(rol)) {
+        return (
+            <div className="min-vh-100 d-flex align-items-center justify-content-center">
+                <div className="text-center">
+                    <h2>🚫 Acceso denegado</h2>
+                    <p>No tienes permisos para entrar a cocina</p>
+                    <button className="btn btn-primary mt-3" onClick={logoutLocal}>
+                        Volver
+                    </button>
+                </div>
+            </div>
         );
     }
 
