@@ -60,6 +60,7 @@ fun SHome(
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val mesaId by cartViewModel.mesaSeleccionada.collectAsState()
+    val menuEnabled = mesaId != null
     val ordenes by cartViewModel.ordenes.collectAsState()
 
     var showCategories by remember { mutableStateOf(false) }
@@ -86,10 +87,73 @@ fun SHome(
             mesaActual = mesaId,
             pedidosActivos = ordenes.count {
                 it.estado.lowercase() !in listOf("cerrada", "cancelada")
-            }
+            },
+            menuEnabled = menuEnabled
         )
 
-        if (showCategories) {
+        if (!menuEnabled) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .background(
+                        color = MainColor,
+                        shape = RoundedCornerShape(28.dp)
+                    )
+                    .padding(horizontal = 24.dp, vertical = 28.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "⌁⌁",
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Text(
+                        text = "¡Bienvenido!",
+                        color = Color.White
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Para ver nuestro menú completo y realizar tu pedido, por favor escanea el código QR de tu mesa.",
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    GlobalButton(
+                        "Escanear QR",
+                        16,
+                        50,
+                        220,
+                        Color.White,
+                        Color.White,
+                        MainColor,
+                        {
+                            navController.navigate("scan")
+                        },
+                        Modifier
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Vista Previa del Menú",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = Color(0xFF2A160E)
+            )
+        }
+
+        if (showCategories && menuEnabled) {
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -137,23 +201,29 @@ fun SHome(
         if (isLoading) {
             Text("Cargando...", modifier = Modifier.padding(16.dp))
         } else {
+            val platillosMostrar = if (menuEnabled) platillos else platillos.take(3)
             LazyColumn(
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
-                items(platillos) { platillo ->
-                    PlatilloCard(
+                items(platillosMostrar) { platillo ->
+                PlatilloCard(
                         nombre = platillo.nombre,
                         descripcion = platillo.descripcion ?: "",
                         precio = platillo.precio,
                         imagenUrl = platillo.urlImagen ?: "",
                         onClickCard = {
-                            selectedPlatillo = platillo
-                            showModal = true
+                            if (menuEnabled) {
+                                selectedPlatillo = platillo
+                                showModal = true
+                            }
                         },
                         onClickAdd = {
-                            selectedPlatillo = platillo
-                            showModal = true
-                        }
+                            if (menuEnabled) {
+                                selectedPlatillo = platillo
+                                showModal = true
+                            }
+                        },
+                        enabled = menuEnabled
                     )
                 }
             }

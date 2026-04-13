@@ -29,7 +29,8 @@ fun HomeTopBar(
     onToggleCategories: () -> Unit,
     onProfileClick: () -> Unit,
     mesaActual: Long?,
-    pedidosActivos: Int
+    pedidosActivos: Int,
+    menuEnabled: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -41,7 +42,9 @@ fun HomeTopBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             IconButton(
-                onClick = onToggleCategories,
+                onClick = {
+                    if (menuEnabled) onToggleCategories()
+                },
                 modifier = Modifier
                     .size(50.dp)
                     .background(Color.White, RoundedCornerShape(16.dp))
@@ -53,8 +56,11 @@ fun HomeTopBar(
 
             AppSearchBar(
                 query = searchQuery,
-                onQueryChange = onSearchChange,
-                modifier = Modifier.weight(1f)
+                onQueryChange = {
+                    if (menuEnabled) onSearchChange(it)
+                },
+                modifier = Modifier.weight(1f),
+                enabled = menuEnabled
             )
 
             Spacer(modifier = Modifier.width(12.dp))

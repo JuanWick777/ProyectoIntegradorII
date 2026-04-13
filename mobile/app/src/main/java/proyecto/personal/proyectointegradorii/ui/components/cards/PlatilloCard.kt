@@ -38,14 +38,15 @@ fun PlatilloCard(
     precio: Double,
     imagenUrl: String,
     onClickCard: () -> Unit = {},
-    onClickAdd: () -> Unit = {}
+    onClickAdd: () -> Unit = {},
+    enabled: Boolean = true
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable { onClickCard() },
+            .clickable(enabled = enabled) { onClickCard() },
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Row(
@@ -101,10 +102,11 @@ fun PlatilloCard(
             ) {
                 IconButton(
                     onClick = onClickAdd,
+                    enabled = enabled,
                     modifier = Modifier
                         .size(45.dp)
                         .background(
-                            Color(0xFFFF6B2C),
+                            if (enabled) Color(0xFFFF6B2C) else Color(0xFFE5E5E5),
                             shape = RoundedCornerShape(12.dp)
                         )
                 ) {

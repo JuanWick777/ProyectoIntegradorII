@@ -27,6 +27,7 @@ fun AppSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     Surface(
         shape = RoundedCornerShape(30.dp),
@@ -52,6 +53,7 @@ fun AppSearchBar(
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
+                enabled = enabled,
                 modifier = Modifier.weight(1f),
                 textStyle = TextStyle(
                     fontSize = 16.sp,
