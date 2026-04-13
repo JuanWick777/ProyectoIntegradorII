@@ -47,9 +47,31 @@ import proyecto.personal.proyectointegradorii.ui.theme.DarkCardColor
 import proyecto.personal.proyectointegradorii.ui.theme.DarkHeaderColor
 import proyecto.personal.proyectointegradorii.ui.theme.DarkTextGray
 import proyecto.personal.proyectointegradorii.ui.theme.DarkTextWhite
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import proyecto.personal.proyectointegradorii.data.local.AppStateCleaner
+import proyecto.personal.proyectointegradorii.viewmodels.account.ConfigurateViewModel
 
 @Composable
-fun SConfigurate(navController: NavController){
+fun SConfigurate(
+    navController: NavController,
+    rootNavController: NavController
+) {
+    val context = LocalContext.current
+    val viewModel: ConfigurateViewModel = viewModel()
+
+    val currentPassword by viewModel.currentPassword.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val deleteSuccess by viewModel.deleteSuccess.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     var notificationsEnabled by remember { mutableStateOf(true) }
     var darkModeEnabled by remember { mutableStateOf(false) }
 
@@ -60,6 +82,17 @@ fun SConfigurate(navController: NavController){
     val currentTitleColor = if (darkModeEnabled) DarkTextWhite else TextColorDark
     val currentSubtitleColor = if (darkModeEnabled) DarkTextGray else TextColorGray
     val dividerColor = if (darkModeEnabled) DarkTextGray.copy(alpha = 0.1f) else BorderInputColor.copy(alpha = 0.3f)
+
+    LaunchedEffect(deleteSuccess) {
+        if (deleteSuccess) {
+            AppStateCleaner.clearAll(context)
+            viewModel.resetDeleteSuccess()
+            rootNavController.navigate("Login") {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     // BOX PRINCIPAL: Solo lleva el color de fondo base
     Box(
@@ -193,18 +226,72 @@ fun SConfigurate(navController: NavController){
                             colorbutton = AlertColor,
                             colortext = Color.White,
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = { /* Lógica eliminar */ }
+                            onClick = { showDeleteDialog = true }
                         )
                     }
                 }
             }
         }
     }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!isLoading) showDeleteDialog = false
+            },
+            title = {
+                Text("Eliminar cuenta")
+            },
+            text = {
+                Column {
+                    Text("Esta acción desactivará tu cuenta. No podrás iniciar sesión después.")
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = currentPassword,
+                        onValueChange = viewModel::onCurrentPasswordChange,
+                        singleLine = true,
+                        label = { Text("Contraseña actual") }
+                    )
+
+                    if (errorMessage != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = errorMessage!!,
+                            color = AlertColor
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (!isLoading) {
+                            viewModel.deleteAccount()
+                        }
+                    }
+                ) {
+                    Text(if (isLoading) "Eliminando..." else "Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        if (!isLoading) showDeleteDialog = false
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
 
 
 @Preview
 @Composable
-fun PsC(){
-    SConfigurate(NavController(LocalContext.current))
+fun PsC() {
+    val navController = NavController(LocalContext.current)
+    SConfigurate(navController, navController)
 }

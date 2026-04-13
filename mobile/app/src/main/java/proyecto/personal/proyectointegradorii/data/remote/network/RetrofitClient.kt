@@ -15,7 +15,7 @@ object RetrofitClient {
     private val BASE_URL = proyecto.personal.proyectointegradorii.BuildConfig.BASE_URL
 
     private val logging = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.BASIC
     }
 
     val authInterceptor = Interceptor { chain ->

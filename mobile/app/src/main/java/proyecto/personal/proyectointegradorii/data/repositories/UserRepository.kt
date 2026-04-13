@@ -11,6 +11,7 @@ import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UpdateProf
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UploadResponse
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 import java.io.File
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.DeleteAccountRequest
 
 class UserRepository {
     suspend fun login(email: String, password: String): LoginResponse? {
@@ -64,5 +65,12 @@ class UserRepository {
         val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
         val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
         return RetrofitClient.api.uploadProfilePhoto(body)
+    }
+
+    suspend fun deleteAccount(contrasenaActual: String): Boolean {
+        RetrofitClient.api.deleteAccount(
+            DeleteAccountRequest(contrasenaActual = contrasenaActual)
+        )
+        return true
     }
 }

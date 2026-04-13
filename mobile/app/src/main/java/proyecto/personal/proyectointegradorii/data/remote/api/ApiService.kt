@@ -9,12 +9,14 @@ import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenResponseDTO
 import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
 import proyecto.personal.proyectointegradorii.data.remote.dto.promocion.PromocionDto
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.DeleteAccountRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UpdateProfileRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UploadResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -40,6 +42,11 @@ interface ApiService {
     suspend fun uploadProfilePhoto(
         @Part file: MultipartBody.Part
     ): UploadResponse
+
+    @HTTP(method = "DELETE", path = "api/auth/eliminar-cuenta", hasBody = true)
+    suspend fun deleteAccount(
+        @Body request: DeleteAccountRequest
+    ): Map<String, String>
 
     // PLATILLOS
     @GET("api/platillos")

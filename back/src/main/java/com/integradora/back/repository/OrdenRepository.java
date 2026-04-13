@@ -30,4 +30,6 @@ public interface OrdenRepository extends JpaRepository<Orden, Long> {
     );
     
     long countByMeseroIdAndEstadoPreparacionIn(Long meseroId, List<EstadoOrden> estados);
+
+    long countByClienteIdAndEstadoPreparacionIn(Long clienteId, List<EstadoOrden> estados);
 }
