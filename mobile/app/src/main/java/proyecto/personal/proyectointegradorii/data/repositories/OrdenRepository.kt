@@ -13,4 +13,8 @@ class OrdenRepository(private val api: ApiService) {
     suspend fun obtenerOrden(id: Long): OrdenResponseDTO {
         return api.obtenerOrden(id)
     }
+
+    suspend fun obtenerMisOrdenes(): List<OrdenResponseDTO> {
+        return api.obtenerMisOrdenes()
+    }
 }

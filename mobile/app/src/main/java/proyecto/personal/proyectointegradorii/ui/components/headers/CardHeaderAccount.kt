@@ -25,6 +25,7 @@ import proyecto.personal.proyectointegradorii.ui.components.texts.Tittle
 import proyecto.personal.proyectointegradorii.ui.theme.CommentTextColor
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
+import coil.compose.AsyncImage
 
 @Composable
 fun CardHeaderAccount(
@@ -65,12 +66,22 @@ fun CardHeaderAccount(
                     .padding(vertical = 15.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Icono de Perfil",
-                    tint = Color.White,
-                    modifier = Modifier.size(70.dp),
-                )
+                if (!fotoPerfil.isNullOrBlank()) {
+                    AsyncImage(
+                        model = fotoPerfil,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(CircleShape)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Icono de Perfil",
+                        tint = Color.White,
+                        modifier = Modifier.size(70.dp),
+                    )
+                }
             }
             Spacer(Modifier.padding(vertical = 8.dp))
             GlobalText(
