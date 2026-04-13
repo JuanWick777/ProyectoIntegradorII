@@ -74,12 +74,13 @@ public class ProfileUploadController {
         Files.copy(file.getInputStream(), target);
 
         String publicPath = "/uploads/perfiles/" + filename;
+
+        usuario.setFotoPerfil(publicPath);
+        usuarioRepository.save(usuario);
+
         String publicUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path(publicPath)
                 .toUriString();
-
-        usuario.setFotoPerfil(publicUrl);
-        usuarioRepository.save(usuario);
 
         return ResponseEntity.ok(Map.of(
                 "url", publicUrl,

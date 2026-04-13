@@ -1,3 +1,16 @@
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8080/api`;
+
+export const resolveImageUrl = (pathOrUrl) => {
+    if (!pathOrUrl) return '';
+    if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
+        return pathOrUrl;
+    }
+
+    const base = API_URL.replace(/\/api$/, '');
+    const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+    return `${base}${path}`;
+};
+
 export const COCINAS = [
     { id: 1, nombre: 'Cocina Caliente' },
     { id: 2, nombre: 'Parrilla' },
@@ -53,7 +66,7 @@ export const getProductKitchenId = (p) => {
 };
 
 export const getProductImage = (p) =>
-    p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '';
+    resolveImageUrl(p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '');
 
 export const ROL_BADGE = {
     admin: { color: '#6f42c1', label: 'Admin' },

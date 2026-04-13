@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import coil.compose.AsyncImage
 import java.io.File
 import java.io.FileOutputStream
+import proyecto.personal.proyectointegradorii.utils.ImageUrlResolver
 
 @Composable
 fun PersonalDatesScreen(navController: NavController) {
@@ -140,7 +141,7 @@ fun PersonalDatesScreen(navController: NavController) {
                         ) {
                             if (!fotoPerfil.isNullOrBlank()) {
                                 AsyncImage(
-                                    model = fotoPerfil,
+                                    model = ImageUrlResolver.resolve(fotoPerfil),
                                     contentDescription = "Foto de perfil",
                                     modifier = Modifier
                                         .matchParentSize()

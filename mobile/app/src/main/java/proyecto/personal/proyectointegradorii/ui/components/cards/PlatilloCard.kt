@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import proyecto.personal.proyectointegradorii.utils.ImageUrlResolver
 
 @Composable
 fun PlatilloCard(
@@ -56,7 +57,7 @@ fun PlatilloCard(
 
             // Imagen
             AsyncImage(
-                model = imagenUrl,
+                model = ImageUrlResolver.resolve(imagenUrl),
                 contentDescription = nombre,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

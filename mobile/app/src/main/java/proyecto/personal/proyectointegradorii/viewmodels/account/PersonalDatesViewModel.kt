@@ -70,7 +70,7 @@ class PersonalDatesViewModel(application: Application) : AndroidViewModel(applic
             _isLoading.value = true
             try {
                 val response = repository.uploadProfilePhoto(file)
-                _fotoPerfil.value = response.url
+                _fotoPerfil.value = response.path
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "No se pudo subir la foto"
             }
