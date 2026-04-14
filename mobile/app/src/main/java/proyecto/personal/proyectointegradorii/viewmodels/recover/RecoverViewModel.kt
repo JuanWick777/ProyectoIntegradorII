@@ -6,9 +6,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 
 class RecoverViewModel : ViewModel() {
 
+    private val repository = UserRepository()
     private val _email = MutableStateFlow("")
     val email = _email.asStateFlow()
     private val _code = MutableStateFlow("")
@@ -21,18 +23,24 @@ class RecoverViewModel : ViewModel() {
     val emailError = _emailError.asStateFlow()
     private val _codeError = MutableStateFlow<String?>(null)
     val codeError = _codeError.asStateFlow()
-    private val _passwordError = MutableStateFlow<String?>(null)
-    val passwordError = _passwordError.asStateFlow()
+    private val _npasswordError = MutableStateFlow<String?>(null)
+    val npasswordError = _npasswordError.asStateFlow()
+
+    private val _cpasswordError = MutableStateFlow<String?>(null)
+    val cpasswordError = _cpasswordError.asStateFlow()
+
     private val _generalMessage = MutableStateFlow<String?>(null)
     val generalMessage = _generalMessage.asStateFlow()
+
     private val _codeSent = MutableStateFlow(false)
     val codeSent = _codeSent.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
     fun onEmailChange(newEmail: String) {
         _email.value = newEmail
-        _emailError.value = null
+        validateEmail(newEmail)
     }
 
     fun onCodeChange(newCode: String) {
@@ -44,74 +52,126 @@ class RecoverViewModel : ViewModel() {
 
     fun onNPasswordChange(newNPassword: String) {
         _nPassword.value = newNPassword
-        _passwordError.value = null
+        validatePassword(newNPassword)
     }
 
     fun onCPasswordChange(newCPassword: String) {
         _cPassword.value = newCPassword
-        _passwordError.value = null
+        validateConfirmPassword(newCPassword)
     }
 
-    fun sendRecoveryCode(){
-        var isValid = true
+    private fun validateEmail(value: String) {
+        // 1. Dividimos el texto en dos partes usando el '@' como referencia
+        val parts = value.split("@")
 
-        if (_email.value.isBlank()) {
-            _emailError.value = "Ingresa el correo para buscar tu cuenta"
-            isValid = false
-        } else if (!_email.value.endsWith("@gmail.com")) {
-            _emailError.value = "Debe ser un correo electronico válido (@gmail.com)."
-            isValid = false
+        // Si hay una parte antes del '@', la guardamos en 'username', si no, queda vacío
+        val username = if (parts.isNotEmpty()) parts[0] else ""
+
+        // Si hay una parte después del '@', le pegamos el '@' y lo guardamos como 'domain'
+        val domain = if (parts.size >= 2) "@" + parts[1] else ""
+
+        // Regex para el usuario: Letras, números, puntos, guiones y guiones bajos
+        val usernameRegex = Regex("^[a-zA-Z0-9._-]+$")
+        val isValidDomain = domain == "@gmail.com" || domain == "@utez.edu.mx"
+
+        _emailError.value = when {
+            value.isBlank() -> "El correo electrónico es obligatorio."
+            value.contains(" ") -> "El correo no puede contener espacios."
+            !value.contains("@") -> "El correo debe incluir un '@'."
+            username.isEmpty() -> "El nombre de usuario no puede estar vacío."
+            // Validamos que el usuario (antes del @) no tenga cosas raras
+            !username.matches(usernameRegex) -> "Solo se admiten letras, números, '.', '_' y '-'."
+            // Aquí está tu blindaje de longitud SIN CONTAR el dominio
+            username.length !in 6..30 -> "El correo debe tener entre 6 y 30 caracteres."
+            !isValidDomain -> "Solo se admiten @gmail.com o @utez.edu.mx"
+            else -> null
         }
+    }
 
-        if (!isValid) return
+    private fun validatePassword(value: String) {
+        val hasUpperCase = value.any { it.isUpperCase() }
+        val hasLowerCase = value.any { it.isLowerCase() }
+        val hasDigit = value.any { it.isDigit() }
+        val hasSpecial = value.any { !it.isLetterOrDigit() }
+        val noSpaces = !value.contains(" ")
+
+        _npasswordError.value = when {
+            value.isBlank() -> "La contraseña es obligatoria."
+            value.length !in 8..30 -> "Debe tener entre 8 y 30 caracteres."
+            !noSpaces -> "No puede contener espacios."
+            !hasUpperCase -> "Debe incluir al menos una mayúscula."
+            !hasDigit -> "Debe incluir al menos un número."
+            !hasSpecial -> "Debe incluir al menos un carácter especial."
+            !hasLowerCase -> "Debe incluir minúsculas."
+            else -> null
+        }
+    }
+
+    private fun validateConfirmPassword(value: String) {
+        _npasswordError.value = when {
+            value != _nPassword.value -> "Las contraseñas no coinciden."
+            else -> null
+        }
+    }
+
+    private fun validateCode(value: String){
+        _codeError.value = when {
+            value.isBlank() -> "El código es obligatorio."
+            value.length < 6 -> "El código debe ser de 6 dígitos."
+            value.length > 6 -> "El código debe ser de 6 dígitos."
+            else -> null
+        }
+    }
+
+
+    fun sendRecoveryCode(){
+        validateEmail(_email.value)
+        if (_emailError.value != null) return
 
         viewModelScope.launch {
             _isLoading.value = true
             _generalMessage.value = null
-            delay(1500)
 
-            if (_email.value == "admin@gmail.com" || _email.value == "tu@gmail.com") {
-                _codeSent.value = true
-                _generalMessage.value = "Código enviado a ${_email.value}"
-            } else {
-                _emailError.value = "Este correo no está registrado"
-            }
+            // Llamamos a la API
+            val result = repository.forgotPassword(_email.value)
+
+            result.fold(
+                onSuccess = { mensaje ->
+                    _codeSent.value = true
+                    _generalMessage.value = mensaje // "Si el correo existe..."
+                },
+                onFailure = { error ->
+                    _emailError.value = error.message ?: "Error de red"
+                }
+            )
 
             _isLoading.value = false
         }
     }
 
     fun resetPassword() {
-        var isValid = true
 
-        if (_code.value.length < 6) {
-            _codeError.value = "El código debe ser de 6 dígitos."
-            isValid = false
-        }
+        validateCode(_code.value)
+        validatePassword(_nPassword.value)
+        validateConfirmPassword(_cPassword.value)
 
-        if (_nPassword.value.isBlank() || _nPassword.value.length < 8) {
-            _passwordError.value = "La contraseña debe tener al menos 8 caracteres"
-            isValid = false
-        }
-
-        if (_cPassword.value.isBlank() || _nPassword.value != _cPassword.value) {
-            _passwordError.value = "Las contraseñas no coinciden"
-            isValid = false
-        }
-
-        if (!isValid) return
+        if (_codeError.value != null || _npasswordError.value != null || _cpasswordError.value != null) return
 
         viewModelScope.launch {
             _isLoading.value = true
-            delay(2000)
 
-            if (_code.value == "123456") {
-                println("¡Contraseña actualizada con éxito!")
-                _generalMessage.value = "Tu contraseña ha sido actualizada exitosamente."
+            // Llamamos a la API real
+            val result = repository.resetPassword(_email.value, _code.value, _nPassword.value)
 
-            } else {
-                _codeError.value = "Código incorrecto o expirado"
-            }
+            result.fold(
+                onSuccess = { mensaje ->
+                    _generalMessage.value = mensaje // "Contraseña actualizada exitosamente."
+                    // Aquí podrías hacer que navegue al Login automáticamente después de un delay
+                },
+                onFailure = { error ->
+                    _codeError.value = error.message ?: "Error al verificar el código"
+                }
+            )
 
             _isLoading.value = false
         }
