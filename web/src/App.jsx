@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useCallback, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAppStore } from './store/useAppStore';
 
 // Páginas
@@ -31,12 +31,34 @@ function RootHandler() {
 }
 
 function App() {
-  const { usuario, token, fetchCurrentUser } = useAppStore();
+  const { usuario, token, fetchCurrentUser, logoutLocal } = useAppStore();
+  const navigate = useNavigate();
   const rol = (usuario?.rol || '').toUpperCase();
 
+  const handleSessionExpired = useCallback(() => {
+    const path = window.location.pathname;
+    logoutLocal();
+
+    if (path.startsWith('/mesero') || path.startsWith('/cocina') || path.startsWith('/login')) {
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    navigate('/admin/login', { replace: true });
+  }, [logoutLocal, navigate]);
+
   useEffect(() => {
-    fetchCurrentUser().catch(() => {});
-  }, []);
+    window.addEventListener('session-expired', handleSessionExpired);
+    return () => window.removeEventListener('session-expired', handleSessionExpired);
+  }, [handleSessionExpired]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    fetchCurrentUser().catch(() => {
+      handleSessionExpired();
+    });
+  }, [token, fetchCurrentUser, handleSessionExpired]);
 
   return (
     <Routes>
@@ -50,7 +72,7 @@ function App() {
         element={
           rol === 'ADMIN'
             ? <Navigate to="/admin" replace />
-            : <AdminLogin onLoginExitoso={() => window.location.replace('/admin')} />
+            : <AdminLogin onLoginExitoso={() => navigate('/admin', { replace: true })} />
         }
       />
       <Route
