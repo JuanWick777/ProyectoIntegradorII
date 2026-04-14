@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8080/api`;
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 const STORAGE_KEY = 'restaurant-storage-v2';
 
 function getStoredToken() {

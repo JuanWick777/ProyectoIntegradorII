@@ -12,6 +12,7 @@ const MesasAdmin = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [nuevoNumero, setNuevoNumero] = useState('');
+    const [showCreateForm, setShowCreateForm] = useState(false);
     const [creando, setCreando] = useState(false);
     const [eliminando, setEliminando] = useState(null);
 
@@ -88,6 +89,17 @@ const MesasAdmin = () => {
 
             {/* Formulario de agregar mesa */}
             <div className="row mb-4">
+                <div className="col-12 mb-3">
+                    <PrimaryButton
+                        type="button"
+                        onClick={() => setShowCreateForm((prev) => !prev)}
+                    >
+                        <Plus size={16} className="me-2" />
+                        {showCreateForm ? 'Ocultar configuración de mesa' : 'Agregar mesa'}
+                    </PrimaryButton>
+                </div>
+
+                {!showCreateForm ? null : (
                 <div className="col-md-6">
                     <div className="card border-0 shadow-sm">
                         <div className="card-body">
@@ -130,6 +142,7 @@ const MesasAdmin = () => {
                         </div>
                     </div>
                 </div>
+                )}
             </div>
 
             {/* Mensajes */}
