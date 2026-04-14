@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
 import proyecto.personal.proyectointegradorii.data.remote.network.SessionManager
 import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
+import retrofit2.HttpException
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -103,12 +104,16 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
             } catch (e: Exception) {
-                _generalErrorMessage.value =
-                    if (e.message?.contains("403") == true || e.message?.contains("401") == true) {
-                        "Credenciales incorrectas"
-                    } else {
-                        "Error de conexión"
+                _generalErrorMessage.value = when (e) {
+                    is HttpException -> {
+                        try {
+                            e.response()?.errorBody()?.string() ?: "HTTP ${e.code()}"
+                        } catch (_: Exception) {
+                            "HTTP ${e.code()}"
+                        }
                     }
+                    else -> e.message ?: "Error de conexión"
+                }
             }
 
             _isLoading.value = false

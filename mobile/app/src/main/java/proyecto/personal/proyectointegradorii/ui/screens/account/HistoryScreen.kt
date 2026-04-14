@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 import proyecto.personal.proyectointegradorii.ui.components.cards.HistoryCard
 import proyecto.personal.proyectointegradorii.ui.components.headers.HeaderCBack
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
+import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorDark
 import proyecto.personal.proyectointegradorii.viewmodels.account.HistoryViewModel
 import java.time.LocalDateTime
@@ -77,8 +78,8 @@ fun HistoryScreen(
         item {
             HeaderCBack(
                 "Historial de Pedidos",
-                30,
-                BackgroundColor,
+                25,
+                MainColor,
                 Modifier,
                 navController
             )

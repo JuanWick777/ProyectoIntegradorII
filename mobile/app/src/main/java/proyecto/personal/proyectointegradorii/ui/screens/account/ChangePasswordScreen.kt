@@ -57,7 +57,7 @@ fun ChangePasswordScreen(
             tittle = "Cambiar Contraseña",
             sizetittle = 28,
             navController = navController,
-            backgroundColor = BackgroundColor
+            backgroundColor = MainColor
         )
 
         // Contenedor principal para darle padding a los elementos de adentro

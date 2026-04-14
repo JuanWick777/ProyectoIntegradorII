@@ -11,11 +11,13 @@ import com.integradora.back.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
@@ -23,6 +25,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final OrdenRepository ordenRepository;
 
+    @Transactional
     public Usuario register(RegisterRequest request) {
         if (usuarioRepository.findByCorreo(request.getCorreo()).isPresent()) {
             throw new RuntimeException("El correo ya está registrado");
@@ -45,6 +48,7 @@ public class AuthService {
         return usuarioRepository.save(usuario);
     }
 
+    @Transactional(readOnly = true)
     public LoginResponseDTO login(LoginRequest request) {
 
         Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
@@ -76,11 +80,13 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public Usuario obtenerPorId(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
+    @Transactional(readOnly = true)
     public Usuario obtenerPorCorreo(String correo) {
         return usuarioRepository.findByCorreo(correo)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -98,6 +104,7 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional
     public LoginResponseDTO actualizarPerfil(
             String correoActual,
             String nombre,
@@ -160,6 +167,7 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional
     public void eliminarCuenta(String correoActual, String contrasenaActual) {
         Usuario usuario = usuarioRepository.findByCorreo(correoActual)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));

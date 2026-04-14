@@ -18,6 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PromocionService {
 
     private final PromocionRepository promocionRepository;
@@ -25,6 +26,7 @@ public class PromocionService {
     private final DetalleOrdenRepository detalleOrdenRepository;
 
     // ── Listados ───────────────────────────────────────────────
+    @Transactional(readOnly = true)
     public List<Promocion> listarActivas() {
         LocalDate hoy = LocalDate.now();
         return promocionRepository.findByActivaTrue().stream()
@@ -33,15 +35,18 @@ public class PromocionService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Promocion> listarTodas() {
         return promocionRepository.findAll();
     }
 
     // ── CRUD ───────────────────────────────────────────────────
+    @Transactional
     public Promocion crear(Promocion promo) {
         return promocionRepository.save(promo);
     }
 
+    @Transactional
     public Promocion actualizar(Long id, Promocion req) {
         Promocion p = promocionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Promoción no encontrada"));
@@ -57,6 +62,7 @@ public class PromocionService {
         return promocionRepository.save(p);
     }
 
+    @Transactional
     public void eliminar(Long id) {
         promocionRepository.deleteById(id);
     }
@@ -139,6 +145,7 @@ public class PromocionService {
         return descuento.max(BigDecimal.ZERO);
     }
 
+    @Transactional(readOnly = true)
     public List<Promocion> listarAutomaticasVigentes() {
         LocalDate hoy = LocalDate.now();
 
@@ -169,6 +176,7 @@ public class PromocionService {
         return descuento.max(BigDecimal.ZERO);
     }
 
+    @Transactional(readOnly = true)
     public Promocion obtenerMejorPromocionAutomatica(BigDecimal subtotal) {
         return listarAutomaticasVigentes().stream()
                 .max((a, b) -> calcularDescuento(a, subtotal).compareTo(calcularDescuento(b, subtotal)))

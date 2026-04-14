@@ -44,7 +44,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import coil.compose.AsyncImage
 import java.io.File
 import java.io.FileOutputStream
@@ -108,7 +107,7 @@ fun PersonalDatesScreen(navController: NavController) {
         HeaderCBack(
             "Datos Personales",
             30,
-            BackgroundColor,
+            MainColor,
             Modifier,
             navController
         )

@@ -8,18 +8,21 @@ import com.integradora.back.model.platillo.Platillo;
 import com.integradora.back.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DetalleOrdenService {
 
     private final DetalleOrdenRepository detalleRepository;
     private final OrdenRepository ordenRepository;
     private final PlatilloRepository platilloRepository;
 
+    @Transactional
     public DetalleOrden agregarDetalle(
             Long ordenId,
             Long platilloId,
@@ -54,10 +57,12 @@ public class DetalleOrdenService {
         return detalleRepository.save(detalle);
     }
 
+    @Transactional(readOnly = true)
     public List<DetalleOrden> obtenerPorOrden(Long ordenId) {
         return detalleRepository.findByOrdenId(ordenId);
     }
 
+    @Transactional(readOnly = true)
     public List<DetalleOrden> obtenerPendientes() {
         return detalleRepository.findByEstadoPreparacionIn(
                 List.of(
@@ -67,6 +72,7 @@ public class DetalleOrdenService {
         );
     }
 
+    @Transactional
     public DetalleOrden cambiarEstado(Long id, String estado) {
 
         DetalleOrden detalle = detalleRepository.findById(id)

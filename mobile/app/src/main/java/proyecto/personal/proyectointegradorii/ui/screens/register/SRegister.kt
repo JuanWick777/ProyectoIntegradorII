@@ -15,11 +15,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-
-
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -30,6 +27,7 @@ import proyecto.personal.proyectointegradorii.ui.components.inputs.GlobalTextInp
 import proyecto.personal.proyectointegradorii.ui.components.inputs.PasswordInput
 import proyecto.personal.proyectointegradorii.ui.components.texts.ErrorText
 import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
+import proyecto.personal.proyectointegradorii.ui.theme.BackgroundCardColor
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorDark
@@ -82,7 +80,7 @@ fun ScreenRegister(
         HeaderCBack(
             "Crear Cuenta",
             35,
-            BackgroundColor,
+            MainColor,
             Modifier,
             navController
         )
@@ -177,8 +175,8 @@ fun ScreenRegister(
                                 20,
                                 55,
                                 130,
-                                Color.White,
                                 MainColor,
+                                BackgroundCardColor,
                                 MainColor,
                                 {
                                     navController.popBackStack()

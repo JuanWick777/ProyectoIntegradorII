@@ -27,6 +27,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class OrdenService {
 
     private final OrdenRepository ordenRepository;
@@ -36,6 +37,7 @@ public class OrdenService {
     private final DetalleOrdenRepository detalleRepository;
     private final PromocionService promocionService;
 
+    @Transactional
     public Orden crear(Long clienteId, Long mesaId) {
 
         Usuario cliente = usuarioRepository.findById(clienteId)
@@ -54,10 +56,12 @@ public class OrdenService {
         return ordenRepository.save(orden);
     }
 
+    @Transactional(readOnly = true)
     public List<Orden> listar() {
         return ordenRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Orden> porCliente(Long clienteId) {
         return ordenRepository.findByClienteIdOrderByIdDesc(clienteId);
     }
@@ -223,6 +227,7 @@ public class OrdenService {
         return OrdenMapper.toDTO(orden, detalles);
     }
 
+    @Transactional(readOnly = true)
     public OrdenPreviewDTO previsualizarOrden(OrdenRequestDTO request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -289,6 +294,7 @@ public class OrdenService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<Orden> obtenerActivas() {
         return ordenRepository.findByEstadoPreparacionNotIn(
                 List.of(
@@ -299,6 +305,7 @@ public class OrdenService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<Orden> historial() {
         return ordenRepository.findTop50ByEstadoPreparacionInOrderByIdDesc(
                 List.of(
@@ -309,6 +316,7 @@ public class OrdenService {
         );
     }
 
+    @Transactional(readOnly = true)
     public OrdenResponseDTO obtenerPorId(Long id) {
         Orden orden = ordenRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
@@ -318,6 +326,7 @@ public class OrdenService {
         return OrdenMapper.toDTO(orden, detalles);
     }
 
+    @Transactional(readOnly = true)
     public List<OrdenResponseDTO> obtenerOrdenesDelClienteActual(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new RuntimeException("No autenticado");
