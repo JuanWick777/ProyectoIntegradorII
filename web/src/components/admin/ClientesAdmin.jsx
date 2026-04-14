@@ -5,6 +5,7 @@ import DataTable from '../ui/DataTable';
 import { Heart, Mail, Calendar, MapPin, AlertTriangle, User, Search, SlidersHorizontal, Trash2, Eye } from 'lucide-react';
 import { getUserEmail, resolveImageUrl, isUserActive } from './adminConstants';
 import { SecondaryButton, DangerButton } from '../ui/Button';
+import ConfirmModal from '../ui/ConfirmModal';
 
 const ClientesAdmin = ({ mostrarToast }) => {
     const { fetchUsuarios, deleteUsuario } = useAppStore();
@@ -323,57 +324,20 @@ const ClientesAdmin = ({ mostrarToast }) => {
                 </div>
             )}
 
-            {/* Modal de confirmación de eliminación */}
-            {confirmDel && (
-                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.35)' }}>
-                    <div className="modal-dialog modal-dialog-centered modal-sm">
-                        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.5rem', overflow: 'hidden' }}>
-                            <div style={{
-                                background: 'linear-gradient(135deg, #fff4e6 0%, #fff7f0 100%)',
-                                padding: '1.6rem 1.4rem',
-                                textAlign: 'center'
-                            }}>
-                                <div style={{
-                                    width: 64,
-                                    height: 64,
-                                    borderRadius: '50%',
-                                    background: 'rgba(255, 221, 178, 0.45)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    marginBottom: 14,
-                                }}>
-                                    <AlertTriangle size={28} className="text-warning" />
-                                </div>
-                                <h5 className="fw-bold mb-2">¿Eliminar cliente?</h5>
-                                <p className="text-muted small mb-0">Esta acción no se puede deshacer.</p>
-                            </div>
-                            <div className="p-4">
-                                <div className="text-center mb-3">
-                                    <div className="fw-semibold">{confirmDel.nombre}</div>
-                                    <div className="text-muted small">Se borrará toda la información del cliente.</div>
-                                </div>
-                                <div className="d-flex gap-2">
-                                    <button
-                                        className="btn btn-outline-secondary flex-fill"
-                                        style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
-                                        onClick={() => setConfirmDel(null)}
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        className="btn btn-danger flex-fill fw-bold"
-                                        style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
-                                        onClick={() => handleDelete(confirmDel.id)}
-                                    >
-                                        Sí, eliminar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+            <ConfirmModal
+                open={!!confirmDel}
+                title="¿Eliminar cliente?"
+                subtitle="Esta acción no se puede deshacer."
+                description={confirmDel ? (
+                    <div>
+                        <div className="fw-semibold">{confirmDel.nombre}</div>
+                        <div className="text-muted small">Se borrará toda la información del cliente.</div>
                     </div>
-                </div>
-            )}
+                ) : null}
+                confirmText="Sí, eliminar"
+                onClose={() => setConfirmDel(null)}
+                onConfirm={() => confirmDel && handleDelete(confirmDel.id)}
+            />
         </div>
     );
 };
