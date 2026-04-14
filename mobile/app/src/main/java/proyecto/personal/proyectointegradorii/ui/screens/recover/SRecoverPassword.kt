@@ -55,7 +55,8 @@ fun SRecoverPassword(
 
     val emailError by viewModel.emailError.collectAsState()
     val codeError by viewModel.codeError.collectAsState()
-    val passwordError by viewModel.passwordError.collectAsState()
+    val npasswordError by viewModel.npasswordError.collectAsState()
+    val cpasswordError by viewModel.cpasswordError.collectAsState()
     val generalMessage by viewModel.generalMessage.collectAsState()
 
     Column(
@@ -114,7 +115,13 @@ fun SRecoverPassword(
                                 "tu@email.com",
                                 Modifier,
                                 60,
-                                350
+                                350,
+                                isError = emailError != null
+                            )
+                            ErrorText(
+                                emailError,
+                                14,
+                                Modifier
                             )
                             Spacer(Modifier.padding(vertical = 15.dp))
                             GlobalButton(
@@ -125,7 +132,9 @@ fun SRecoverPassword(
                                 MainColor,
                                 MainColor,
                                 TextColorWhite,
-                                {},
+                                {
+                                    viewModel.sendRecoveryCode()
+                                },
                                 Modifier
                             )
                             Spacer(Modifier.padding(vertical = 10.dp))
@@ -213,9 +222,14 @@ fun SRecoverPassword(
                                 value = nPassword,
                                 onValueChange = { viewModel.onNPasswordChange(it) },
                                 placeholder = "••••••••",
-                                isError = passwordError != null,
+                                isError = npasswordError != null,
                                 height = 60,
                                 width = 350
+                            )
+                            ErrorText(
+                                npasswordError,
+                                14,
+                                Modifier
                             )
                             Spacer(modifier = Modifier.height(20.dp))
                             GlobalText(
@@ -228,13 +242,13 @@ fun SRecoverPassword(
                                 value = cPassword,
                                 onValueChange = { viewModel.onCPasswordChange(it) },
                                 placeholder = "••••••••",
-                                isError = passwordError != null,
+                                isError = cpasswordError != null,
                                 height = 60,
                                 width = 350
                             )
                             ErrorText(
-                                passwordError,
-                                15,
+                                cpasswordError,
+                                14,
                                 Modifier
                             )
                         }
@@ -246,7 +260,7 @@ fun SRecoverPassword(
                             ancho = 350,
                             bordercolorbutton = MainColor,
                             colorbutton = MainColor,
-                            colortext = Color.White,
+                            colortext = TextColorWhite,
                             onClick = { viewModel.resetPassword() },
                             modifier = Modifier,
                             enabled = !isLoading

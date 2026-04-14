@@ -20,7 +20,7 @@ fun GlobalCard(
     backgroundColor: Color = BackgroundCardColor
 ) {
     Surface(
-        color = BackgroundCardColor,
+        color = backgroundColor,
         shadowElevation = 8.dp,
         shape = RoundedCornerShape(24.dp),
         modifier = modifier

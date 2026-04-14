@@ -10,7 +10,11 @@ import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRespons
 import proyecto.personal.proyectointegradorii.data.remote.dto.platillo.PlatilloDto
 import proyecto.personal.proyectointegradorii.data.remote.dto.promocion.PromocionDto
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.DeleteAccountRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.ForgotPasswordRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.ForgotPasswordResponse
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.ResetPasswordRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.ResetPasswordResponse
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UpdateProfileRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UploadResponse
 import retrofit2.Response
@@ -47,6 +51,13 @@ interface ApiService {
     suspend fun deleteAccount(
         @Body request: DeleteAccountRequest
     ): Map<String, String>
+
+    // RECUPERACIÓN DE CONTRASEÑA
+    @POST("api/auth/forgot-password")
+    suspend fun forgotPassword(@Body request: ForgotPasswordRequest): Response<ForgotPasswordResponse>
+
+    @POST("api/auth/reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<ResetPasswordResponse>
 
     // PLATILLOS
     @GET("api/platillos")
