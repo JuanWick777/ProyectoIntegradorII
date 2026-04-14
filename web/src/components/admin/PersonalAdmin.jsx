@@ -4,7 +4,7 @@ import SectionHeader from '../ui/SectionHeader';
 import DataTable from '../ui/DataTable';
 import UsuarioModal from './UsuarioModal';
 import { ForkKnife, Table, PlusCircle, Edit2, Trash2, AlertTriangle, Shield, UserCheck, User, ChefHat, Coffee, Flame, Cake, Search, SlidersHorizontal } from 'lucide-react';
-import { normalizeRole, getUserEmail, getUserRole, ROL_BADGE } from './adminConstants';
+import { normalizeRole, getUserEmail, getUserRole, ROL_BADGE, isUserActive } from './adminConstants';
 import ConfirmModal from '../ui/ConfirmModal';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 
@@ -46,7 +46,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
             const nombre = (u.nombre || '').toString().toLowerCase();
             const email = getUserEmail(u).toLowerCase();
             const rol = getUserRole(u);
-            const estado = u.activo ? 'activo' : 'inactivo';
+            const estado = isUserActive(u) ? 'activo' : 'inactivo';
             const query = searchQuery.toLowerCase().trim();
 
             if (query && !(nombre.includes(query) || email.includes(query))) {
@@ -188,19 +188,22 @@ const PersonalAdmin = ({ mostrarToast }) => {
         {
             key: 'estado',
             label: 'Estado',
-            render: (u) => (
-                <span
-                    className="badge fw-semibold"
-                    style={{
-                        background: u.activo ? '#52C41A' : '#CCCCCC',
-                        borderRadius: '2rem',
-                        fontSize: '0.8rem',
-                        color: u.activo ? '#FFFFFF' : '#666666',
-                    }}
-                >
-                    {u.activo ? 'Activo' : 'Inactivo'}
-                </span>
-            ),
+            render: (u) => {
+                const activo = isUserActive(u);
+                return (
+                    <span
+                        className="badge fw-semibold"
+                        style={{
+                            background: activo ? '#52C41A' : '#CCCCCC',
+                            borderRadius: '2rem',
+                            fontSize: '0.8rem',
+                            color: activo ? '#FFFFFF' : '#666666',
+                        }}
+                    >
+                        {activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                );
+            },
         },
         {
             key: 'acciones',

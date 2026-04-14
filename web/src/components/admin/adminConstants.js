@@ -50,6 +50,20 @@ export const normalizeRole = (rol) => (rol || '').toString().trim().toLowerCase(
 export const getUserEmail = (u) => u?.email ?? u?.correo ?? '';
 export const getUserRole = (u) => normalizeRole(u?.rol ?? u?.tipoUsuario);
 
+export const isUserActive = (u) => {
+    if (u == null) return false;
+
+    const activeValue = u?.activo ?? u?.activoUsuario ?? u?.active ?? u?.isActive;
+    if (activeValue !== undefined && activeValue !== null) {
+        if (typeof activeValue === 'boolean') return activeValue;
+        const normalized = String(activeValue).trim().toLowerCase();
+        return ['1', 'true', 'si', 'sí', 'activo', 'active', 'habilitado', 'enabled', 'yes'].includes(normalized);
+    }
+
+    const estadoValue = String(u?.estado ?? u?.estadoUsuario ?? u?.estadoCuenta ?? '').trim().toLowerCase();
+    return ['1', 'true', 'si', 'sí', 'activo', 'active', 'habilitado', 'enabled', 'yes'].includes(estadoValue);
+};
+
 export const getProductName = (p) => p?.nombre ?? '';
 export const getProductDesc = (p) => p?.descripcion ?? '';
 export const getProductPrice = (p) => p?.precio ?? 0;

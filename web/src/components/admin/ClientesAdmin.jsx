@@ -3,7 +3,8 @@ import { useAppStore } from '../../store/useAppStore';
 import SectionHeader from '../ui/SectionHeader';
 import DataTable from '../ui/DataTable';
 import { Heart, Mail, Calendar, MapPin, AlertTriangle, User, Search, SlidersHorizontal, Trash2, Eye } from 'lucide-react';
-import { getUserEmail } from './adminConstants';
+import { getUserEmail, resolveImageUrl, isUserActive } from './adminConstants';
+import { SecondaryButton, DangerButton } from '../ui/Button';
 
 const ClientesAdmin = ({ mostrarToast }) => {
     const { fetchUsuarios, deleteUsuario } = useAppStore();
@@ -35,7 +36,7 @@ const ClientesAdmin = ({ mostrarToast }) => {
         const filtered = clientes.filter((c) => {
             const nombre = (c.nombre || '').toString().toLowerCase();
             const email = getUserEmail(c).toLowerCase();
-            const estado = c.activo ? 'activo' : 'inactivo';
+            const estado = isUserActive(c) ? 'activo' : 'inactivo';
             const query = searchQuery.toLowerCase().trim();
 
             if (query && !(nombre.includes(query) || email.includes(query))) {
@@ -76,10 +77,22 @@ const ClientesAdmin = ({ mostrarToast }) => {
                 const email = getUserEmail(c);
                 return (
                     <div className="d-flex align-items-center gap-2">
-                        <div className="rounded-circle d-flex align-items-center justify-content-center" 
-                            style={{ width: 32, height: 32, background: '#e8f4f8', color: '#00a8cc' }}>
-                            <User size={16} />
-                        </div>
+                        {(() => {
+                            const fotoUrl = resolveImageUrl(c?.imagenUrl ?? c?.imagen_url ?? c?.urlImagen ?? c?.url_imagen ?? c?.foto ?? c?.photo ?? '');
+                            return fotoUrl ? (
+                                <img
+                                    src={fotoUrl}
+                                    alt={c.nombre || 'Cliente'}
+                                    className="rounded-circle"
+                                    style={{ width: 32, height: 32, objectFit: 'cover', border: '1px solid #dee2e6' }}
+                                />
+                            ) : (
+                                <div className="rounded-circle d-flex align-items-center justify-content-center" 
+                                    style={{ width: 32, height: 32, background: '#e8f4f8', color: '#00a8cc' }}>
+                                    <User size={16} />
+                                </div>
+                            );
+                        })()}
                         <div className="fw-semibold">{c.nombre}</div>
                     </div>
                 );
@@ -101,19 +114,22 @@ const ClientesAdmin = ({ mostrarToast }) => {
         {
             key: 'estado',
             label: 'Estado',
-            render: (c) => (
-                <span
-                    className="badge fw-semibold"
-                    style={{
-                        background: c.activo ? '#52C41A' : '#CCCCCC',
-                        borderRadius: '2rem',
-                        fontSize: '0.8rem',
-                        color: c.activo ? '#FFFFFF' : '#666666',
-                    }}
-                >
-                    {c.activo ? 'Activo' : 'Inactivo'}
-                </span>
-            ),
+            render: (c) => {
+                const activo = isUserActive(c);
+                return (
+                    <span
+                        className="badge fw-semibold"
+                        style={{
+                            background: activo ? '#52C41A' : '#CCCCCC',
+                            borderRadius: '2rem',
+                            fontSize: '0.8rem',
+                            color: activo ? '#FFFFFF' : '#666666',
+                        }}
+                    >
+                        {activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                );
+            },
         },
         {
             key: 'registro',
@@ -133,22 +149,23 @@ const ClientesAdmin = ({ mostrarToast }) => {
             className: 'text-end pe-4',
             render: (c) => (
                 <div className="d-flex gap-2 justify-content-end">
-                    <button
-                        className="btn btn-sm btn-outline-info"
+                    <SecondaryButton
+                        type="button"
+                        size="sm"
+                        className="me-2"
                         style={{ borderRadius: '0.5rem' }}
-                        title="Ver detalles"
                         onClick={() => setModalDetalle(c)}
                     >
                         <Eye size={16} />
-                    </button>
-                    <button
-                        className="btn btn-sm btn-outline-danger"
+                    </SecondaryButton>
+                    <DangerButton
+                        type="button"
+                        size="sm"
                         style={{ borderRadius: '0.5rem' }}
-                        title="Eliminar cliente"
                         onClick={() => setConfirmDel(c)}
                     >
                         <Trash2 size={16} />
-                    </button>
+                    </DangerButton>
                 </div>
             ),
         },
@@ -251,14 +268,14 @@ const ClientesAdmin = ({ mostrarToast }) => {
                                                 <span
                                                     className="badge fw-semibold"
                                                     style={{
-                                                        background: modalDetalle.activo ? '#d1fae5' : '#e2e3e5',
+                                                        background: isUserActive(modalDetalle) ? '#d1fae5' : '#e2e3e5',
                                                         borderRadius: '2rem',
                                                         padding: '0.55rem 1rem',
                                                         fontSize: '0.9rem',
-                                                        color: modalDetalle.activo ? '#065f46' : '#6c757d',
+                                                        color: isUserActive(modalDetalle) ? '#065f46' : '#6c757d',
                                                     }}
                                                 >
-                                                    {modalDetalle.activo ? 'Activo' : 'Inactivo'}
+                                                    {isUserActive(modalDetalle) ? 'Activo' : 'Inactivo'}
                                                 </span>
                                             </div>
                                         </div>

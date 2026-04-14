@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, FileText, Flame, Check, ChefHat, RefreshCw, AlertTriangle, History } from 'lucide-react';
+import { User, FileText, Flame, Check, ChefHat, RefreshCw, AlertTriangle, History, Clock, Edit2 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import MeseroLogin from './mesero/MeseroLogin';
-import HamburgerMenu from './shared/HamburgerMenu';
+import PerfilModal from './shared/PerfilModal';
 import { PrimaryButton } from './ui/Button';
 
 const ESTADO_CONFIG = {
@@ -30,103 +30,103 @@ const ESTADO_CONFIG = {
 };
 
 const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
-    const estado = detalle.estadoPreparacion || 'PENDIENTE';
+    const estado = (detalle.estadoPreparacion || 'PENDIENTE').toUpperCase();
     const cfg = ESTADO_CONFIG[estado] || ESTADO_CONFIG.PENDIENTE;
 
     const createdAt = new Date(detalle.orden?.fechaCreacion || detalle.createdAt || Date.now());
     const minutosAgo = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 60000));
-    const esUrgente = minutosAgo > 12;
 
     const mesaNumero = detalle.orden?.mesa?.numero ?? detalle.orden?.mesaNumero ?? '-';
     const ordenId = detalle.orden?.id ?? detalle.orden?.ordenId ?? detalle.ordenId ?? '-';
 
     return (
         <div
-            className="card border-0 shadow-sm h-100"
+            className="shadow-sm h-100"
             style={{
-                borderRadius: '1rem',
-                borderLeft: `6px solid ${cfg.color}`,
-                background: esUrgente ? '#fff8f5' : cfg.bg,
+                borderRadius: '1.5rem',
+                border: `1px solid ${cfg.border}`,
+                background: '#ffffff',
+                overflow: 'hidden',
             }}
         >
             <div
-                className="card-header d-flex justify-content-between align-items-center py-2"
+                className="d-flex justify-content-between align-items-start p-3"
                 style={{
-                    background: 'linear-gradient(90deg, #fff3e0, #ffffff)',
+                    background: cfg.bg,
                     borderBottom: `1px solid ${cfg.border}`,
-                    borderRadius: '1rem 1rem 0 0',
                 }}
             >
-                <div className="fw-bold d-flex align-items-center gap-2" style={{ color: '#8e4b10' }}>
-                    <Users size={18} /> Mesa {mesaNumero}
-                </div>
-                <div className="d-flex align-items-center gap-2">
-                    <span className="badge text-dark" style={{ background: '#ffe0b2' }}>
-                        #{ordenId}
-                    </span>
-                    <span
-                        className="badge"
-                        style={{ background: cfg.color, color: '#fff' }}
-                    >
-                        {cfg.icono} {minutosAgo} min
-                    </span>
-                </div>
-            </div>
-
-            <div className="card-body p-3">
-                <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <div className="fw-bold" style={{ fontSize: '1.05rem', color: '#5a3a1a' }}>
-                            {detalle.platillo?.nombre || 'Platillo'}
-                        </div>
-                        <div className="text-muted small">
-                            {detalle.cantidad} × ${Number(detalle.precioUnitario || 0).toFixed(2)}
-                        </div>
+                <div>
+                    <div className="text-uppercase fw-bold small mb-2" style={{ color: cfg.color }}>
+                        {cfg.label}
                     </div>
+                    <h5 className="fw-bold mb-1" style={{ color: '#222' }}>
+                        Orden #{ordenId}
+                    </h5>
+                    <div className="text-muted small">Mesa {mesaNumero}</div>
+                </div>
+                <div className="text-end">
                     <span
-                        className="badge rounded-pill"
+                        className="rounded-pill px-2 py-1 fw-semibold"
                         style={{
                             background: cfg.color,
                             color: '#fff',
+                            fontSize: '0.8rem',
                         }}
                     >
-                        {cfg.label}
+                        {cfg.icono}
                     </span>
+                    <div className="mt-2 text-muted small">{minutosAgo} min</div>
+                </div>
+            </div>
+
+            <div className="p-3">
+                <div className="mb-3">
+                    <div className="fw-semibold" style={{ color: '#1f2937', fontSize: '1.05rem' }}>
+                        {detalle.platillo?.nombre || 'Platillo'}
+                    </div>
+                    <div className="mt-2 d-flex flex-wrap gap-2">
+                        <span className="badge rounded-pill" style={{ background: '#f3f4f6', color: '#4b5563' }}>
+                            {detalle.cantidad} × ${Number(detalle.precioUnitario || 0).toFixed(2)}
+                        </span>
+                        <span className="badge rounded-pill" style={{ background: cfg.color, color: '#fff' }}>
+                            {cfg.label}
+                        </span>
+                    </div>
                 </div>
 
                 {detalle.notaCliente && detalle.notaCliente.trim() !== '' && (
                     <div
-                        className="mt-2 px-2 py-2 rounded-3 small d-flex align-items-center gap-2"
+                        className="mb-3 px-3 py-2 rounded-4"
                         style={{
-                            background: '#fff8e1',
-                            color: '#8a5a00',
-                            border: '1px solid #ffd54f',
+                            background: '#fff9db',
+                            border: `1px solid ${cfg.color}33`,
+                            color: '#5f370e',
                         }}
                     >
-                        <FileText size={14} /> {detalle.notaCliente}
+                        <div className="small fw-semibold mb-1">Nota del cliente</div>
+                        <div className="small">{detalle.notaCliente}</div>
                     </div>
                 )}
 
-                <div className="mt-3 d-flex justify-content-between align-items-center border-top pt-2">
+                <div className="d-flex justify-content-between align-items-center px-3 py-3 rounded-4" style={{ background: '#f8fafc', border: '1px solid #e5e7eb' }}>
                     <span className="text-muted small">Subtotal</span>
-                    <strong style={{ color: '#d35400' }}>
-                        ${Number(detalle.subtotal || 0).toFixed(2)}
-                    </strong>
+                    <strong style={{ color: '#111827' }}>${Number(detalle.subtotal || 0).toFixed(2)}</strong>
                 </div>
             </div>
 
-            <div className="card-footer bg-transparent p-3 border-0">
+            <div className="p-3 pt-0">
                 {estado === 'PENDIENTE' && typeof onPreparar === 'function' && (
                     <button
                         className="btn w-100 fw-bold text-white d-flex align-items-center justify-content-center gap-2"
-                        style={{ background: '#e67e22', borderRadius: '0.75rem' }}
+                        style={{ background: cfg.color, borderRadius: '1rem', minHeight: '48px' }}
                         onClick={onPreparar}
                         disabled={loading}
                     >
                         {loading ? (
                             <span className="spinner-border spinner-border-sm" />
                         ) : (
-                            <><Flame size={18} /> Iniciar preparación</>
+                            <><Flame size={18} /> Preparar</>
                         )}
                     </button>
                 )}
@@ -134,21 +134,21 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
                 {estado === 'EN_PREPARACION' && typeof onListo === 'function' && (
                     <button
                         className="btn w-100 fw-bold text-white d-flex align-items-center justify-content-center gap-2"
-                        style={{ background: '#27ae60', borderRadius: '0.75rem' }}
+                        style={{ background: cfg.color, borderRadius: '1rem', minHeight: '48px' }}
                         onClick={onListo}
                         disabled={loading}
                     >
                         {loading ? (
                             <span className="spinner-border spinner-border-sm" />
                         ) : (
-                            <><Check size={18} /> Marcar como listo</>
+                            <><Check size={18} /> Listo</>
                         )}
                     </button>
                 )}
 
                 {estado === 'LISTO' && (
-                    <div className="text-center fw-semibold d-flex align-items-center justify-content-center gap-2" style={{ color: '#27ae60' }}>
-                        <Check size={20} /> Ticket listo para entrega
+                    <div className="text-center fw-semibold d-flex align-items-center justify-content-center gap-2 px-3 py-3 rounded-4" style={{ background: '#ecfdf5', color: '#166534' }}>
+                        <Check size={20} /> Listo para entrega
                     </div>
                 )}
             </div>
@@ -165,6 +165,7 @@ const KitchenDashboard = () => {
     const [loadingId, setLoadingId] = useState(null);
     const [ultimaSync, setUltimaSync] = useState(null);
     const [vista, setVista] = useState('dashboard'); // 'dashboard' | 'historial'
+    const [perfilAbierto, setPerfilAbierto] = useState(false);
 
     const cargarTickets = useCallback(async () => {
         try {
@@ -283,42 +284,79 @@ const KitchenDashboard = () => {
     return (
         <div className="min-vh-100" style={{ background: '#ffffff' }}>
             <header
-                className="sticky-top shadow-sm py-3 px-3 d-flex justify-content-between align-items-center"
+                className="sticky-top shadow-sm py-3 px-3"
                 style={{
-                    background: 'linear-gradient(90deg, #fff7ed, #ffffff)',
-                    borderBottom: '2px solid #f39c12',
+                    background: '#ffffff',
+                    borderBottom: '1px solid #e5e7eb',
                 }}
             >
-                <div className="d-flex align-items-center gap-3">
-                    <ChefHat size={32} style={{ color: '#b45309' }} />
-                    <div>
-                        <h1 className="fw-bold mb-0" style={{ fontSize: '1.15rem', color: '#b45309' }}>
-                            KDS - Cocina en Vivo
-                        </h1>
-                        <span className="text-muted" style={{ fontSize: '0.78rem' }}>
-                            Chef: {usuario.nombre}
+                <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+                    <div className="d-flex align-items-start gap-3">
+                        <div
+                            className="rounded-3 d-flex align-items-center justify-content-center"
+                            style={{ width: 48, height: 48, background: '#f97316', color: '#ffffff' }}
+                        >
+                            <ChefHat size={24} />
+                        </div>
+                        <div>
+                            <h1 className="fw-bold mb-1" style={{ fontSize: '1.25rem', color: '#111827' }}>
+                                RestoApp Kitchen
+                            </h1>
+                            <div className="text-muted" style={{ fontSize: '0.9rem' }}>
+                                Sistema de gestión de cocina en tiempo real
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
+                        <span
+                            className="rounded-pill px-3 py-2 d-flex align-items-center gap-2"
+                            style={{ background: '#fee2e2', color: '#b91c1c', fontSize: '0.85rem' }}
+                        >
+                            <AlertTriangle size={16} /> Prioridad Alta
                         </span>
+                        <span
+                            className="rounded-pill px-3 py-2 d-flex align-items-center gap-2"
+                            style={{ background: '#eef2ff', color: '#3730a3', fontSize: '0.85rem' }}
+                        >
+                            <Clock size={16} /> Turno: Mañana
+                        </span>
+                        <button
+                            type="button"
+                            className="btn fw-semibold px-4 py-2 d-flex align-items-center gap-2"
+                            style={{ borderRadius: '9999px', borderColor: '#f97316', backgroundColor: '#ffffff', border: '2px solid #f97316', color: '#f97316' }}
+                            onClick={() => setPerfilAbierto(true)}
+                        >
+                            <User size={16} /> Editar perfil
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-warning fw-semibold px-4 py-2 d-flex align-items-center justify-content-center"
+                            style={{ borderRadius: '9999px', backgroundColor: '#f97316', borderColor: '#f97316', color: '#ffffff' }}
+                            onClick={logoutLocal}
+                        >
+                            Salir
+                        </button>
                     </div>
                 </div>
 
-                <div className="d-flex align-items-center gap-2">
-                    {ultimaSync && (
-                        <span className="text-muted d-none d-md-inline d-flex align-items-center gap-1" style={{ fontSize: '0.75rem' }}>
-                            <RefreshCw size={14} /> {ultimaSync.toLocaleTimeString('es-MX', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                            })}
-                        </span>
-                    )}
-                    <HamburgerMenu
-                        loginPath="/login"
-                        accentColor="#e67e22"
-                        onLogout={logoutLocal}
-                        navItems={navItems}
-                        activeItem={vista}
-                        onNavItemClick={setVista}
-                    />
+                <div className="mt-3 d-flex flex-wrap align-items-center gap-2">
+                    <button
+                        type="button"
+                        className="btn rounded-pill px-4 py-2 fw-semibold"
+                        style={vista === 'dashboard' ? { borderColor: '#f97316', backgroundColor: '#f97316', color: '#ffffff', border: '2px solid #f97316' } : { borderColor: '#f97316', backgroundColor: '#ffffff', color: '#f97316', border: '2px solid #f97316' }}
+                        onClick={() => setVista('dashboard')}
+                    >
+                        Pedidos
+                    </button>
+                    <button
+                        type="button"
+                        className="btn rounded-pill px-4 py-2 fw-semibold"
+                        style={vista === 'historial' ? { borderColor: '#f97316', backgroundColor: '#f97316', color: '#ffffff', border: '2px solid #f97316' } : { borderColor: '#f97316', backgroundColor: '#ffffff', color: '#f97316', border: '2px solid #f97316' }}
+                        onClick={() => setVista('historial')}
+                    >
+                        Historial
+                    </button>
                 </div>
             </header>
 
@@ -363,12 +401,14 @@ const KitchenDashboard = () => {
                 ) : (
                     <div className="row g-3">
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#ffe5e5', border: '1px solid #ffcccc', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#fdecea', border: '1px solid #f5b7b1', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
                                 <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#c0392b' }}>
-                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#c0392b' }} /> Pendiente ({pendientes.length})
+                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#e74c3c' }} /> Pendiente ({pendientes.length})
                                 </h5>
                                 {pendientes.length === 0 ? (
-                                    <p className="text-center text-muted py-4">Sin tickets pendientes</p>
+                                    <div className="text-center text-muted py-4" style={{ color: '#c0392b' }}>
+                                        Sin tickets pendientes
+                                    </div>
                                 ) : (
                                     <div className="d-grid gap-3">
                                         {pendientes.map(detalle => (
@@ -377,7 +417,6 @@ const KitchenDashboard = () => {
                                                 detalle={detalle}
                                                 loading={loadingId === detalle.id}
                                                 onPreparar={() => accionEstado(detalle.id, 'EN_PREPARACION')}
-                                                onListo={() => accionEstado(detalle.id, 'LISTO')}
                                             />
                                         ))}
                                     </div>
@@ -386,12 +425,14 @@ const KitchenDashboard = () => {
                         </div>
 
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#fffbea', border: '1px solid #f9e79f', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
+                            <div className="rounded-4 p-3 h-100" style={{ background: '#fff9e6', border: '1px solid #f9e79f', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
                                 <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#b9770e' }}>
                                     <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#f1c40f' }} /> En preparación ({enPreparacion.length})
                                 </h5>
                                 {enPreparacion.length === 0 ? (
-                                    <p className="text-center text-muted py-4">Nada en preparación</p>
+                                    <div className="text-center text-muted py-4" style={{ color: '#b9770e' }}>
+                                        Nada en preparación
+                                    </div>
                                 ) : (
                                     <div className="d-grid gap-3">
                                         {enPreparacion.map(detalle => (
@@ -399,7 +440,6 @@ const KitchenDashboard = () => {
                                                 key={detalle.id}
                                                 detalle={detalle}
                                                 loading={loadingId === detalle.id}
-                                                onPreparar={() => accionEstado(detalle.id, 'EN_PREPARACION')}
                                                 onListo={() => accionEstado(detalle.id, 'LISTO')}
                                             />
                                         ))}
@@ -413,7 +453,7 @@ const KitchenDashboard = () => {
                             <div
                                 className="rounded-4 p-3 h-100"
                                 style={{
-                                    background: '#f0fff4',
+                                    background: '#ecfdf5',
                                     border: '1px solid #abebc6',
                                     maxHeight: 'calc(100vh - 110px)',
                                     overflowY: 'auto'
@@ -423,7 +463,9 @@ const KitchenDashboard = () => {
                                     <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#27ae60' }} /> Listo ({listos.length})
                                 </h5>
                                 {listos.length === 0 ? (
-                                    <p className="text-center text-muted py-4">Sin tickets listos</p>
+                                    <div className="text-center text-muted py-4" style={{ color: '#1e8449' }}>
+                                        Sin tickets listos
+                                    </div>
                                 ) : (
                                     <div className="d-grid gap-3">
                                         {listos.map(detalle => (
@@ -431,8 +473,6 @@ const KitchenDashboard = () => {
                                                 key={detalle.id}
                                                 detalle={detalle}
                                                 loading={loadingId === detalle.id}
-                                                onPreparar={() => accionEstado(detalle.id, 'EN_PREPARACION')}
-                                                onListo={() => accionEstado(detalle.id, 'LISTO')}
                                             />
                                         ))}
                                     </div>
@@ -443,6 +483,13 @@ const KitchenDashboard = () => {
                     </div>
                 )}
             </div>
+            {perfilAbierto && (
+                <PerfilModal
+                    usuario={usuario}
+                    onClose={() => setPerfilAbierto(false)}
+                    onGuardado={() => fetchCurrentUser()}
+                />
+            )}
         </div>
     );
 };

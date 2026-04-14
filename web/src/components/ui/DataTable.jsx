@@ -17,7 +17,7 @@ const DataTable = ({
                     <thead style={{ background: '#51443B' }}>
                         <tr>
                             {columns.map(col => (
-                                <th key={col.key} className={col.className || ''} style={{ color: '#FFFFFF' }}>
+                                <th key={col.key} className={col.className || ''} style={{ color: '#000000' }}>
                                     {col.label}
                                 </th>
                             ))}
