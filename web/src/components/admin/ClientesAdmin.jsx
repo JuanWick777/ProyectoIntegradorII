@@ -6,6 +6,7 @@ import { Heart, Mail, Calendar, MapPin, AlertTriangle, User, Search, SlidersHori
 import { getUserEmail, resolveImageUrl, isUserActive } from './adminConstants';
 import { SecondaryButton, DangerButton } from '../ui/Button';
 import ConfirmModal from '../ui/ConfirmModal';
+import ClienteDetalleModal from '../shared/ClienteDetalleModal';
 
 const ClientesAdmin = ({ mostrarToast }) => {
     const { fetchUsuarios, deleteUsuario } = useAppStore();
@@ -229,100 +230,14 @@ const ClientesAdmin = ({ mostrarToast }) => {
             />
 
             {/* Modal de detalles del cliente */}
-            {modalDetalle && (
-                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.35)' }}>
-                    <div className="modal-dialog modal-dialog-centered modal-lg">
-                        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.5rem', overflow: 'hidden' }}>
-                            <div style={{ background: '#0f4c81', padding: '1.5rem 1.75rem' }}>
-                                <div className="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <div className="d-flex align-items-center gap-3 mb-2">
-                                            <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: 46, height: 46, background: 'rgba(255,255,255,0.18)', color: 'white' }}>
-                                                <User size={24} />
-                                            </div>
-                                            <div>
-                                                <h5 className="fw-bold text-white mb-1">{modalDetalle.nombre}</h5>
-                                                <div className="text-white-50" style={{ fontSize: '0.9rem' }}>Cliente registrado</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button type="button" className="btn btn-close btn-close-white" onClick={() => setModalDetalle(null)} />
-                                </div>
-                            </div>
-
-                            <div className="p-4" style={{ background: '#f8f9fa' }}>
-                                <div className="row g-4">
-                                    <div className="col-12 col-md-6">
-                                        <div className="bg-white rounded-4 p-3 h-100 border" style={{ borderColor: '#e8eaef' }}>
-                                            <div className="text-uppercase fw-semibold text-muted small mb-3">Email</div>
-                                            <div className="d-flex align-items-center gap-2 py-2 px-3 rounded-3" style={{ background: '#f4f7fb' }}>
-                                                <Mail size={18} className="text-secondary" />
-                                                <span className="fw-semibold">{getUserEmail(modalDetalle)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-12 col-md-6">
-                                        <div className="bg-white rounded-4 p-3 h-100 border" style={{ borderColor: '#e8eaef' }}>
-                                            <div className="text-uppercase fw-semibold text-muted small mb-3">Estado</div>
-                                            <div>
-                                                <span
-                                                    className="badge fw-semibold"
-                                                    style={{
-                                                        background: isUserActive(modalDetalle) ? '#d1fae5' : '#e2e3e5',
-                                                        borderRadius: '2rem',
-                                                        padding: '0.55rem 1rem',
-                                                        fontSize: '0.9rem',
-                                                        color: isUserActive(modalDetalle) ? '#065f46' : '#6c757d',
-                                                    }}
-                                                >
-                                                    {isUserActive(modalDetalle) ? 'Activo' : 'Inactivo'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {modalDetalle.createdAt && (
-                                        <div className="col-12">
-                                            <div className="bg-white rounded-4 p-3 border" style={{ borderColor: '#e8eaef' }}>
-                                                <div className="text-uppercase fw-semibold text-muted small mb-3">Fecha de Registro</div>
-                                                <div className="d-flex align-items-center gap-2 py-2 px-3 rounded-3" style={{ background: '#f4f7fb' }}>
-                                                    <Calendar size={18} className="text-secondary" />
-                                                    <span>{new Date(modalDetalle.createdAt).toLocaleDateString('es-ES', {
-                                                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                                                    })}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="p-4 border-top" style={{ background: '#ffffff' }}>
-                                <div className="d-flex flex-column flex-sm-row align-items-stretch gap-2">
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-secondary flex-fill"
-                                        onClick={() => setModalDetalle(null)}
-                                    >
-                                        Cerrar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-danger flex-fill fw-bold"
-                                        onClick={() => {
-                                            setConfirmDel(modalDetalle);
-                                            setModalDetalle(null);
-                                        }}
-                                    >
-                                        <Trash2 size={16} className="me-2" />Eliminar cliente
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ClienteDetalleModal
+                cliente={modalDetalle}
+                onClose={() => setModalDetalle(null)}
+                onEliminar={() => {
+                    setConfirmDel(modalDetalle);
+                    setModalDetalle(null);
+                }}
+            />
 
             <ConfirmModal
                 open={!!confirmDel}
