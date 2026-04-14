@@ -1,13 +1,11 @@
 package com.integradora.back.controller.admin;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -55,7 +53,7 @@ public class AdminUploadController {
         Path target = dir.resolve(filename).normalize();
         Files.copy(file.getInputStream(), target);
 
-        String publicPath = "/api/admin/uploads/platillos/" + filename;
+        String publicPath = "/uploads/platillos/" + filename;
         String publicUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path(publicPath)
                 .toUriString();
@@ -65,35 +63,6 @@ public class AdminUploadController {
                 "path", publicPath,
                 "filename", filename
         ));
-    }
-
-    @GetMapping(value = "/platillos/{filename}", produces = {
-            MediaType.IMAGE_JPEG_VALUE,
-            MediaType.IMAGE_PNG_VALUE,
-            MediaType.IMAGE_GIF_VALUE,
-            "image/webp"
-    })
-    public ResponseEntity<byte[]> getPlatilloImage(@PathVariable String filename) throws IOException {
-        if (filename == null || filename.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        Path dir = Paths.get("uploads", "platillos").toAbsolutePath().normalize();
-        Path file = dir.resolve(filename).normalize();
-
-        if (!file.getParent().equals(dir) || !Files.exists(file)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        byte[] fileContent = Files.readAllBytes(file);
-        String contentType = Files.probeContentType(file);
-        if (contentType == null) {
-            contentType = "application/octet-stream";
-        }
-
-        return ResponseEntity.ok()
-                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
-                .body(fileContent);
     }
 
     @DeleteMapping("/platillos")
