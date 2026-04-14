@@ -67,8 +67,8 @@ const QRGenerator = () => {
         setGenerando(true);
         setGenMsg('');
         try {
-            const API = `http://${window.location.hostname}:8080`;
-            const res = await fetch(`${API}/api/admin/mesas/generar?hasta=${totalMesas}`, {
+            const API = import.meta.env.VITE_API_URL || '/api';
+            const res = await fetch(`${API}/admin/mesas/generar?hasta=${totalMesas}`, {
                 method: 'POST'
             });
             const data = await res.json();

@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8080/api`;
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const resolveImageUrl = (pathOrUrl) => {
     if (!pathOrUrl) return '';

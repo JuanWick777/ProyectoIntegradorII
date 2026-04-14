@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8080/api`;
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 const STORAGE_KEY = 'restaurant-storage-v2';
 
 function getStoredToken() {
@@ -340,14 +340,19 @@ export const useAppStore = create(
                     return null;
                 }
 
-                const data = await apiFetch('/auth/me', { token });
-                const usuarioNormalizado = {
-                    ...data,
-                    rol: (data?.rol || '').toUpperCase(),
-                };
+                try {
+                    const data = await apiFetch('/auth/me', { token });
+                    const usuarioNormalizado = {
+                        ...data,
+                        rol: (data?.rol || '').toUpperCase(),
+                    };
 
-                set({ usuario: usuarioNormalizado });
-                return usuarioNormalizado;
+                    set({ usuario: usuarioNormalizado });
+                    return usuarioNormalizado;
+                } catch (error) {
+                    set({ usuario: null, token: null });
+                    throw error;
+                }
             },
 
             fetchAdminProducts: async () => {

@@ -41,34 +41,67 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onEmailChange(newEmail: String){
         _email.value = newEmail
-        _emailError.value = null
-        _generalErrorMessage.value = null
+        validateEmail(newEmail)
     }
 
     fun onPasswordChange(newPassword: String){
         _password.value = newPassword
-        _passwordError.value = null
-        _generalErrorMessage.value = null
+        validatePassword(newPassword)
+    }
+
+    private fun validateEmail(value: String) {
+        // 1. Dividimos el texto en dos partes usando el '@' como referencia
+        val parts = value.split("@")
+
+        // Si hay una parte antes del '@', la guardamos en 'username', si no, queda vacío
+        val username = if (parts.isNotEmpty()) parts[0] else ""
+
+        // Si hay una parte después del '@', le pegamos el '@' y lo guardamos como 'domain'
+        val domain = if (parts.size >= 2) "@" + parts[1] else ""
+
+        // Regex para el usuario: Letras, números, puntos, guiones y guiones bajos
+        val usernameRegex = Regex("^[a-zA-Z0-9._-]+$")
+        val isValidDomain = domain == "@gmail.com" || domain == "@utez.edu.mx"
+
+        _emailError.value = when {
+            value.isBlank() -> "El correo electrónico es obligatorio."
+            value.contains(" ") -> "El correo no puede contener espacios."
+            !value.contains("@") -> "El correo debe incluir un '@'."
+            username.isEmpty() -> "El nombre de usuario no puede estar vacío."
+            // Validamos que el usuario (antes del @) no tenga cosas raras
+            !username.matches(usernameRegex) -> "Solo se admiten letras, números, '.', '_' y '-'."
+            // Aquí está tu blindaje de longitud SIN CONTAR el dominio
+            username.length !in 6..30 -> "El correo debe tener entre 6 y 30 caracteres."
+            !isValidDomain -> "Solo se admiten @gmail.com o @utez.edu.mx"
+            else -> null
+        }
+    }
+
+    private fun validatePassword(value: String) {
+        val hasUpperCase = value.any { it.isUpperCase() }
+        val hasLowerCase = value.any { it.isLowerCase() }
+        val hasDigit = value.any { it.isDigit() }
+        val hasSpecial = value.any { !it.isLetterOrDigit() }
+        val noSpaces = !value.contains(" ")
+
+        _passwordError.value = when {
+            value.isBlank() -> "La contraseña es obligatoria."
+            value.length !in 8..30 -> "Debe tener entre 8 y 30 caracteres."
+            !noSpaces -> "No puede contener espacios."
+            !hasUpperCase -> "Debe incluir al menos una mayúscula."
+            !hasDigit -> "Debe incluir al menos un número."
+            !hasSpecial -> "Debe incluir al menos un carácter especial."
+            !hasLowerCase -> "Debe incluir minúsculas."
+            else -> null
+        }
     }
 
     fun login() {
-        var isValid = true
+        validateEmail(_email.value)
+        validatePassword(_password.value)
 
-        if (_email.value.isBlank()) {
-            _emailError.value = "El correo no puede estar vacío"
-            isValid = false
-        }
-
-        if (_password.value.isBlank()) {
-            _passwordError.value = "La contraseña no puede estar vacía"
-            isValid = false
-        }
-
-        if (!isValid) return
-
-        _generalErrorMessage.value = null
-        _loginSuccess.value = false
-
+        // Si hay algún error en los estados de error, nos detenemos
+        if (_emailError.value != null || _passwordError.value != null) return
 
         viewModelScope.launch {
             _isLoading.value = true
