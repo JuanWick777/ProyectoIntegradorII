@@ -3,6 +3,7 @@ import { Edit2, Plus, Save, Tag } from 'lucide-react';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import { PrimaryButton, SecondaryButton } from '../ui/Button';
 
 const EMPTY_PROMO = {
   titulo: '',
@@ -40,11 +41,19 @@ const PromoModal = ({ promo, categorias = [], onSave, onClose, saving }) => {
       bodyClassName="pt-2"
       footerClassName="border-0 pt-0"
       footer={(
-        <div className="d-flex justify-content-end gap-2">
-          <button className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
-          <button
-            className="btn fw-bold px-4 d-flex align-items-center gap-2"
-            style={{ background: '#e67e22', color: 'white', borderRadius: '0.75rem' }}
+        <div className="d-flex gap-3 justify-content-end">
+          <SecondaryButton
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            style={{ borderRadius: '0.75rem', minWidth: '120px' }}
+          >
+            Cancelar
+          </SecondaryButton>
+          <PrimaryButton
+            type="button"
+            className="fw-bold"
+            style={{ borderRadius: '0.75rem', minWidth: '120px' }}
             onClick={() => onSave(form)}
             disabled={saving
               || !form.titulo?.trim()
@@ -55,7 +64,7 @@ const PromoModal = ({ promo, categorias = [], onSave, onClose, saving }) => {
             {saving
               ? <><LoadingSpinner size="sm" className="me-2" variant="light" />Guardando...</>
               : isNew ? <><Plus size={18} /> Crear</> : <><Save size={18} /> Guardar</>}
-          </button>
+          </PrimaryButton>
         </div>
       )}
     >

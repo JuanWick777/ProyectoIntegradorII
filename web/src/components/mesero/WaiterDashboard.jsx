@@ -3,6 +3,7 @@ import { ClipboardList, Clock, CheckCircle, ChefHat, UtensilsCrossed, Handshake,
 import { useAppStore } from '../../store/useAppStore';
 import OrderCard from './OrderCard';
 import HamburgerMenu from '../shared/HamburgerMenu';
+import { PrimaryButton, SecondaryButton } from '../ui/Button';
 
 const FILTROS = [
     { key: 'todos', label: 'Todos', Icon: ClipboardList },
@@ -242,12 +243,12 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                         <p style={{ fontSize: 48 }}>🔒</p>
                         <p className="fw-bold fs-5 text-danger">Sesión expirada</p>
                         <p className="text-muted small mb-3">El servidor fue reiniciado. Vuelve a ingresar.</p>
-                        <button
-                            className="btn btn-primary"
+                        <PrimaryButton
+                            type="button"
                             onClick={() => window.location.reload()}
                         >
                             Reingresar
-                        </button>
+                        </PrimaryButton>
                     </div>
                 ) : loading ? (
                     <div className="text-center py-5 text-muted">

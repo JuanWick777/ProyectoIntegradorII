@@ -6,6 +6,7 @@ import UsuarioModal from './UsuarioModal';
 import { ForkKnife, Table, PlusCircle, Edit2, Trash2, AlertTriangle, Shield, UserCheck, User, ChefHat, Coffee, Flame, Cake, Search, SlidersHorizontal } from 'lucide-react';
 import { normalizeRole, getUserEmail, getUserRole, ROL_BADGE } from './adminConstants';
 import ConfirmModal from '../ui/ConfirmModal';
+import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 
 const PersonalAdmin = ({ mostrarToast }) => {
     const { fetchUsuarios, createUsuario, updateUsuario, deleteUsuario } = useAppStore();
@@ -207,20 +208,23 @@ const PersonalAdmin = ({ mostrarToast }) => {
             className: 'text-end pe-4',
             render: (u) => (
                 <div>
-                    <button
-                        className="btn btn-sm btn-outline-primary me-2"
+                    <SecondaryButton
+                        type="button"
+                        size="sm"
+                        className="me-2"
                         style={{ borderRadius: '0.5rem' }}
                         onClick={() => setModal(u)}
                     >
                         <Edit2 size={16} className="me-1" />Editar
-                    </button>
-                    <button
-                        className="btn btn-sm btn-outline-danger"
+                    </SecondaryButton>
+                    <DangerButton
+                        type="button"
+                        size="sm"
                         style={{ borderRadius: '0.5rem' }}
                         onClick={() => setConfirmDel(u)}
                     >
                         <Trash2 size={16} />
-                    </button>
+                    </DangerButton>
                 </div>
             ),
         },
@@ -233,13 +237,14 @@ const PersonalAdmin = ({ mostrarToast }) => {
                 subtitle="Administración de empleados y roles"
                 badge={usuarios.length}
                 actions={(
-                    <button
-                        className="btn btn-primary fw-bold shadow-sm"
+                    <PrimaryButton
+                        type="button"
+                        className="fw-bold shadow-sm"
                         style={{ borderRadius: '2rem' }}
                         onClick={() => setModal({})}
                     >
                         <PlusCircle size={18} className="me-2" />Nuevo Empleado
-                    </button>
+                    </PrimaryButton>
                 )}
             />
 

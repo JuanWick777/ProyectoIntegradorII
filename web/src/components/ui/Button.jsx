@@ -1,17 +1,46 @@
 import React from 'react';
 
-const VARIANT_CLASSES = {
-  primary: 'ui-btn--primary text-white shadow-lg',
-  secondary: 'bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-700',
-  outline: 'border border-gray-300 text-gray-700 hover:bg-gray-100',
-  danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
-  success: 'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800',
+const VARIANT_STYLES = {
+  primary: {
+    backgroundColor: '#FF7A00',
+    color: '#FFFFFF',
+    borderColor: '#FF7A00',
+  },
+  secondary: {
+    backgroundColor: '#FFFFFF',
+    color: '#FF7A00',
+    borderColor: '#FF7A00',
+  },
+  outline: {
+    backgroundColor: '#FFFFFF',
+    color: '#FF7A00',
+    borderColor: '#FF7A00',
+  },
+  danger: {
+    backgroundColor: '#FF7A00',
+    color: '#FFFFFF',
+    borderColor: '#FF7A00',
+  },
+  success: {
+    backgroundColor: '#16A34A',
+    color: '#FFFFFF',
+    borderColor: '#16A34A',
+  },
 };
 
-const SIZE_CLASSES = {
-  sm: 'px-3 py-2 text-sm',
-  md: 'px-4 py-2 text-base',
-  lg: 'px-5 py-3 text-base',
+const SIZE_STYLES = {
+  sm: {
+    padding: '0.5rem 0.75rem',
+    fontSize: '0.875rem',
+  },
+  md: {
+    padding: '0.75rem 1rem',
+    fontSize: '1rem',
+  },
+  lg: {
+    padding: '0.875rem 1.25rem',
+    fontSize: '1.125rem',
+  },
 };
 
 const Button = ({
@@ -23,17 +52,36 @@ const Button = ({
   className = '',
   disabled = false,
   children,
+  style = {},
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:opacity-60 disabled:pointer-events-none';
-  const variantClass = VARIANT_CLASSES[variant] || VARIANT_CLASSES.primary;
-  const sizeClass = SIZE_CLASSES[size] || SIZE_CLASSES.md;
-  const widthClass = fullWidth ? 'w-full' : '';
+  const variantStyle = VARIANT_STYLES[variant] || VARIANT_STYLES.primary;
+  const sizeStyle = SIZE_STYLES[size] || SIZE_STYLES.md;
+
+  const baseStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    fontWeight: '600',
+    borderRadius: '0.75rem',
+    border: '2px solid',
+    transition: 'all 0.2s ease-in-out',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    outline: 'none',
+    width: fullWidth ? '100%' : 'auto',
+    opacity: disabled ? 0.6 : 1,
+    pointerEvents: disabled ? 'none' : 'auto',
+    ...sizeStyle,
+    ...variantStyle,
+    ...style,
+  };
 
   return (
     <button
       type={type}
-      className={`${baseClasses} ${variantClass} ${sizeClass} ${widthClass} ${className}`.trim()}
+      style={baseStyle}
+      className={className}
       disabled={disabled || loading}
       aria-busy={loading ? 'true' : 'false'}
       {...props}
@@ -42,5 +90,10 @@ const Button = ({
     </button>
   );
 };
+
+export const PrimaryButton = (props) => <Button variant="primary" {...props} />;
+export const SecondaryButton = (props) => <Button variant="secondary" {...props} />;
+export const OutlineButton = (props) => <Button variant="outline" {...props} />;
+export const DangerButton = (props) => <Button variant="danger" {...props} />;
 
 export default Button;

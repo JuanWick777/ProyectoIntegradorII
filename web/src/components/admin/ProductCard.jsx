@@ -9,6 +9,7 @@ import {
 } from './adminConstants';
 import Badge from '../ui/Badge';
 import { AlertTriangle } from 'lucide-react';
+import { SecondaryButton, DangerButton } from '../ui/Button';
 
 const ProductCard = ({ product, onEdit, onDelete }) => {
     const disponibilidad = getProductDisponibilidad(product);
@@ -18,14 +19,17 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
     const descripcion = getProductDesc(product);
     const precio = getProductPrice(product);
 
+    const [imageError, setImageError] = React.useState(false);
+
     return (
         <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '1rem', overflow: 'hidden' }}>
             <div style={{ height: 140, background: '#f0f0f0', overflow: 'hidden', position: 'relative' }}>
-                {imagen ? (
+                {imagen && !imageError ? (
                     <img
                         src={imagen}
                         alt={nombre}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={() => setImageError(true)}
                     />
                 ) : (
                     <div className="d-flex align-items-center justify-content-center h-100 text-muted">
@@ -62,22 +66,28 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
                     </span>
                 </div>
 
-                <button
-                    className="btn btn-outline-primary btn-sm mt-2 w-100 fw-semibold d-flex align-items-center justify-content-center gap-1"
+                <SecondaryButton
+                    type="button"
+                    size="sm"
+                    fullWidth
+                    className="mt-2 fw-semibold d-flex align-items-center justify-content-center gap-1"
                     style={{ borderRadius: '0.6rem' }}
                     onClick={() => onEdit(product)}
                 >
                     <Edit2 size={14} /> Editar
-                </button>
+                </SecondaryButton>
 
-                <button
-                    className="btn btn-outline-danger btn-sm mt-2 w-100 fw-semibold d-flex align-items-center justify-content-center gap-1"
+                <DangerButton
+                    type="button"
+                    size="sm"
+                    fullWidth
+                    className="mt-2 fw-semibold d-flex align-items-center justify-content-center gap-1"
                     style={{ borderRadius: '0.6rem' }}
                     onClick={() => onDelete && onDelete(product)}
                     disabled={!onDelete}
                 >
                     <Trash2 size={14} /> Eliminar
-                </button>
+                </DangerButton>
             </div>
         </div>
     );

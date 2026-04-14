@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { UtensilsCrossed, Search, Tag } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import ProductCard from './ProductCard';
+import { PrimaryButton, SecondaryButton, OutlineButton } from '../ui/Button';
 
 /**
  * MenuCliente.jsx — Catálogo de productos del cliente
@@ -100,17 +101,27 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
                 {/* Tabs de categorías */}
                 <div className="d-flex gap-2 overflow-auto pb-3" style={{ scrollbarWidth: 'none' }}>
                     {categorias.map(cat => (
-                        <button
-                            key={cat}
-                            className={`btn btn-sm flex-shrink-0 fw-semibold ${categoriaActiva === cat
-                                ? 'btn-light text-primary'
-                                : 'text-white border-white border-opacity-50'
-                                }`}
-                            style={{ borderRadius: '2rem', minWidth: 80 }}
-                            onClick={() => setCategoriaActiva(cat)}
-                        >
-                            {cat === 'todos' ? <><UtensilsCrossed size={14} className="me-1" style={{ display: 'inline' }} /> Todo</> : cat}
-                        </button>
+                        categoriaActiva === cat ? (
+                            <PrimaryButton
+                                key={cat}
+                                size="sm"
+                                className="fw-semibold"
+                                style={{ borderRadius: '2rem', minWidth: 80 }}
+                                onClick={() => setCategoriaActiva(cat)}
+                            >
+                                {cat === 'todos' ? <><UtensilsCrossed size={14} className="me-1" style={{ display: 'inline' }} /> Todo</> : cat}
+                            </PrimaryButton>
+                        ) : (
+                            <OutlineButton
+                                key={cat}
+                                size="sm"
+                                className="fw-semibold"
+                                style={{ borderRadius: '2rem', minWidth: 80, opacity: 0.95 }}
+                                onClick={() => setCategoriaActiva(cat)}
+                            >
+                                {cat === 'todos' ? <><UtensilsCrossed size={14} className="me-1" style={{ display: 'inline' }} /> Todo</> : cat}
+                            </OutlineButton>
+                        )
                     ))}
                 </div>
             </header>
@@ -171,12 +182,14 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
                     <div className="text-center py-5 text-muted">
                         <Search size={48} style={{ color: '#cbd5e0' }} className="mx-auto d-block mb-3" />
                         <p className="fw-semibold">Sin resultados para "{busqueda}"</p>
-                        <button
-                            className="btn btn-link text-primary"
+                        <SecondaryButton
+                            type="button"
+                            className="text-primary px-0"
+                            style={{ background: 'transparent', borderColor: 'transparent' }}
                             onClick={() => { setBusqueda(''); setCategoriaActiva('todos'); }}
                         >
                             Ver todo el menú
-                        </button>
+                        </SecondaryButton>
                     </div>
                 ) : (
                     <div className="row g-3">
@@ -192,17 +205,18 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
             {/* ── Barra flotante del carrito ───────────────────────────── */}
             {totalItems > 0 && (
                 <div className="cart-footer-bar">
-                    <button
-                        className="btn btn-primary w-100 fw-bold py-3 d-flex align-items-center justify-content-between"
-                        style={{ borderRadius: '0.75rem' }}
+                    <PrimaryButton
+                        className="w-100 fw-bold d-flex align-items-center justify-content-between"
+                        fullWidth
                         onClick={onVerCarrito}
+                        style={{ borderRadius: '0.75rem' }}
                     >
                         <span className="badge bg-white text-primary rounded-circle" style={{ width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                             {totalItems}
                         </span>
                         <span>Ver mi pedido</span>
                         <span className="fw-bold">${totalPrecio.toFixed(2)}</span>
-                    </button>
+                    </PrimaryButton>
                 </div>
             )}
         </div>

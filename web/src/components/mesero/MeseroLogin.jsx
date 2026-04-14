@@ -7,6 +7,7 @@ import AlertMessage from '../ui/AlertMessage';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import AuthLayout from '../auth/AuthLayout';
 import AuthCard from '../auth/AuthCard';
+import { PrimaryButton } from '../ui/Button';
 
 const MeseroLogin = ({
     onLoginExitoso,
@@ -94,16 +95,16 @@ const MeseroLogin = ({
 
                     <AlertMessage message={error} className="mb-3" />
 
-                    <button
+                    <PrimaryButton
                         type="submit"
-                        className="btn btn-primary w-100 fw-bold py-2 mt-1"
-                        style={{ background: '#FF7043', borderRadius: '0.75rem', border: 'none' }}
+                        className="w-100 fw-bold py-2 mt-1"
+                        style={{ borderRadius: '0.75rem', border: 'none' }}
                         disabled={loading}
                     >
                         {loading
                             ? <><LoadingSpinner size="sm" className="me-2" />Ingresando...</>
                             : <><LogIn size={18} className="me-2" />Iniciar Sesión</>}
-                    </button>
+                    </PrimaryButton>
                 </form>
 
                 <p className="text-center text-muted small mt-3 mb-0">

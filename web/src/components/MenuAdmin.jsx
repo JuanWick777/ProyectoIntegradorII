@@ -12,6 +12,7 @@ import StatCard from './ui/StatCard';
 import { LayoutDashboard, Utensils, ChefHat, Users, User, Info, Settings, QrCode, Tag, Clock, PlusCircle, LogOut, Check, Heart } from 'lucide-react';
 import { getProductCategoryName, getProductName } from './admin/adminConstants';
 import ConfirmModal from './ui/ConfirmModal';
+import { PrimaryButton, SecondaryButton, OutlineButton } from './ui/Button';
 
 const MenuAdmin = () => {
     const {
@@ -307,26 +308,39 @@ const MenuAdmin = () => {
                                     onChange={(e) => setBusqueda(e.target.value)}
                                 />
 
-                                <button
-                                    className="btn btn-primary fw-bold"
+                                <PrimaryButton
+                                    type="button"
+                                    className="fw-bold"
                                     style={{ borderRadius: '2rem' }}
                                     onClick={() => setModalProduct({})}
                                 >
                                     <PlusCircle size={18} className="me-2" />Nuevo Platillo
-                                </button>
+                                </PrimaryButton>
                             </div>
 
                             <div className="d-flex gap-2 flex-wrap mb-4">
                                 {categoriasFiltro.map((cat) => (
-                                    <button
-                                        key={cat}
-                                        className={`btn btn-sm ${filtroCategoria === cat ? 'btn-dark' : 'btn-outline-secondary'
-                                            }`}
-                                        style={{ borderRadius: '2rem' }}
-                                        onClick={() => setFiltroCategoria(cat)}
-                                    >
-                                        {cat}
-                                    </button>
+                                    filtroCategoria === cat ? (
+                                        <PrimaryButton
+                                            key={cat}
+                                            size="sm"
+                                            className="fw-bold"
+                                            style={{ borderRadius: '2rem', minWidth: 80 }}
+                                            onClick={() => setFiltroCategoria(cat)}
+                                        >
+                                            {cat}
+                                        </PrimaryButton>
+                                    ) : (
+                                        <OutlineButton
+                                            key={cat}
+                                            size="sm"
+                                            className="fw-bold"
+                                            style={{ borderRadius: '2rem', minWidth: 80, opacity: 0.95 }}
+                                            onClick={() => setFiltroCategoria(cat)}
+                                        >
+                                            {cat}
+                                        </OutlineButton>
+                                    )
                                 ))}
                             </div>
 

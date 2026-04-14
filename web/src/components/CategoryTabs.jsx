@@ -8,12 +8,29 @@ const CategoryTabs = ({ categories, activeCategory, onSelectCategory }) => {
                     <button
                         key={cat.id}
                         onClick={() => onSelectCategory(cat.id)}
-                        className={`
-                            px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200
-                            ${activeCategory === cat.id
-                                ? 'bg-gray-900 text-white shadow-md transform scale-105'
-                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}
-                        `}
+                        style={activeCategory === cat.id ? {
+                            backgroundColor: '#FF7A00',
+                            color: '#FFFFFF',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s duration',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            transform: 'scale(1.05)'
+                        } : {
+                            backgroundColor: '#FFFFFF',
+                            color: '#FF7A00',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            border: '2px solid #FF7A00',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s duration'
+                        }}
                     >
                         {cat.name}
                     </button>
@@ -22,5 +39,6 @@ const CategoryTabs = ({ categories, activeCategory, onSelectCategory }) => {
         </div>
     );
 };
+
 
 export default CategoryTabs;

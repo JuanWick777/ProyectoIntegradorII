@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UtensilsCrossed, Users, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { PrimaryButton } from '../ui/Button';
 import AlertMessage from '../ui/AlertMessage';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
@@ -103,11 +104,12 @@ const MesaIngreso = ({ onMesaValida }) => {
                                 />
                             </div>
 
-                            <button
+                            <PrimaryButton
                                 type="submit"
-                                className="btn btn-primary w-100 fw-bold py-3 fs-5"
-                                disabled={loading || !input}
+                                fullWidth
+                                className="fw-bold py-3 fs-5"
                                 style={{ borderRadius: '0.75rem' }}
+                                disabled={loading || !input}
                             >
                                 {loading ? (
                                     <span>
@@ -117,7 +119,7 @@ const MesaIngreso = ({ onMesaValida }) => {
                                 ) : (
                                     'Ver Menú →'
                                 )}
-                            </button>
+                            </PrimaryButton>
                         </form>
                     </div>
                 </div>

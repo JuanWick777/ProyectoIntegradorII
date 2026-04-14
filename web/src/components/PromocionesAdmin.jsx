@@ -6,6 +6,7 @@ import PromoCard from './ui/PromoCard';
 import LoadingSpinner from './ui/LoadingSpinner';
 import ConfirmModal from './ui/ConfirmModal';
 import PromoModal from './shared/PromoModal';
+import { PrimaryButton } from './ui/Button';
 
 const TIPO_BADGE = {
     PORCENTAJE: { color: '#0d6efd', label: '% OFF' },
@@ -88,13 +89,14 @@ const PromocionesAdmin = ({ mostrarToast }) => {
                 title="Gestión de Promociones"
                 subtitle="El mesero puede aplicar el código en el pedido del cliente"
                 actions={(
-                    <button
-                        className="btn btn-primary fw-bold px-4 shadow-sm d-flex align-items-center gap-2"
+                    <PrimaryButton
+                        type="button"
+                        className="fw-bold px-4 shadow-sm d-flex align-items-center gap-2"
                         style={{ borderRadius: '2rem' }}
                         onClick={() => setModal({})}
                     >
                         <Plus size={18} />Nueva Promoción
-                    </button>
+                    </PrimaryButton>
                 )}
             />
 

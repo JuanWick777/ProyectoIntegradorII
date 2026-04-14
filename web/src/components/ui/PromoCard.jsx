@@ -1,4 +1,5 @@
 import React from 'react';
+import { SecondaryButton, DangerButton } from './Button';
 
 const PromoCard = ({
     promo,
@@ -65,20 +66,22 @@ const PromoCard = ({
                             {promo.activa ? '● Activa' : '○ Inactiva'}
                         </span>
                         <div className="d-flex gap-2">
-                            <button
-                                className="btn btn-sm btn-outline-secondary"
+                            <SecondaryButton
+                                type="button"
+                                size="sm"
                                 style={{ borderRadius: '0.5rem' }}
                                 onClick={() => onEdit(promo)}
                             >
                                 <i className="bi bi-pencil"></i>
-                            </button>
-                            <button
-                                className="btn btn-sm btn-outline-danger"
+                            </SecondaryButton>
+                            <DangerButton
+                                type="button"
+                                size="sm"
                                 style={{ borderRadius: '0.5rem' }}
                                 onClick={() => onDelete(promo.id)}
                             >
                                 <i className="bi bi-trash"></i>
-                            </button>
+                            </DangerButton>
                         </div>
                     </div>
 

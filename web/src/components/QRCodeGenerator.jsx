@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react'; // Using SVG for better print quality
 import SectionHeader from './ui/SectionHeader';
+import { PrimaryButton, SecondaryButton } from './ui/Button';
 
 const QRGenerator = () => {
     const [baseUrl, setBaseUrl] = useState(() => {
@@ -89,21 +90,25 @@ const QRGenerator = () => {
                         subtitle="Configura y elige qué mesas imprimir para ahorrar papel."
                         actions={(
                             <div className="d-flex flex-wrap gap-2">
-                                <button
+                                <SecondaryButton
+                                    type="button"
                                     onClick={generarMesas}
                                     disabled={generando}
-                                    className="btn btn-outline-success btn-sm fw-bold shadow-sm"
+                                    size="sm"
+                                    className="fw-bold shadow-sm"
                                     style={{ borderRadius: '1rem' }}
                                 >
                                     <i className="bi bi-arrow-repeat me-2"></i>{generando ? 'Generando...' : 'Sincronizar Mesas en BD'}
-                                </button>
-                                <button
+                                </SecondaryButton>
+                                <PrimaryButton
+                                    type="button"
                                     onClick={printPage}
-                                    className="btn btn-primary btn-sm fw-bold shadow-sm px-4"
+                                    size="sm"
+                                    className="fw-bold shadow-sm px-4"
                                     style={{ borderRadius: '1rem' }}
                                 >
                                     <i className="bi bi-printer me-2"></i>Imprimir Selección
-                                </button>
+                                </PrimaryButton>
                             </div>
                         )}
                         className="mb-3"

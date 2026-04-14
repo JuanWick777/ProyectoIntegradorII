@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { QrCode, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { PrimaryButton } from './ui/Button';
 
 const Welcome = () => {
     const { setNumeroMesa } = useAppStore();
@@ -39,12 +40,13 @@ const Welcome = () => {
                         value={manualInput}
                         onChange={(e) => setManualInput(e.target.value)}
                     />
-                    <button
+                        <PrimaryButton
                         type="submit"
-                        className="bg-orange-600 text-white rounded-lg px-4 py-2 hover:bg-orange-700 transition-colors"
+                        className="rounded-lg p-0 w-12 h-12"
+                        disabled={!manualInput.trim()}
                     >
                         <ArrowRight />
-                    </button>
+                    </PrimaryButton>
                 </form>
             </div>
         </div>

@@ -8,6 +8,7 @@ import {
 } from './adminConstants';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
+import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 import { Plus, Edit, Save } from 'lucide-react';
 
 const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => {
@@ -72,16 +73,18 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
             title={isNew ? <><Plus size={18} className="me-2" />Nuevo Platillo</> : <><Edit size={18} className="me-2" />Editar Platillo</>}
             onClose={onClose}
             className="border-0"
-            bodyClassName="pt-2"
-            footerClassName="justify-end gap-2"
+            bodyClassName=""
+            size="md"
+            footerClassName="d-flex gap-3 justify-content-end"
             footer={(
                 <>
-                    <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
+                    <SecondaryButton type="button" onClick={onClose} disabled={saving} style={{ borderRadius: '0.75rem', minWidth: '120px' }}>
                         Cancelar
-                    </button>
-                    <button
-                        className="btn btn-primary fw-bold px-4"
-                        style={{ borderRadius: '0.75rem' }}
+                    </SecondaryButton>
+                    <PrimaryButton
+                        type="button"
+                        className="fw-bold"
+                        style={{ borderRadius: '0.75rem', minWidth: '120px' }}
                         onClick={() => onSave(form)}
                         disabled={saving || !form.nombre?.trim() || !form.precio || Number(form.precio) <= 0}
                     >
@@ -91,7 +94,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                                 Guardando...
                             </>
                         ) : isNew ? <><Plus size={16} className="me-2" />Crear</> : <><Save size={16} className="me-2" />Guardar</>}
-                    </button>
+                    </PrimaryButton>
                 </>
             )}
         >
@@ -179,18 +182,18 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                     className="form-control-sm"
                 />
                 <div className="d-flex gap-2 mt-2">
-                    <button
+                    <SecondaryButton
                         type="button"
-                        className="btn btn-outline-secondary btn-sm"
+                        size="sm"
                         onClick={() => setForm((prev) => ({ ...prev, imagenFile: null }))}
                         disabled={saving}
                     >
                         Quitar selección
-                    </button>
+                    </SecondaryButton>
 
-                    <button
+                    <DangerButton
                         type="button"
-                        className="btn btn-outline-danger btn-sm"
+                        size="sm"
                         onClick={() => setForm((prev) => ({
                             ...prev,
                             imagenFile: null,
@@ -200,7 +203,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                         disabled={saving || (!form.imagenUrl && !(form.imagenFile instanceof File))}
                     >
                         Eliminar imagen
-                    </button>
+                    </DangerButton>
                 </div>
                 {imgPreview && (
                     <img

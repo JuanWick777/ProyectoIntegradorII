@@ -1,15 +1,13 @@
-const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8080/api`;
-
-export const resolveImageUrl = (pathOrUrl) => {
-    if (!pathOrUrl) return '';
-    if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
-        return pathOrUrl;
-    }
-
-    const base = API_URL.replace(/\/api$/, '');
-    const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
-    return `${base}${path}`;
-};
+export const CATEGORIAS = [
+    { id: 21, nombre: 'Entradas y Snacks' },
+    { id: 24, nombre: 'Platos Fuertes' },
+    { id: 27, nombre: 'Coctelería' },
+    { id: 23, nombre: 'Postres Gourmet' },
+    { id: 2, nombre: 'Bebidas Frías' },
+    { id: 22, nombre: 'Pizzas Artesanales' },
+    { id: 25, nombre: 'Ensaladas y Bowls' },
+    { id: 26, nombre: 'Mariscos y Pescados' },
+];
 
 export const COCINAS = [
     { id: 1, nombre: 'Cocina Caliente' },
@@ -55,7 +53,7 @@ export const getProductCategoryId = (p) => {
     if (p?.categoria?.id) return Number(p.categoria.id);
     if (p?.categoria_id) return Number(p.categoria_id);
     if (p?.categoriaId) return Number(p.categoriaId);
-    return null;
+    return CATEGORIAS?.[0]?.id ?? 21;
 };
 
 export const getProductKitchenId = (p) => {
@@ -66,7 +64,7 @@ export const getProductKitchenId = (p) => {
 };
 
 export const getProductImage = (p) =>
-    resolveImageUrl(p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '');
+    p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '';
 
 export const ROL_BADGE = {
     admin: { color: '#6f42c1', label: 'Admin' },
@@ -92,7 +90,7 @@ export const EMPTY_NEW = {
     imagenUrl: '',
     imagenFile: null,
     imagenRemoved: false,
-    categoria_id: '',
+    categoria_id: CATEGORIAS?.[0]?.id ?? 21,
     kitchen_id: COCINAS?.[0]?.id ?? 1,
     disponibilidad: 'DISPONIBLE',
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import { Clock, Check, ChefHat, UtensilsCrossed, PartyPopper, CreditCard, X, ClipboardList, FileText } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { PrimaryButton } from '../ui/Button';
 
 const POLL_INTERVAL_MS = 8000; // 8 segundos — balance entre reactividad y carga al servidor
 
@@ -290,13 +291,15 @@ const OrderTracker = ({ ordenId, onNuevoPedido }) => {
 
                 {/* ── Acciones finales ──────────────────────────────── */}
                 {estado === 'cerrada' && (
-                    <button
-                        className="btn btn-primary w-100 fw-bold py-3 mb-4"
+                    <PrimaryButton
+                        type="button"
+                        fullWidth
+                        className="fw-bold py-3 mb-4"
                         style={{ borderRadius: '0.75rem' }}
                         onClick={onNuevoPedido}
                     >
                         Hacer Nuevo Pedido
-                    </button>
+                    </PrimaryButton>
                 )}
             </div>
         </div>

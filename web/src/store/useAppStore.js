@@ -31,18 +31,10 @@ async function apiFetch(endpoint, options = {}) {
         console.log('📤 Sending with Authorization:', headers.Authorization.substring(0, 30) + '...');
     }
 
-    let res;
-    try {
-        res = await fetch(`${API_URL}${endpoint}`, {
-            ...options,
-            headers,
-        });
-    } catch (e) {
-        const err = new Error('Error de red: no se pudo conectar con el servidor');
-        err.isNetworkError = true;
-        err.cause = e;
-        throw err;
-    }
+    const res = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+    });
 
     let data = {};
     try {
@@ -52,12 +44,9 @@ async function apiFetch(endpoint, options = {}) {
     }
 
     if (!res.ok) {
-        const isAuthEndpoint = endpoint.startsWith('/auth/login') || endpoint.startsWith('/auth/register');
-
-        if (res.status === 401 && !isAuthEndpoint) {
+        if (res.status === 401 || res.status === 403) {
             window.dispatchEvent(new CustomEvent('session-expired'));
         }
-
         const err = new Error(data.error || `Error ${res.status}`);
         err.status = res.status;
         err.data = data;
@@ -260,17 +249,6 @@ export const useAppStore = create(
                 }
             },
 
-            fetchKitchenHistorial: async () => {
-                const { token } = get();
-                try {
-                    const data = await apiFetch('/cocina/historial', { token });
-                    return data || [];
-                } catch (e) {
-                    console.error('Error cargando historial de cocina:', e);
-                    return [];
-                }
-            },
-
             updateDetalleEstado: async (detalleId, nuevoEstado) => {
                 const { token } = get();
                 await apiFetch(`/detalle-orden/${detalleId}/estado`, {
@@ -281,28 +259,10 @@ export const useAppStore = create(
             },
 
             login: async (email, password) => {
-                let data;
-                try {
-                    data = await apiFetch('/auth/login', {
-                        method: 'POST',
-                        body: JSON.stringify({ correo: email, contrasena: password }),
-                    });
-                } catch (err) {
-                    const status = err?.status;
-                    const backendMsg = err?.data?.error;
-                    const isGenericStatusMsg =
-                        typeof err?.message === 'string' && /^Error\s+\d+$/.test(err.message.trim());
-
-                    if (status === 401 || status === 403) {
-                        throw new Error('Correo o contraseña incorrectos.');
-                    }
-
-                    if (backendMsg && !isGenericStatusMsg) {
-                        throw new Error(backendMsg);
-                    }
-
-                    throw err;
-                }
+                const data = await apiFetch('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ correo: email, contrasena: password }),
+                });
 
                 const usuarioNormalizado = {
                     ...data,
@@ -347,19 +307,14 @@ export const useAppStore = create(
                     return null;
                 }
 
-                try {
-                    const data = await apiFetch('/auth/me', { token });
-                    const usuarioNormalizado = {
-                        ...data,
-                        rol: (data?.rol || '').toUpperCase(),
-                    };
+                const data = await apiFetch('/auth/me', { token });
+                const usuarioNormalizado = {
+                    ...data,
+                    rol: (data?.rol || '').toUpperCase(),
+                };
 
-                    set({ usuario: usuarioNormalizado });
-                    return usuarioNormalizado;
-                } catch (e) {
-                    set({ usuario: null, token: null, ordenActual: null, carrito: [] });
-                    throw e;
-                }
+                set({ usuario: usuarioNormalizado });
+                return usuarioNormalizado;
             },
 
             fetchAdminProducts: async () => {
@@ -377,7 +332,6 @@ export const useAppStore = create(
                     return data || [];
                 } catch (e) {
                     console.error('Error cargando categorías:', e);
-                    set({ categorias: [] });
                     return [];
                 }
             },
