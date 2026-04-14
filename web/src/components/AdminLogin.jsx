@@ -6,6 +6,7 @@ import AlertMessage from './ui/AlertMessage';
 import LoadingSpinner from './ui/LoadingSpinner';
 import AuthLayout from './auth/AuthLayout';
 import AuthCard from './auth/AuthCard';
+import { PrimaryButton } from './ui/Button';
 
 const AdminLogin = ({ onLoginExitoso }) => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -75,10 +76,10 @@ const AdminLogin = ({ onLoginExitoso }) => {
                         label={<><Lock size={16} className="me-2" />Contraseña</>}
                     />
 
-                    <button
+                    <PrimaryButton
                         type="submit"
-                        className="btn btn-primary w-100 fw-bold py-2 mt-1"
-                        style={{ background: '#FF7043', borderRadius: '0.75rem', border: 'none' }}
+                        className="w-100 fw-bold py-2 mt-1"
+                        style={{ borderRadius: '0.75rem', border: 'none' }}
                         disabled={loading}
                     >
                         {loading ? (
@@ -87,7 +88,7 @@ const AdminLogin = ({ onLoginExitoso }) => {
                             <LogIn size={18} className="me-2" />
                         )}
                         Ingresar
-                    </button>
+                    </PrimaryButton>
                 </form>
             </AuthCard>
         </AuthLayout>

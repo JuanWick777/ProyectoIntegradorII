@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Modal from './Modal';
+import { SecondaryButton, DangerButton } from './Button';
 
 const ConfirmModal = ({
   open,
@@ -21,27 +22,31 @@ const ConfirmModal = ({
       onClose={onClose}
       closeOnBackdrop
       showCloseButton={false}
+      title={null}
       size="sm"
       className="border-0 shadow-lg"
       bodyClassName="p-0"
       footerClassName="p-0 border-0 bg-transparent"
       footer={(
         <div className="p-4 pt-0">
-          <div className="d-flex gap-2">
-            <button
-              className="btn btn-outline-secondary flex-fill"
+          <div className="d-flex gap-3">
+            <SecondaryButton
+              type="button"
+              fullWidth
               style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
               onClick={onClose}
             >
               {cancelText}
-            </button>
-            <button
-              className={`btn btn-${confirmVariant} flex-fill fw-bold`}
+            </SecondaryButton>
+            <DangerButton
+              type="button"
+              fullWidth
+              className="fw-bold"
               style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
               onClick={onConfirm}
             >
               {confirmText}
-            </button>
+            </DangerButton>
           </div>
         </div>
       )}

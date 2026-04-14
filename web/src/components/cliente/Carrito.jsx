@@ -3,6 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { Trash2, FileText, AlertTriangle, Users } from 'lucide-react';
 import AlertMessage from '../ui/AlertMessage';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import { PrimaryButton, SecondaryButton } from '../ui/Button';
 
 const IVA_RATE = 0.16; // 16% IVA México
 
@@ -57,17 +58,29 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
         return (
             <div className="min-vh-100 d-flex flex-column">
                 <header className="bg-white px-3 py-3 border-bottom d-flex align-items-center gap-3 sticky-top">
-                    <button className="btn btn-light rounded-circle p-2" onClick={onBack}>
+                    <SecondaryButton
+                        type="button"
+                        size="sm"
+                        className="rounded-circle p-2"
+                        style={{ minWidth: 0, width: 36, height: 36 }}
+                        onClick={onBack}
+                    >
                         ←
-                    </button>
+                    </SecondaryButton>
                     <h1 className="fs-5 fw-bold mb-0">Mi Pedido</h1>
                 </header>
                 <div className="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted p-4">
                     <p style={{ fontSize: 64 }}>🛒</p>
                     <p className="fw-semibold fs-5">Tu pedido está vacío</p>
-                    <button className="btn btn-primary mt-2" onClick={onBack} style={{ borderRadius: '0.75rem' }}>
+                    <PrimaryButton
+                        type="button"
+                        className="mt-2"
+                        fullWidth
+                        style={{ borderRadius: '0.75rem' }}
+                        onClick={onBack}
+                    >
                         Ver el Menú
-                    </button>
+                    </PrimaryButton>
                 </div>
             </div>
         );
@@ -189,8 +202,9 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                     showBootstrapIcon={false}
                 />
 
-                <button
-                    className="btn btn-primary w-100 fw-bold py-3"
+                <PrimaryButton
+                    className="w-100 fw-bold py-3"
+                    fullWidth
                     style={{ borderRadius: '0.75rem' }}
                     onClick={handleConfirmar}
                     disabled={loading || carrito.length === 0}
@@ -203,7 +217,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                     ) : (
                         `✓ Confirmar Pedido · $${total.toFixed(2)}`
                     )}
-                </button>
+                </PrimaryButton>
             </div>
         </div>
     );

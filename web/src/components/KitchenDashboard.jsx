@@ -3,6 +3,7 @@ import { Users, FileText, Flame, Check, ChefHat, RefreshCw, AlertTriangle, Histo
 import { useAppStore } from '../store/useAppStore';
 import MeseroLogin from './mesero/MeseroLogin';
 import HamburgerMenu from './shared/HamburgerMenu';
+import { PrimaryButton } from './ui/Button';
 
 const ESTADO_CONFIG = {
     PENDIENTE: {
@@ -228,9 +229,13 @@ const KitchenDashboard = () => {
                         <AlertTriangle size={48} className="mx-auto mb-3" style={{ color: '#dc3545' }} />
                         <h2>Acceso denegado</h2>
                         <p>No tienes permisos para entrar a cocina</p>
-                        <button className="btn btn-primary mt-3" onClick={logoutLocal}>
+                        <PrimaryButton
+                            type="button"
+                            className="mt-3"
+                            onClick={logoutLocal}
+                        >
                             Volver
-                        </button>
+                        </PrimaryButton>
                     </div>
                 </div>
             );
@@ -254,9 +259,13 @@ const KitchenDashboard = () => {
                 <div className="text-center">
                     <h2>🚫 Acceso denegado</h2>
                     <p>No tienes permisos para entrar a cocina</p>
-                    <button className="btn btn-primary mt-3" onClick={logoutLocal}>
+                    <PrimaryButton
+                        type="button"
+                        className="mt-3"
+                        onClick={logoutLocal}
+                    >
                         Volver
-                    </button>
+                    </PrimaryButton>
                 </div>
             </div>
         );

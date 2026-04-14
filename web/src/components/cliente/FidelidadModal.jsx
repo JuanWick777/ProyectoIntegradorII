@@ -1,6 +1,7 @@
 import React from 'react';
 import { Gift, Pizza, Smartphone, Bell, Apple, Bot } from 'lucide-react';
 import Modal from '../ui/Modal';
+import { PrimaryButton, SecondaryButton } from '../ui/Button';
 
 /**
  * FidelidadModal.jsx — Modal de fidelidad con diseño propio.
@@ -81,23 +82,25 @@ const FidelidadModal = ({ onContinue }) => {
                 </div>
             </div>
 
-            <div className="px-4 pb-4 d-flex gap-2">
-                <button
+            <div className="px-4 pb-4 d-flex gap-3">
+                <SecondaryButton
                     type="button"
-                    className="btn btn-outline-secondary flex-fill py-2"
+                    fullWidth
+                    className="py-2"
                     onClick={handleDownload}
                     style={{ borderRadius: '0.75rem' }}
                 >
                     📲 Descargar App
-                </button>
-                <button
+                </SecondaryButton>
+                <PrimaryButton
                     type="button"
-                    className="btn btn-primary flex-fill py-2 fw-bold"
+                    fullWidth
+                    className="py-2 fw-bold"
                     onClick={handleContinue}
                     style={{ borderRadius: '0.75rem' }}
                 >
                     Continuar al Menú →
-                </button>
+                </PrimaryButton>
             </div>
         </Modal>
     );

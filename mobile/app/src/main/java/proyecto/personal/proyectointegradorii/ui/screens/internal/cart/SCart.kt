@@ -21,12 +21,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import proyecto.personal.proyectointegradorii.ui.components.alerts.successful.SuccessOrderDialog
 import proyecto.personal.proyectointegradorii.ui.components.buttons.GlobalButton
 import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
 import proyecto.personal.proyectointegradorii.ui.components.headers.InternalHeader
+import proyecto.personal.proyectointegradorii.ui.theme.AlertColor
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorDark
@@ -355,6 +357,24 @@ fun SCart(
                             "No hay mesa seleccionada"
                         }
                     )
+
+                    if (items.isNotEmpty() && orden == null) {
+                        GlobalButton(
+                            "Cancelar pedido",
+                            16,
+                            50,
+                            350,
+                            AlertColor,
+                            AlertColor,
+                            Color.White,
+                            {
+                                cartViewModel.cancelarPedidoAntesDeConfirmar()
+                            },
+                            Modifier
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
                     GlobalButton(
                         "Confirmar Pedido",

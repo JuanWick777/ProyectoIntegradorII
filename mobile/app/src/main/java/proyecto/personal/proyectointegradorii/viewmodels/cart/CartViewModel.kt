@@ -84,6 +84,13 @@ class CartViewModel : ViewModel() {
         CartStateStorage.clear(context)
     }
 
+    fun cancelarPedidoAntesDeConfirmar() {
+        _cartItems.value = emptyList()
+        _usarPuntos.value = false
+        _previewOrden.value = null
+        persistState()
+    }
+
     fun cargarPreviewOrden() {
         val mesaId = _mesaSeleccionada.value ?: return
 

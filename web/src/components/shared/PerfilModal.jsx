@@ -4,6 +4,7 @@ import { useAppStore } from '../../store/useAppStore';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
 import AlertMessage from '../ui/AlertMessage';
+import { PrimaryButton, SecondaryButton } from '../ui/Button';
 
 const PerfilModal = ({ usuario, onClose, onGuardado }) => {
   const { actualizarPerfil } = useAppStore();
@@ -186,27 +187,22 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '0 1.5rem 1.5rem', display: 'flex', gap: 10 }}>
-        <button
-          onClick={onClose}
+      <div style={{ padding: '0 1.5rem 1.5rem', display: 'flex', gap: '1rem' }}>
+        <SecondaryButton
           type="button"
-          className="btn btn-outline-secondary flex-fill"
+          fullWidth
+          onClick={onClose}
           style={{ borderRadius: '0.75rem', padding: '0.7rem' }}
           disabled={loading}
         >
           Cancelar
-        </button>
-        <button
-          onClick={handleGuardar}
+        </SecondaryButton>
+        <PrimaryButton
           type="button"
-          className="btn flex-fill fw-bold"
-          style={{
-            borderRadius: '0.75rem',
-            padding: '0.7rem',
-            border: 'none',
-            background: loading ? '#cbd5e0' : 'linear-gradient(135deg, #e67e22, #d35400)',
-            color: 'white',
-          }}
+          fullWidth
+          className="fw-bold"
+          onClick={handleGuardar}
+          style={{ borderRadius: '0.75rem', padding: '0.7rem' }}
           disabled={loading}
         >
           {loading ? (
@@ -220,7 +216,7 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
               Guardar cambios
             </>
           )}
-        </button>
+        </PrimaryButton>
       </div>
     </Modal>
   );

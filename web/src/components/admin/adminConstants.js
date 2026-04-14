@@ -11,6 +11,17 @@ export const resolveImageUrl = (pathOrUrl) => {
     return `${base}${path}`;
 };
 
+export const CATEGORIAS = [
+    { id: 21, nombre: 'Entradas y Snacks' },
+    { id: 24, nombre: 'Platos Fuertes' },
+    { id: 27, nombre: 'Coctelería' },
+    { id: 23, nombre: 'Postres Gourmet' },
+    { id: 2, nombre: 'Bebidas Frías' },
+    { id: 22, nombre: 'Pizzas Artesanales' },
+    { id: 25, nombre: 'Ensaladas y Bowls' },
+    { id: 26, nombre: 'Mariscos y Pescados' },
+];
+
 export const COCINAS = [
     { id: 1, nombre: 'Cocina Caliente' },
     { id: 2, nombre: 'Parrilla' },

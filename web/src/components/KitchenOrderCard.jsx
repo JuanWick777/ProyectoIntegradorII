@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChefHat, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { PrimaryButton, SecondaryButton } from './ui/Button';
 
 const KitchenOrderCard = ({ order }) => {
     const { updateOrderStatus, cancelOrder } = useAppStore();
@@ -116,19 +117,22 @@ const KitchenOrderCard = ({ order }) => {
                             required
                         />
                         <div className="flex gap-2">
-                            <button
+                            <SecondaryButton
                                 type="button"
+                                fullWidth
                                 onClick={() => setShowCancelModal(false)}
-                                className="flex-1 text-gray-500 text-sm py-1 font-semibold"
+                                className="text-sm py-1"
                             >
                                 Atrás
-                            </button>
-                            <button
+                            </SecondaryButton>
+                            <PrimaryButton
                                 type="submit"
-                                className="flex-1 bg-red-600 text-white rounded-md py-1 text-sm font-bold shadow-md hover:bg-red-700"
+                                fullWidth
+                                className="text-sm py-1 bg-red-600 hover:bg-red-700"
+                                style={{ backgroundColor: '#dc2626' }}
                             >
                                 Cancelar
-                            </button>
+                            </PrimaryButton>
                         </div>
                     </form>
                 </div>

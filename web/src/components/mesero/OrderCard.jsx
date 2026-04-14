@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, FileText, UtensilsCrossed, DollarSign, Check, X } from 'lucide-react';
 import Badge from '../ui/Badge';
+import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 
 const ESTADO_BADGE = {
     pendiente_confirmacion: { label: 'Pendiente', color: '#e67e22' },
@@ -105,44 +106,57 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
 
                         {esPendiente && (
                             <>
-                                <button
-                                    className="btn btn-success btn-sm flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-1"
+                                <PrimaryButton
+                                    type="button"
+                                    size="sm"
+                                    fullWidth
+                                    className="flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-1"
                                     onClick={onAceptar}
                                     disabled={loading}
+                                    style={{ backgroundColor: '#27ae60' }}
                                 >
                                     {loading
                                         ? <span className="spinner-border spinner-border-sm" />
                                         : <><Check size={16} /> Aceptar</>}
-                                </button>
+                                </PrimaryButton>
 
-                                <button
-                                    className="btn btn-outline-danger btn-sm fw-semibold d-flex align-items-center justify-content-center gap-1"
+                                <DangerButton
+                                    type="button"
+                                    size="sm"
+                                    className="fw-semibold d-flex align-items-center justify-content-center gap-1"
                                     onClick={onCancelar}
                                     disabled={loading}
                                 >
                                     <X size={16} /> Cancelar
-                                </button>
+                                </DangerButton>
                             </>
                         )}
 
                         {esLista && (
-                            <button
-                                className="btn btn-primary btn-sm w-100 fw-semibold d-flex align-items-center justify-content-center gap-1"
+                            <PrimaryButton
+                                type="button"
+                                size="sm"
+                                fullWidth
+                                className="fw-semibold d-flex align-items-center justify-content-center gap-1"
                                 onClick={onEntregar}
                                 disabled={loading}
                             >
                                 <UtensilsCrossed size={16} /> Marcar entregada
-                            </button>
+                            </PrimaryButton>
                         )}
 
                         {esEntregada && (
-                            <button
-                                className="btn btn-warning btn-sm w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+                            <PrimaryButton
+                                type="button"
+                                size="sm"
+                                fullWidth
+                                className="fw-bold d-flex align-items-center justify-content-center gap-1"
                                 onClick={onCobrar}
                                 disabled={loading}
+                                style={{ backgroundColor: '#f39c12' }}
                             >
                                 <DollarSign size={16} /> Cobrar y cerrar mesa
-                            </button>
+                            </PrimaryButton>
                         )}
                     </div>
                 )}
