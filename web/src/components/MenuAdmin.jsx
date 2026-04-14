@@ -4,6 +4,7 @@ import AdminSidebar from './admin/AdminSidebar';
 import PersonalAdmin from './admin/PersonalAdmin';
 import ClientesAdmin from './admin/ClientesAdmin';
 import ConfiguracionAdmin from './admin/ConfiguracionAdmin';
+import MesasAdmin from './admin/MesasAdmin';
 import ProductCard from './admin/ProductCard';
 import ProductModal from './admin/ProductModal';
 import PromocionesAdmin from './PromocionesAdmin';
@@ -181,6 +182,7 @@ const MenuAdmin = () => {
                 navItems={[
                     { id: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
                     { id: 'menu', icon: <Utensils size={18} />, label: 'Platillos' },
+                    { id: 'mesas', icon: <Utensils size={18} />, label: 'Mesas' },
                     { id: 'personal', icon: <Users size={18} />, label: 'Personal' },
                     { id: 'clientes', icon: <Heart size={18} />, label: 'Clientes' },
                     { id: 'promociones', icon: <Tag size={18} />, label: 'Promociones' },
@@ -270,6 +272,8 @@ const MenuAdmin = () => {
                         </>
                     ) : vistaActual === 'personal' ? (
                         <PersonalAdmin mostrarToast={mostrarToast} />
+                    ) : vistaActual === 'mesas' ? (
+                        <MesasAdmin />
                     ) : vistaActual === 'clientes' ? (
                         <ClientesAdmin mostrarToast={mostrarToast} />
                     ) : vistaActual === 'promociones' ? (

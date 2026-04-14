@@ -93,6 +93,36 @@ export const useAppStore = create(
                 return await apiFetch(`/mesas/${numero}`);
             },
 
+            fetchMesas: async () => {
+                return await apiFetch('/mesas');
+            },
+
+            crearMesa: async (numero) => {
+                const { token } = get();
+                return await apiFetch('/mesas', {
+                    method: 'POST',
+                    body: JSON.stringify({ numero }),
+                    token,
+                });
+            },
+
+            eliminarMesa: async (id) => {
+                const { token } = get();
+                return await apiFetch(`/mesas/${id}`, {
+                    method: 'DELETE',
+                    token,
+                });
+            },
+
+            actualizarEstadoMesa: async (id, estado) => {
+                const { token } = get();
+                return await apiFetch(`/mesas/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ estado }),
+                    token,
+                });
+            },
+
             fetchProducts: async () => {
                 set({ loadingProducts: true });
                 try {
@@ -154,15 +184,15 @@ export const useAppStore = create(
                 if (carrito.length === 0 || !numeroMesa) return;
 
                 const payload = {
-                    mesaId: numeroMesa,
-                    detalles: carrito.map((item) => ({
-                        platilloId: item.id,
+                    mesa_numero: numeroMesa,
+                    items: carrito.map((item) => ({
+                        producto_id: item.id,
                         cantidad: item.cantidad,
-                        nota: item.notas || '',
+                        nota_cliente: item.notas || '',
                     })),
                 };
 
-                const data = await apiFetch('/ordenes/completa', {
+                const data = await apiFetch('/ordenes', {
                     method: 'POST',
                     body: JSON.stringify(payload),
                     token,
