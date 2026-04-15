@@ -1,34 +1,24 @@
 import React from 'react';
-import { Users, FileText, UtensilsCrossed, DollarSign, Check, X } from 'lucide-react';
-import Badge from '../ui/Badge';
+import { Users, FileText, UtensilsCrossed, DollarSign, Check, X, Clock, CheckCircle, ChefHat, Handshake, XCircle } from 'lucide-react';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 
 const ESTADO_BADGE = {
-    pendiente_confirmacion: { label: 'Pendiente', color: '#e67e22' },
-    confirmada: { label: 'Confirmada', color: '#3498db' },
-    en_preparacion: { label: 'En cocina', color: '#9b59b6' },
-    lista: { label: '¡Lista!', color: '#27ae60' },
-    entregada: { label: 'Entregada', color: '#7f8c8d' },
-    cerrada: { label: 'Cerrada', color: '#95a5a6' },
-    cancelada: { label: 'Cancelada', color: '#e74c3c' },
-};
-
-const ESTADO_ICONO = {
-    pendiente_confirmacion: '🕐',
-    confirmada: '✅',
-    en_preparacion: '👨‍🍳',
-    lista: '🍽️',
-    entregada: '🤝',
-    cerrada: '💰',
-    cancelada: '❌',
+    pendiente_confirmacion: { label: 'Pendiente', bg: '#ffe4d6', color: '#c0392b', Icon: Clock },
+    confirmada: { label: 'Confirmada', bg: '#dbeafe', color: '#0c4a6e', Icon: CheckCircle },
+    en_preparacion: { label: 'En cocina', bg: '#fef3c7', color: '#b9770e', Icon: ChefHat },
+    lista: { label: '¡Lista!', bg: '#bbf7d0', color: '#1e8449', Icon: UtensilsCrossed },
+    entregada: { label: 'Entregada', bg: '#e2e8f0', color: '#475569', Icon: Handshake },
+    cerrada: { label: 'Cerrada', bg: '#e5e7eb', color: '#4b5563', Icon: DollarSign },
+    cancelada: { label: 'Cancelada', bg: '#ffe4d6', color: '#c0392b', Icon: XCircle },
 };
 
 const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading }) => {
 
     const badge = ESTADO_BADGE[orden.estado] || { label: orden.estado, color: '#95a5a6' };
-    const icono = ESTADO_ICONO[orden.estado] || '📋';
 
     const esPendiente = orden.estado === 'pendiente_confirmacion';
+    const esConfirmada = orden.estado === 'confirmada';
+    const esEnPreparacion = orden.estado === 'en_preparacion';
     const esLista = orden.estado === 'lista';
     const esEntregada = orden.estado === 'entregada';
     const esCerrada = ['cerrada', 'cancelada'].includes(orden.estado);
@@ -57,13 +47,25 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
                         </div>
                     </div>
 
-                    <Badge
-                        pill={true}
-                        className="px-3 py-2"
-                        style={{ background: badge.color, color: '#fff', fontSize: '0.75rem' }}
+                    <span
+                        className="d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold"
+                        style={{ background: badge.bg || badge.color, color: badge.bg ? badge.color : '#111827', fontSize: '0.75rem', borderRadius: '9999px' }}
                     >
-                        {icono} {badge.label}
-                    </Badge>
+                        {badge.Icon && (
+                            <span
+                                className="d-inline-flex align-items-center justify-content-center rounded-circle"
+                                style={{
+                                    width: 22,
+                                    height: 22,
+                                    background: 'rgba(255,255,255,0.8)',
+                                    color: badge.color,
+                                }}
+                            >
+                                <badge.Icon size={14} />
+                            </span>
+                        )}
+                        {badge.label}
+                    </span>
                 </div>
 
                 {/* ITEMS */}
@@ -102,46 +104,72 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
 
                 {/* BOTONES */}
                 {!esCerrada && (
-                    <div className="d-flex gap-2 flex-wrap">
+                    <div className="d-flex gap-2">
 
                         {esPendiente && (
                             <>
-                                <PrimaryButton
-                                    type="button"
-                                    size="sm"
-                                    fullWidth
-                                    className="flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-1"
-                                    onClick={onAceptar}
-                                    disabled={loading}
-                                    style={{ backgroundColor: '#27ae60' }}
-                                >
-                                    {loading
-                                        ? <span className="spinner-border spinner-border-sm" />
-                                        : <><Check size={16} /> Aceptar</>}
-                                </PrimaryButton>
-
                                 <DangerButton
                                     type="button"
                                     size="sm"
                                     className="fw-semibold d-flex align-items-center justify-content-center gap-1"
                                     onClick={onCancelar}
                                     disabled={loading}
+                                    style={{ flex: 1, minWidth: 0 }}
                                 >
                                     <X size={16} /> Cancelar
                                 </DangerButton>
+                                
+                                <PrimaryButton
+                                    type="button"
+                                    size="sm"
+                                    className="fw-semibold d-flex align-items-center justify-content-center gap-1"
+                                    onClick={onAceptar}
+                                    disabled={loading}
+                                    style={{ flex: 1, minWidth: 0, backgroundColor: '#27ae60', borderColor: '#27ae60' }}
+                                >
+                                    {loading
+                                        ? <span className="spinner-border spinner-border-sm" />
+                                        : <><Check size={16} /> Aceptar</>}
+                                </PrimaryButton>
                             </>
+                        )}
+
+                        {esConfirmada && (
+                            <PrimaryButton
+                                type="button"
+                                size="sm"
+                                className="fw-semibold d-flex align-items-center justify-content-center gap-1"
+                                onClick={onAceptar}
+                                disabled={loading}
+                                style={{ flex: 1, minWidth: 0, backgroundColor: '#0ea5e9', borderColor: '#0ea5e9' }}
+                            >
+                                <ChefHat size={16} /> En cocina
+                            </PrimaryButton>
+                        )}
+
+                        {esEnPreparacion && (
+                            <PrimaryButton
+                                type="button"
+                                size="sm"
+                                className="fw-semibold d-flex align-items-center justify-content-center gap-1"
+                                onClick={onAceptar}
+                                disabled={loading}
+                                style={{ flex: 1, minWidth: 0, backgroundColor: '#f59e0b', borderColor: '#f59e0b' }}
+                            >
+                                <UtensilsCrossed size={16} /> Marcar lista
+                            </PrimaryButton>
                         )}
 
                         {esLista && (
                             <PrimaryButton
                                 type="button"
                                 size="sm"
-                                fullWidth
                                 className="fw-semibold d-flex align-items-center justify-content-center gap-1"
                                 onClick={onEntregar}
                                 disabled={loading}
+                                style={{ flex: 1, minWidth: 0, backgroundColor: '#009a43', borderColor: '#009a43'}}
                             >
-                                <UtensilsCrossed size={16} /> Marcar entregada
+                                <CheckCircle size={16} /> Marcar entregada
                             </PrimaryButton>
                         )}
 
@@ -149,11 +177,10 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
                             <PrimaryButton
                                 type="button"
                                 size="sm"
-                                fullWidth
                                 className="fw-bold d-flex align-items-center justify-content-center gap-1"
                                 onClick={onCobrar}
                                 disabled={loading}
-                                style={{ backgroundColor: '#f39c12' }}
+                                style={{ flex: 1, minWidth: 0, backgroundColor: '#009a43' }}
                             >
                                 <DollarSign size={16} /> Cobrar y cerrar mesa
                             </PrimaryButton>

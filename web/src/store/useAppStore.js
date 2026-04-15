@@ -243,6 +243,13 @@ export const useAppStore = create(
                 return data;
             },
 
+            fetchMeseroHistorial: async () => {
+                const { token } = get();
+                const data = await apiFetch('/ordenes/historial', { token });
+                set({ orders: data });
+                return data;
+            },
+
             cambiarEstadoOrden: async (ordenId, nuevoEstado) => {
                 const { token } = get();
                 await apiFetch(`/ordenes/${ordenId}/estado`, {

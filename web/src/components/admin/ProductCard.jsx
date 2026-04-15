@@ -59,11 +59,17 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
                     {descripcion || <em>Sin descripción</em>}
                 </p>
 
-                <div className="mt-auto d-flex justify-content-between align-items-center">
-                    <span className="fw-bold text-success fs-5">${Number(precio).toFixed(2)}</span>
-                    <span className={`small fw-bold ${stockAgotado ? 'text-danger' : 'text-success'}`}>
+                <div className="mb-2">
+                    <span
+                        className={`fw-bold ${stockAgotado ? 'text-danger' : 'text-success'}`}
+                        style={{ fontSize: '0.8rem' }}
+                    >
                         {disponibilidad}
                     </span>
+                </div>
+
+                <div className="mt-auto d-flex justify-content-between align-items-center">
+                    <span className="fw-bold text-success fs-5">${Number(precio).toFixed(2)}</span>
                 </div>
 
                 <SecondaryButton
