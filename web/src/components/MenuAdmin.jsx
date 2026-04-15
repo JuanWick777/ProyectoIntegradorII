@@ -19,10 +19,12 @@ const MenuAdmin = () => {
     const {
         products,
         categorias,
+        cocinas,
         updateProduct,
         createProduct,
         fetchAdminProducts,
         fetchCategorias,
+        fetchCocinas,
         fetchUsuarios,
         fetchOrders,
         uploadPlatilloImage,
@@ -64,6 +66,10 @@ const MenuAdmin = () => {
         };
 
         cargarDatos();
+    }, []);
+
+    useEffect(() => {
+        fetchCocinas().catch(() => console.error('Error cargando cocinas'));
     }, []);
 
     const mostrarToast = (msg) => {
@@ -377,6 +383,7 @@ const MenuAdmin = () => {
                         onClose={() => setModalProduct(null)}
                         saving={saving}
                         categorias={categorias}
+                        cocinas={cocinas}
                     />
                 )}
 

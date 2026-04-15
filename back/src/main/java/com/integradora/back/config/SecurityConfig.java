@@ -42,10 +42,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/test").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/mesas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/platillos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cocina").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/promociones").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ordenes/completa").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/{id}").permitAll()
