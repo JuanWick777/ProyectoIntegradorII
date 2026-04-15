@@ -125,7 +125,8 @@ public class OrdenService {
             Platillo platillo = platilloRepository.findById(det.getPlatilloId())
                     .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
 
-            if ("AGOTADO".equalsIgnoreCase(platillo.getDisponibilidad())) {
+            if ("AGOTADO".equalsIgnoreCase(platillo.getEstado())
+                    || "INACTIVO".equalsIgnoreCase(platillo.getEstado())) {
                 throw new RuntimeException("El platillo se encuentra agotado: " + platillo.getNombre());
             }
 
@@ -135,7 +136,6 @@ public class OrdenService {
             DetalleOrden detalle = DetalleOrden.builder()
                     .orden(orden)
                     .platillo(platillo)
-                    .cocina(platillo.getCocina())
                     .cantidad(det.getCantidad())
                     .precioUnitario(precio)
                     .subtotal(subtotal)
@@ -209,7 +209,8 @@ public class OrdenService {
             Platillo platillo = platilloRepository.findById(det.getPlatilloId())
                     .orElseThrow(() -> new RuntimeException("Platillo no encontrado"));
 
-            if ("AGOTADO".equalsIgnoreCase(platillo.getDisponibilidad())) {
+            if ("AGOTADO".equalsIgnoreCase(platillo.getEstado())
+                    || "INACTIVO".equalsIgnoreCase(platillo.getEstado())) {
                 throw new RuntimeException("El platillo se encuentra agotado: " + platillo.getNombre());
             }
 

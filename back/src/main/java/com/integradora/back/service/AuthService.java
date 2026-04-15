@@ -35,13 +35,10 @@ public class AuthService {
                 .nombreCompleto(request.getNombreCompleto())
                 .correo(request.getCorreo())
                 .contrasena(passwordEncoder.encode(request.getContrasena()))
-                .telefono(null)
                 .tipoUsuario("Cliente")
                 .rolEspecifico(null)
-                .areaAsignada(null)
                 .puntosLealtad(0)
-                .turno(null)
-                .estado("Activo")
+                .estado("ACTIVO")
                 .fechaRegistro(null)
                 .build();
 
@@ -62,8 +59,13 @@ public class AuthService {
         String raw = request.getContrasena();
         String stored = usuario.getContrasena();
 
-        if (!passwordEncoder.matches(raw, stored)) {
+        if (!passwordMatches(raw, stored)) {
             throw new RuntimeException("Credenciales incorrectas");
+        }
+
+        if (!isBcryptHash(stored)) {
+            usuario.setContrasena(passwordEncoder.encode(raw));
+            usuarioRepository.save(usuario);
         }
 
         String rol = normalizarRol(usuario);
@@ -218,5 +220,21 @@ public class AuthService {
         if (tipo.contains("EMPLEADO")) return "EMPLEADO";
 
         return "CLIENTE";
+    }
+
+    private boolean passwordMatches(String raw, String stored) {
+        if (stored == null) {
+            return false;
+        }
+
+        if (isBcryptHash(stored)) {
+            return passwordEncoder.matches(raw, stored);
+        }
+
+        return stored.equals(raw);
+    }
+
+    private boolean isBcryptHash(String value) {
+        return value != null && (value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$"));
     }
 }

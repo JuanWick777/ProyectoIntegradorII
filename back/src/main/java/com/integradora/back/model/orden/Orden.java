@@ -29,10 +29,6 @@ public class Orden {
     private Usuario mesero;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_cocinero")
-    private Usuario cocinero;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_mesa")
     private Mesa mesa;
 
@@ -58,4 +54,4 @@ public class Orden {
 
     @Column(name = "fecha_finalizacion")
     private LocalDateTime fechaFinalizacion;
-}
+}

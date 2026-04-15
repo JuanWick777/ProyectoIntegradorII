@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
+    import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react'; // Using SVG for better print quality
 import SectionHeader from './ui/SectionHeader';
 import { PrimaryButton, SecondaryButton } from './ui/Button';
+
+const PUBLIC_APP_URL =
+    import.meta.env.VITE_PUBLIC_APP_URL ||
+    (typeof window !== 'undefined' ? window.location.origin : '');
 
 const QRGenerator = () => {
     const [baseUrl, setBaseUrl] = useState(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('qr_base_url');
             if (saved) return saved;
-
-            const url = new URL(window.location.href);
-            return `${url.protocol}//${url.hostname}${url.port ? ':' + url.port : ''}`;
         }
-        return '';
+        return PUBLIC_APP_URL;
     });
 
     const [totalMesas, setTotalMesas] = useState(() => {
@@ -21,7 +22,16 @@ const QRGenerator = () => {
     });
 
     useEffect(() => {
-        if (baseUrl) localStorage.setItem('qr_base_url', baseUrl);
+        if (!baseUrl) return;
+
+        const isLocal =
+            baseUrl.includes('localhost') ||
+            baseUrl.includes('127.0.0.1') ||
+            baseUrl.includes('192.168.');
+
+        if (!isLocal) {
+            localStorage.setItem('qr_base_url', baseUrl);
+        }
     }, [baseUrl]);
 
     useEffect(() => {
@@ -57,10 +67,7 @@ const QRGenerator = () => {
     const printPage = () => window.print();
 
     const resetUrl = () => {
-        if (typeof window !== 'undefined') {
-            const url = new URL(window.location.href);
-            setBaseUrl(`${url.protocol}//${url.hostname}${url.port ? ':' + url.port : ''}`);
-        }
+        setBaseUrl(PUBLIC_APP_URL);
     };
 
     const generarMesas = async () => {

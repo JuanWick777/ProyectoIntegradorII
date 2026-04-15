@@ -42,7 +42,7 @@ class HomeViewModel : ViewModel() {
                 category.isNullOrBlank() ||
                         platillo.categoriaNombre.equals(category, ignoreCase = true)
 
-            coincideBusqueda && coincideCategoria
+            coincideBusqueda && coincideCategoria && platillo.estaDisponible()
         }
     }.stateIn(
         viewModelScope,
@@ -52,7 +52,8 @@ class HomeViewModel : ViewModel() {
 
     val categorias = _platillos
         .map { lista ->
-            lista.mapNotNull { it.categoriaNombre }
+            lista.filter { it.estaDisponible() }
+                .mapNotNull { it.categoriaNombre }
                 .distinct()
                 .sorted()
         }

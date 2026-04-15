@@ -36,10 +36,8 @@ public class AdminController {
         usuario.setContrasena(passwordEncoder.encode(req.getPassword()));
         usuario.setTipoUsuario("Empleado");
         usuario.setRolEspecifico(req.getRol().toUpperCase());
-        usuario.setAreaAsignada(req.getEspecialidad());
         usuario.setEstado("ACTIVO");
         usuario.setPuntosLealtad(0);
-        usuario.setTurno(null);
         usuario.setFotoPerfil(req.getFotoPerfil());
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -54,7 +52,6 @@ public class AdminController {
         usuario.setNombreCompleto(req.getNombre());
         usuario.setCorreo(req.getEmail());
         usuario.setRolEspecifico(req.getRol());
-        usuario.setAreaAsignada(req.getEspecialidad());
         usuario.setFotoPerfil(req.getFotoPerfil());
 
         if (req.getPassword() != null && !req.getPassword().isBlank()) {

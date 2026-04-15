@@ -1,6 +1,5 @@
 package com.integradora.back.model.detalleorden;
 
-import com.integradora.back.model.cocina.Cocina;
 import com.integradora.back.model.orden.Orden;
 import com.integradora.back.model.platillo.Platillo;
 import jakarta.persistence.*;
@@ -28,10 +27,6 @@ public class DetalleOrden {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "platillo_id")
     private Platillo platillo;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kitchen_id")
-    private Cocina cocina;
 
     @Column(name = "cantidad", nullable = false)
     private Integer cantidad;

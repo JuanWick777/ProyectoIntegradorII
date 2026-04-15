@@ -26,23 +26,14 @@ public class Usuario {
     @Column(name = "contrasena", nullable = false)
     private String contrasena;
 
-    @Column(name = "telefono")
-    private String telefono;
-
     @Column(name = "tipo_usuario")
     private String tipoUsuario;
 
     @Column(name = "rol_especifico")
     private String rolEspecifico;
 
-    @Column(name = "area_asignada")
-    private String areaAsignada;
-
     @Column(name = "puntos_lealtad")
     private Integer puntosLealtad;
-
-    @Column(name = "turno")
-    private String turno;
 
     @Column(name = "estado")
     private String estado;
@@ -52,4 +43,10 @@ public class Usuario {
 
     @Column(name = "foto_perfil")
     private String fotoPerfil;
+
+    @Column(name = "codigo_recuperacion")
+    private String codigoRecuperacion;
+
+    @Column(name = "expiracion_codigo")
+    private LocalDateTime expiracionCodigo;
 }

@@ -206,24 +206,25 @@ fun SHome(
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 items(platillosMostrar) { platillo ->
+                    val disponible = platillo.estaDisponible()
                 PlatilloCard(
                         nombre = platillo.nombre,
                         descripcion = platillo.descripcion ?: "",
                         precio = platillo.precio,
                         imagenUrl = platillo.urlImagen ?: "",
                         onClickCard = {
-                            if (menuEnabled) {
+                            if (menuEnabled && disponible) {
                                 selectedPlatillo = platillo
                                 showModal = true
                             }
                         },
                         onClickAdd = {
-                            if (menuEnabled) {
+                            if (menuEnabled && disponible) {
                                 selectedPlatillo = platillo
                                 showModal = true
                             }
                         },
-                        enabled = menuEnabled
+                        enabled = menuEnabled && disponible
                     )
                 }
             }

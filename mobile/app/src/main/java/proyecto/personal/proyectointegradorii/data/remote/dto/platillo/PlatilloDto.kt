@@ -9,6 +9,13 @@ data class PlatilloDto(
     val disponibilidad: String?,
     val categoriaId: Long?,
     val categoriaNombre: String?,
-    val kitchenId: Long?,
     val estado: String?
-)
+) {
+    fun estadoActual(): String {
+        return (estado ?: disponibilidad ?: "DISPONIBLE").uppercase()
+    }
+
+    fun estaDisponible(): Boolean {
+        return estadoActual() !in listOf("AGOTADO", "INACTIVO")
+    }
+}
