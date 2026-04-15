@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -114,7 +113,7 @@ fun SCart(
                         .padding(horizontal = 20.dp, vertical = 15.dp)
                 ) {
                     GlobalCard(
-                        backgroundColor = Color.White,
+                        backgroundColor = BackgroundCardColor,
                         modifier = Modifier.weight(1f), // Permite que la tarjeta ocupe el alto disponible
                         content = {
                             // Columna interna para controlar el padding dentro de la Card
@@ -343,57 +342,112 @@ fun SCart(
                     }
                 } else {
                     Column(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 20.dp, vertical = 15.dp)
                     ) {
                         GlobalText(
-                            "Pedidos realizados",
-                            22,
-                            TextColorDark,
-                            Modifier
+                            texto = "Pedidos realizados",
+                            tamanio = 22,
+                            color = TextColorDark,
+                            peso = FontWeight.Bold
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        LazyColumn {
+                        LazyColumn(
+                            contentPadding = PaddingValues(bottom = 20.dp)
+                        ) {
                             items(ordenes) { pedido ->
-                                Column(
-                                    modifier = Modifier.padding(bottom = 14.dp)
-                                ) {
-                                    Text("Pedido #${pedido.id}")
-                                    Text("Estado: ${pedido.estado}")
-                                    Text("Mesa: ${pedido.mesaNumero ?: "-"}")
-                                    Text("Total: $${pedido.total}")
-
-                                    if (pedido.montoDescuento > 0) {
-                                        Text("Descuento: -$${"%.2f".format(pedido.montoDescuento)}")
-                                    }
-
-                                    if (pedido.montoDescuento > 0) {
-                                        val promoTexto =
-                                            if (!pedido.codigoPromoAplicado.isNullOrBlank()) {
-                                                "Código: ${pedido.codigoPromoAplicado}"
-                                            } else {
-                                                "Promoción automática"
+                                GlobalCard(
+                                    backgroundColor = BackgroundCardColor,
+                                    modifier = Modifier.padding(bottom = 16.dp),
+                                    content = {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        ) {
+                                            // 1. Encabezado de la orden (ID y Estado)
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                GlobalText(
+                                                    texto = "Pedido #${pedido.id}",
+                                                    tamanio = 18,
+                                                    color = TextColorDark,
+                                                    peso = FontWeight.Bold
+                                                )
+                                                GlobalText(
+                                                    texto = pedido.estado.replace("_", " ").replaceFirstChar { it.uppercase() },
+                                                    tamanio = 14,
+                                                    color = MainColor,
+                                                    peso = FontWeight.SemiBold
+                                                )
                                             }
-                                        Text(promoTexto)
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            // 2. Información extra (Mesa)
+                                            GlobalText(
+                                                texto = "Mesa: ${pedido.mesaNumero ?: "Sin asignar"}",
+                                                tamanio = 14,
+                                                color = Color.Gray
+                                            )
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            // 3. Totales y descuentos
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                GlobalText("Total", 16, TextColorDark, peso = FontWeight.SemiBold)
+                                                GlobalText("$${"%.2f".format(pedido.total)}", 16, MainColor, peso = FontWeight.Bold)
+                                            }
+
+                                            if (pedido.montoDescuento > 0) {
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    val promoTexto = if (!pedido.codigoPromoAplicado.isNullOrBlank()) {
+                                                        "Código: ${pedido.codigoPromoAplicado}"
+                                                    } else {
+                                                        "Promo automática"
+                                                    }
+                                                    GlobalText(promoTexto, 12, Color(0xFF4CAF50))
+                                                    GlobalText("-$${"%.2f".format(pedido.montoDescuento)}", 12, Color(0xFF4CAF50))
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(16.dp))
+
+                                            // 4. Botón centrado para ver la orden
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                GlobalButton(
+                                                    text = "Ver seguimiento",
+                                                    textsize = 14,
+                                                    alt = 45,
+                                                    ancho = 250,
+                                                    bordercolorbutton = MainColor,
+                                                    colorbutton = MainColor,
+                                                    colortext = TextColorWhite,
+                                                    onClick = {
+                                                        cartViewModel.setOrdenActual(pedido)
+                                                    }
+                                                )
+                                            }
+                                        }
                                     }
-
-                                    Spacer(modifier = Modifier.height(6.dp))
-
-                                    GlobalButton(
-                                        "Ver seguimiento",
-                                        14,
-                                        45,
-                                        250,
-                                        MainColor,
-                                        MainColor,
-                                        TextColorWhite,
-                                        {
-                                            cartViewModel.setOrdenActual(pedido)
-                                        },
-                                        Modifier
-                                    )
-                                }
+                                )
                             }
                         }
                     }
@@ -594,7 +648,7 @@ fun SCart(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .background(
-                                            color = BackgroundCardColor,
+                                            color = BackgroundColor,
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                         .padding(8.dp),
