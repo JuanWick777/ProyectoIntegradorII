@@ -3,14 +3,13 @@ import { useAppStore } from '../store/useAppStore';
 import AdminSidebar from './admin/AdminSidebar';
 import PersonalAdmin from './admin/PersonalAdmin';
 import ClientesAdmin from './admin/ClientesAdmin';
-import ConfiguracionAdmin from './admin/ConfiguracionAdmin';
 import MesasAdmin from './admin/MesasAdmin';
 import ProductCard from './admin/ProductCard';
 import ProductModal from './admin/ProductModal';
 import PromocionesAdmin from './PromocionesAdmin';
 import QRCodeGenerator from './QRCodeGenerator';
 import StatCard from './ui/StatCard';
-import { LayoutDashboard, Utensils, ChefHat, Users, User, Info, Settings, QrCode, Tag, Clock, PlusCircle, LogOut, Check, Heart } from 'lucide-react';
+import { LayoutDashboard, Utensils, ChefHat, Users, User, QrCode, Tag, PlusCircle, LogOut, Check, Heart } from 'lucide-react';
 import { getProductCategoryName, getProductName } from './admin/adminConstants';
 import ConfirmModal from './ui/ConfirmModal';
 import { PrimaryButton, SecondaryButton, OutlineButton } from './ui/Button';
@@ -187,9 +186,6 @@ const MenuAdmin = () => {
                     { id: 'clientes', icon: <Heart size={18} />, label: 'Clientes' },
                     { id: 'promociones', icon: <Tag size={18} />, label: 'Promociones' },
                     { id: 'qr', icon: <QrCode size={18} />, label: 'QR' },
-                    { id: 'historial', icon: <Clock size={18} />, label: 'Historial' },
-                    { id: 'informacion', icon: <Info size={18} />, label: 'Información' },
-                    { id: 'configuracion', icon: <Settings size={18} />, label: 'Configuración' },
                 ]}
                 activeItem={vistaActual}
                 onNavItemClick={setVistaActual}
@@ -280,20 +276,6 @@ const MenuAdmin = () => {
                         <PromocionesAdmin mostrarToast={mostrarToast} />
                     ) : vistaActual === 'qr' ? (
                         <QRCodeGenerator />
-                    ) : vistaActual === 'historial' ? (
-                        <div className="text-center py-5 text-muted">
-                            <p style={{ fontSize: 48 }}>📜</p>
-                            <h4 className="fw-bold text-dark">Historial de Órdenes</h4>
-                            <p>Plataforma de historial en construcción</p>
-                        </div>
-                    ) : vistaActual === 'informacion' ? (
-                        <div className="text-center py-5 text-muted">
-                            <p style={{ fontSize: 48 }}>🔨</p>
-                            <h4 className="fw-bold text-dark">Sección en construcción</h4>
-                            <p>Esta funcionalidad está siendo desarrollada</p>
-                        </div>
-                    ) : vistaActual === 'configuracion' ? (
-                        <ConfiguracionAdmin />
                     ) : (
                         <>
                             <div className="d-flex flex-wrap gap-3 align-items-center mb-4">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import MesaIngreso from '../components/cliente/MesaIngreso';
 import FidelidadModal from '../components/cliente/FidelidadModal';
@@ -9,29 +9,41 @@ import OrderTracker from '../components/cliente/OrderTracker';
 const ClientePage = () => {
     const { numeroMesa, ordenActual, fetchProducts, validarMesa, setNumeroMesa } = useAppStore();
 
-    // Leemos la URL al iniciar para saber si venimos de un QR (Bypass)
-    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-    const mesaParam = params.get('mesa');
-    const mesaActiva = numeroMesa || (mesaParam ? parseInt(mesaParam, 10) : null);
+    const mesaParam = useMemo(() => {
+        const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+        return params.get('mesa');
+    }, []);
 
-    const [vista, setVista] = useState(() => {
-        return mesaActiva ? 'menu' : 'ingreso';
-    });
+    const mesaDesdeQr = mesaParam ? Number.parseInt(mesaParam, 10) : null;
+    const mesaActiva = numeroMesa || mesaDesdeQr;
 
-    const [ordenId, setOrdenId] = useState(ordenActual?.orden_id || null);
+    const [vista, setVista] = useState(() => (mesaActiva ? 'menu' : 'ingreso'));
+    const [ordenId, setOrdenId] = useState(ordenActual?.orden_id || ordenActual?.id || null);
     const [mesaError, setMesaError] = useState(null);
     const [validandoMesa, setValidandoMesa] = useState(false);
+    const qrValidadoRef = useRef(false);
 
-    const validarMesaQR = async (mesa) => {
+    const handleMesaValida = useCallback(() => {
+        setVista('fidelidad');
+    }, []);
+
+    const validarMesaQR = useCallback(async (mesa) => {
+        if (!mesa || Number.isNaN(mesa)) {
+            setMesaError('El codigo QR no contiene una mesa valida.');
+            setVista('ingreso');
+            return;
+        }
+
         setValidandoMesa(true);
         try {
             const result = await validarMesa(mesa);
             setNumeroMesa(result.numero);
+            setVista('menu');
         } catch (err) {
             if (err.status === 404) {
-                setMesaError('La mesa no existe o no está disponible.');
+                setMesaError('La mesa no existe o no esta disponible.');
             } else if (err.status === 409) {
-                setMesaError('Esta mesa está ocupada. Por favor, llama al mesero.');
+                setMesaError('Esta mesa esta ocupada. Por favor, llama al mesero.');
             } else {
                 setMesaError('Error validando la mesa. Intenta de nuevo.');
             }
@@ -39,92 +51,115 @@ const ClientePage = () => {
         } finally {
             setValidandoMesa(false);
         }
-    };(
-                <>
-                    <MesaIngreso onMesaValida={handleMesaValida} />
-                    {mesaError && (
-                        <div
-                            className="modal d-flex align-items-center justify-content-center"
-                            style={{
-                                display: 'flex',
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100vh',
-                                background: 'rgba(0,0,0,0.5)',
-                                zIndex: 9999,
-                            }}
-                        >
-                            <div className="card shadow-lg" style={{ maxWidth: 400, borderRadius: '1.25rem' }}>
-                                <div className="card-body text-center p-4">
-                                    <div
-                                        className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                                        style={{
-                                            width: 60,
-                                            height: 60,
-                                            background: '#fff3cd',
-                                        }}
-                                    >
-                                        <span style={{ fontSize: '2rem' }}>⚠️</span>
-                                    </div>
-                                    <h5 className="card-title fw-bold text-dark mb-2">Mesa No Válida</h5>
-                                    <p className="card-text text-secondary mb-4">{mesaError}</p>
-                                    <button
-                                        className="btn btn-primary fw-bold py-2 px-4"
-                                        onClick={() => setMesaError(null)}
-                                        style={{ borderRadius: '0.75rem' }}
-                                    >
-                                        Intentar de Nuevo
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )
+    }, [setNumeroMesa, validarMesa]);
 
     useEffect(() => {
-        if (mesaParam && !numeroMesa && !validandoMesa) {
-            validarMesaQR(parseInt(mesaParam, 10));
+        if (mesaDesdeQr && !numeroMesa && !validandoMesa && !qrValidadoRef.current) {
+            qrValidadoRef.current = true;
+            validarMesaQR(mesaDesdeQr);
         }
+    }, [mesaDesdeQr, numeroMesa, validandoMesa, validarMesaQR]);
+
+    useEffect(() => {
         if (vista === 'menu' || vista === 'fidelidad') {
             fetchProducts();
         }
-    }, [vista, fetchProducts, mesaParam, numeroMesa, validandoMesa, validarMesa, setNumeroMesa]);
+    }, [vista, fetchProducts]);
 
-    const handleMesaValida = () => setVista('fidelidad');
     const handleContinuarMenu = () => setVista('menu');
     const handleVerCarrito = () => setVista('carrito');
     const handleVolverMenu = () => setVista('menu');
-    // El backend devuelve .id (no .orden_id)
-    const handlePedidoEnviado = (ord) => { setOrdenId(ord.id || ord.orden_id); setVista('tracker'); };
-    const handleNuevoPedido = () => { setOrdenId(null); setVista('menu'); };
+    const handlePedidoEnviado = (ord) => {
+        setOrdenId(ord.id || ord.orden_id);
+        setVista('tracker');
+    };
+    const handleNuevoPedido = () => {
+        setOrdenId(null);
+        setVista('menu');
+    };
 
+    const renderMesaError = () => {
+        if (!mesaError) return null;
+
+        return (
+            <div
+                className="modal d-flex align-items-center justify-content-center"
+                style={{
+                    display: 'flex',
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100vh',
+                    background: 'rgba(0,0,0,0.5)',
+                    zIndex: 9999,
+                }}
+            >
+                <div className="card shadow-lg" style={{ maxWidth: 400, borderRadius: '1.25rem' }}>
+                    <div className="card-body text-center p-4">
+                        <div
+                            className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                            style={{
+                                width: 60,
+                                height: 60,
+                                background: '#fff3cd',
+                            }}
+                        >
+                            <span style={{ fontSize: '2rem' }}>!</span>
+                        </div>
+                        <h5 className="card-title fw-bold text-dark mb-2">Mesa no valida</h5>
+                        <p className="card-text text-secondary mb-4">{mesaError}</p>
+                        <button
+                            className="btn btn-primary fw-bold py-2 px-4"
+                            onClick={() => setMesaError(null)}
+                            style={{ borderRadius: '0.75rem' }}
+                        >
+                            Intentar de nuevo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    let content;
     switch (vista) {
         case 'ingreso':
-            return <MesaIngreso onMesaValida={handleMesaValida} />;
+            content = <MesaIngreso onMesaValida={handleMesaValida} />;
+            break;
 
         case 'fidelidad':
-            return (
+            content = (
                 <>
                     <MenuCliente numeroMesa={mesaActiva} onVerCarrito={handleVerCarrito} />
                     <FidelidadModal onContinue={handleContinuarMenu} />
                 </>
             );
+            break;
 
         case 'menu':
-            return <MenuCliente numeroMesa={mesaActiva} onVerCarrito={handleVerCarrito} />;
+            content = <MenuCliente numeroMesa={mesaActiva} onVerCarrito={handleVerCarrito} />;
+            break;
 
         case 'carrito':
-            return <Carrito onBack={handleVolverMenu} onPedidoEnviado={handlePedidoEnviado} />;
+            content = <Carrito onBack={handleVolverMenu} onPedidoEnviado={handlePedidoEnviado} />;
+            break;
 
         case 'tracker':
-            return <OrderTracker ordenId={ordenId} onNuevoPedido={handleNuevoPedido} />;
+            content = <OrderTracker ordenId={ordenId} numeroMesa={mesaActiva} onNuevoPedido={handleNuevoPedido} />;
+            break;
 
         default:
-            return <MesaIngreso onMesaValida={handleMesaValida} />;
+            content = <MesaIngreso onMesaValida={handleMesaValida} />;
+            break;
     }
+
+    return (
+        <>
+            {content}
+            {renderMesaError()}
+        </>
+    );
 };
 
 export default ClientePage;

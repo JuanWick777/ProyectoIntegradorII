@@ -35,7 +35,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
     const total = subtotal + iva;
 
     const handleConfirmar = async () => {
-        if (carrito.length === 0) return;
+        if (loading || carrito.length === 0) return;
         setLoading(true);
         setError('');
 

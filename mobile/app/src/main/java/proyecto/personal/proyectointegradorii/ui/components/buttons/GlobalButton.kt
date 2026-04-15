@@ -1,5 +1,6 @@
 package proyecto.personal.proyectointegradorii.ui.components.buttons
 
+import android.os.SystemClock
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
@@ -9,6 +10,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
@@ -27,10 +32,19 @@ fun GlobalButton(
     colortext: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    debounceMillis: Long = 900L
 ){
+    var lastClickAt by remember { mutableLongStateOf(0L) }
+
     Button(
-        onClick = onClick,
+        onClick = {
+            val now = SystemClock.elapsedRealtime()
+            if (now - lastClickAt >= debounceMillis) {
+                lastClickAt = now
+                onClick()
+            }
+        },
         enabled = enabled,
         modifier = modifier
             .height(alt.dp)

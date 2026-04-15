@@ -35,6 +35,11 @@ public class OrdenController {
         return ResponseEntity.ok(service.obtenerPorId(id));
     }
 
+    @GetMapping("/mesa/{numero}/activas")
+    public ResponseEntity<List<OrdenResponseDTO>> obtenerActivasPorMesa(@PathVariable Integer numero) {
+        return ResponseEntity.ok(service.obtenerActivasPorMesa(numero));
+    }
+
     @PutMapping("/{id}/estado")
     public OrdenResponseDTO actualizarEstado(
             @PathVariable Long id,

@@ -2,12 +2,13 @@ package proyecto.personal.proyectointegradorii.ui.screens.internal.scan
 
 import android.net.Uri
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,15 +25,15 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import proyecto.personal.proyectointegradorii.ui.components.buttons.GlobalButton
+import proyecto.personal.proyectointegradorii.ui.components.cards.GlobalCard
 import proyecto.personal.proyectointegradorii.ui.components.headers.InternalHeader
+import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
+import proyecto.personal.proyectointegradorii.ui.theme.BackgroundCardColor
 import proyecto.personal.proyectointegradorii.ui.theme.BackgroundColor
 import proyecto.personal.proyectointegradorii.ui.theme.MainColor
+import proyecto.personal.proyectointegradorii.ui.theme.TextColorDark
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
 import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
-import proyecto.personal.proyectointegradorii.ui.components.inputs.GlobalTextInput
 
 @Composable
 fun SScan(
@@ -41,8 +42,6 @@ fun SScan(
 ) {
     val context = LocalContext.current
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var mesaDetectada by remember { mutableStateOf<Long?>(null) }
-    var mesaManual by rememberSaveable { mutableStateOf("") }
 
     val options = GmsBarcodeScannerOptions.Builder()
         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -67,14 +66,16 @@ fun SScan(
 
     fun confirmarMesa(mesaId: Long?) {
         if (mesaId != null && mesaId > 0) {
-            mesaDetectada = mesaId
             errorMessage = null
             cartViewModel.setMesaSeleccionada(mesaId)
-            navController.navigate("cart") {
+            navController.navigate("home") {
+                popUpTo("home") {
+                    inclusive = false
+                }
                 launchSingleTop = true
             }
         } else {
-            errorMessage = "Ingresa un número de mesa válido"
+            errorMessage = "El QR no contiene una mesa valida"
         }
     }
 
@@ -93,14 +94,23 @@ fun SScan(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        Text("Escanea el código QR de tu mesa para asignarla automáticamente.")
+        GlobalCard(
+            {
+                GlobalText(
+                    "Escanea el código QR de tu mesa para asignarla automaticamente.",
+                    15,
+                    TextColorDark,
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(horizontal = 10.dp, vertical = 18.dp)
+                        .fillMaxWidth()
+                )
+            },
+            Modifier,
+            BackgroundCardColor
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
-
-        mesaDetectada?.let {
-            Text("Mesa detectada: $it")
-            Spacer(modifier = Modifier.height(12.dp))
-        }
 
         errorMessage?.let {
             Text(it)
@@ -108,7 +118,7 @@ fun SScan(
         }
 
         GlobalButton(
-            "Escanear código QR",
+            "Escanear codigo QR",
             16,
             50,
             280,
@@ -120,22 +130,7 @@ fun SScan(
 
                 scanner.startScan()
                     .addOnSuccessListener { barcode ->
-                        val mesaId = extraerMesa(barcode.rawValue)
-
-                        /*if (mesaId != null) {
-                            mesaDetectada = mesaId
-                            cartViewModel.setMesaSeleccionada(mesaId)
-                            navController.navigate("cart") {
-                                launchSingleTop = true
-                            }
-                        } else {
-                            errorMessage = "El QR no contiene una mesa válida"
-                        }*/
-                        if (mesaId != null) {
-                            confirmarMesa(mesaId)
-                        } else {
-                            errorMessage = "El QR no contiene una mesa válida"
-                        }
+                        confirmarMesa(extraerMesa(barcode.rawValue))
                     }
                     .addOnCanceledListener {
                         errorMessage = "Escaneo cancelado"
@@ -144,44 +139,11 @@ fun SScan(
                         errorMessage = if ((e.message ?: "").contains(CommonStatusCodes.CANCELED.toString())) {
                             "Escaneo cancelado"
                         } else {
-                            "No se pudo leer el código QR"
+                            "No se pudo leer el codigo QR"
                         }
                     }
             },
             Modifier
         )
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Text("O selecciona tu mesa manualmente para pruebas")
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        GlobalTextInput(
-            value = mesaManual,
-            onValueChange = { nuevo ->
-                mesaManual = nuevo.filter { it.isDigit() }
-            },
-            placeholder = "Ej. 3",
-            height = 56,
-            width = 280
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        GlobalButton(
-            "Usar mesa manualmente",
-            16,
-            50,
-            280,
-            MainColor,
-            BackgroundColor,
-            MainColor,
-            {
-                confirmarMesa(mesaManual.toLongOrNull())
-            },
-            Modifier
-        )
-        Text("Modo pruebas: también puedes asignar la mesa manualmente")
     }
 }

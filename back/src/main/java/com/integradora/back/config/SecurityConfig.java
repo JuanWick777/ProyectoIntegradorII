@@ -48,6 +48,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/cocina").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/promociones").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ordenes/completa").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ordenes/mesa/*/activas").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/mis-ordenes").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
@@ -73,6 +74,7 @@ public class SecurityConfig {
         // allowedOriginPatterns permite usar allowCredentials con comodines
         config.addAllowedOriginPattern("http://localhost:*");
         config.addAllowedOriginPattern("http://192.168.*.*:*");
+        config.addAllowedOriginPattern("http://10.*.*.*:*");
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

@@ -15,8 +15,25 @@ function getStoredToken() {
     }
 }
 
+function isPublicRequest(endpoint, method = 'GET') {
+    const normalizedMethod = method.toUpperCase();
+
+    return (
+        (normalizedMethod === 'GET' && endpoint.startsWith('/mesas')) ||
+        (normalizedMethod === 'GET' && endpoint.startsWith('/platillos')) ||
+        (normalizedMethod === 'GET' && endpoint.startsWith('/promociones')) ||
+        (normalizedMethod === 'GET' && endpoint.startsWith('/ordenes/')) ||
+        (normalizedMethod === 'GET' && endpoint.startsWith('/ordenes/mesa/')) ||
+        (normalizedMethod === 'POST' && endpoint === '/ordenes/completa') ||
+        endpoint.startsWith('/auth/login') ||
+        endpoint.startsWith('/auth/register')
+    );
+}
+
 async function apiFetch(endpoint, options = {}) {
     const token = options.token || getStoredToken();
+    const method = options.method || 'GET';
+    const shouldAttachToken = token && !isPublicRequest(endpoint, method);
 
     const isFormDataBody =
         typeof FormData !== 'undefined' && options?.body instanceof FormData;
@@ -26,7 +43,7 @@ async function apiFetch(endpoint, options = {}) {
         ...(options.headers || {}),
     };
 
-    if (token) {
+    if (shouldAttachToken) {
         headers.Authorization = `Bearer ${token}`;
         console.log('📤 Sending with Authorization:', headers.Authorization.substring(0, 30) + '...');
     }
@@ -192,7 +209,7 @@ export const useAppStore = create(
                     detalles: carrito.map((item) => ({
                         platilloId: item.id,
                         cantidad: item.cantidad,
-                        notaCliente: item.notas || '',
+                        nota: item.notas || '',
                     })),
                 };
 
@@ -226,6 +243,11 @@ export const useAppStore = create(
                 }, 5000);
 
                 set({ pollingInterval: interval });
+            },
+
+            fetchOrdenesActivasPorMesa: async (numeroMesa) => {
+                if (!numeroMesa) return [];
+                return await apiFetch(`/ordenes/mesa/${numeroMesa}/activas`);
             },
 
             stopOrderPolling: () => {

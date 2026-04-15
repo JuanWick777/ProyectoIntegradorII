@@ -1,68 +1,58 @@
-import React, { useEffect, useCallback, useRef } from 'react';
-import { Clock, Check, ChefHat, UtensilsCrossed, PartyPopper, CreditCard, X, ClipboardList, FileText } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Check, ChefHat, ClipboardList, Clock, CreditCard, FileText, PartyPopper, UtensilsCrossed, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { PrimaryButton } from '../ui/Button';
+import { PrimaryButton, SecondaryButton } from '../ui/Button';
 
-const POLL_INTERVAL_MS = 8000; // 8 segundos — balance entre reactividad y carga al servidor
+const POLL_INTERVAL_MS = 8000;
 
-/**
- * Configuración visual de cada estado de la orden.
- */
 const ESTADOS_CONFIG = {
     pendiente_confirmacion: {
-        label: 'Pendiente de Confirmación',
-        sublabel: 'Tu pedido está esperando ser aceptado por el mesero.',
+        label: 'Pendiente de confirmacion',
+        sublabel: 'Tu pedido esta esperando ser aceptado por el mesero.',
         Icon: Clock,
         color: '#856404',
-        bg: '#FFF3CD',
         step: 1,
     },
     confirmada: {
-        label: 'Pedido Confirmado',
-        sublabel: 'El mesero aceptó tu pedido, pronto lo prepararemos.',
+        label: 'Pedido confirmado',
+        sublabel: 'El mesero acepto tu pedido, pronto lo prepararemos.',
         Icon: Check,
         color: '#0C5460',
-        bg: '#D1ECF1',
         step: 2,
     },
     en_preparacion: {
-        label: 'En Preparación',
-        sublabel: 'Nuestros chefs están trabajando en tu pedido.',
+        label: 'En preparacion',
+        sublabel: 'Nuestros chefs estan trabajando en tu pedido.',
         Icon: ChefHat,
         color: '#004085',
-        bg: '#CCE5FF',
         step: 3,
     },
     lista: {
-        label: '¡Listo para servir!',
-        sublabel: 'Tu pedido está listo. El mesero lo llevará a tu mesa.',
+        label: 'Listo para servir',
+        sublabel: 'Tu pedido esta listo. El mesero lo llevara a tu mesa.',
         Icon: UtensilsCrossed,
         color: '#155724',
-        bg: '#D4EDDA',
         step: 4,
     },
     entregada: {
-        label: 'Orden Entregada',
-        sublabel: '¡Buen provecho! Disfruta tu comida.',
+        label: 'Orden entregada',
+        sublabel: 'Buen provecho.',
         Icon: PartyPopper,
         color: '#383D41',
-        bg: '#E2E3E5',
         step: 5,
     },
     cerrada: {
-        label: 'Cuenta Cerrada',
-        sublabel: '¡Gracias por tu visita! Esperamos verte pronto.',
+        label: 'Cuenta cerrada',
+        sublabel: 'Gracias por tu visita.',
         Icon: CreditCard,
         color: '#383D41',
-        bg: '#E2E3E5',
-        step: 6,
+        step: 5,
     },
     cancelada: {
-        label: 'Pedido Cancelado',
+        label: 'Pedido cancelado',
         sublabel: 'El pedido fue cancelado. Por favor, contacta al mesero.',
         Icon: X,
         color: '#721C24',
-        bg: '#F8D7DA',
         step: 0,
     },
 };
@@ -75,232 +65,249 @@ const PASOS_BARRA = [
     { step: 5, label: 'Entregado' },
 ];
 
-/**
- * OrderTracker.jsx — Pantalla de trazabilidad de la orden
- *
- * Implementa polling real con useEffect + setInterval.
- * Consulta GET /api/ordenes/{id} cada POLL_INTERVAL_MS ms.
- * Se detiene automáticamente cuando la orden está cerrada/cancelada.
- *
- * Props:
- *   ordenId    — ID de la orden a rastrear
- *   onNuevoPedido — callback para hacer un nuevo pedido
- */
-const OrderTracker = ({ ordenId, onNuevoPedido }) => {
-    const { ordenActual, startOrderPolling, stopOrderPolling } = useAppStore();
-    const intervalRef = useRef(null);
+const estadosFinales = ['cerrada', 'cancelada', 'entregada'];
 
-    // Estado vivo de la orden
-    const orden = ordenActual;
+const getConfig = (estado) => ESTADOS_CONFIG[estado] || ESTADOS_CONFIG.pendiente_confirmacion;
+
+const DetalleOrden = ({ detalle }) => {
+    const estadoDet = (detalle?.estadoPreparacion || '').toString().toUpperCase();
+    const estadoBadge = {
+        PENDIENTE: { cls: 'bg-warning text-dark', txt: 'Pendiente' },
+        EN_PREPARACION: { cls: 'bg-info', txt: 'Preparando' },
+        LISTO: { cls: 'bg-success', txt: 'Listo' },
+        FINALIZADA: { cls: 'bg-secondary', txt: 'Finalizado' },
+    }[estadoDet] || { cls: 'bg-light text-dark', txt: estadoDet || 'Pendiente' };
+
+    return (
+        <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom">
+            <div>
+                <span className="fw-semibold small">{detalle.nombre}</span>
+                <span className="text-muted small ms-2">x{detalle.cantidad}</span>
+                {detalle.nota && (
+                    <p className="text-muted mb-0 d-flex align-items-center gap-1" style={{ fontSize: '0.72rem' }}>
+                        <FileText size={12} /> {detalle.nota}
+                    </p>
+                )}
+            </div>
+            <span className={`badge ${estadoBadge.cls} rounded-pill`} style={{ fontSize: '0.7rem' }}>
+                {estadoBadge.txt}
+            </span>
+        </div>
+    );
+};
+
+const OrdenActivaCard = ({ orden }) => {
     const estado = orden?.estado || 'pendiente_confirmacion';
-    const config = ESTADOS_CONFIG[estado] || ESTADOS_CONFIG['pendiente_confirmacion'];
+    const config = getConfig(estado);
     const IconComponent = config.Icon;
-    const esFinal = ['cerrada', 'cancelada', 'entregada'].includes(estado);
 
-    // Iniciar polling al montar, limpiar al desmontar
+    return (
+        <div className="card border-0 shadow mb-4" style={{ borderRadius: '1.25rem', overflow: 'hidden' }}>
+            <div className="card-body p-4 text-center">
+                <p className="text-muted small mb-2">Pedido #{orden.id}</p>
+                <IconComponent size={38} style={{ color: config.color }} />
+                <h2 className="fw-bold fs-5 mt-3 mb-1" style={{ color: config.color }}>
+                    {config.label}
+                </h2>
+                <p className="text-muted small mb-0">{config.sublabel}</p>
+            </div>
+
+            {estado !== 'cancelada' && (
+                <div className="px-4 pb-4">
+                    <div className="d-flex justify-content-between align-items-end position-relative">
+                        <div
+                            className="position-absolute"
+                            style={{
+                                top: 14,
+                                left: '5%',
+                                right: '5%',
+                                height: 4,
+                                background: '#E9ECEF',
+                                borderRadius: 2,
+                                zIndex: 0,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    height: '100%',
+                                    background: '#FF7A00',
+                                    borderRadius: 2,
+                                    width: `${Math.max(0, ((config.step - 1) / (PASOS_BARRA.length - 1)) * 100)}%`,
+                                    transition: 'width 0.6s ease',
+                                }}
+                            />
+                        </div>
+
+                        {PASOS_BARRA.map((paso) => {
+                            const completado = config.step >= paso.step;
+                            const activo = config.step === paso.step;
+                            return (
+                                <div key={paso.step} className="d-flex flex-column align-items-center" style={{ zIndex: 1, flex: 1 }}>
+                                    <div
+                                        style={{
+                                            width: 28,
+                                            height: 28,
+                                            borderRadius: '50%',
+                                            background: completado ? '#FF7A00' : '#E9ECEF',
+                                            border: activo ? '3px solid #FF7A00' : 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: completado ? '#fff' : '#adb5bd',
+                                            fontWeight: 700,
+                                            fontSize: 13,
+                                            boxShadow: activo ? '0 0 0 4px rgba(255,122,0,0.2)' : 'none',
+                                            marginBottom: 4,
+                                        }}
+                                    >
+                                        {completado && !activo ? <Check size={14} /> : paso.step}
+                                    </div>
+                                    <span
+                                        style={{
+                                            fontSize: '0.65rem',
+                                            fontWeight: completado ? 700 : 400,
+                                            color: completado ? '#FF7A00' : '#adb5bd',
+                                        }}
+                                    >
+                                        {paso.label}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {orden?.detalles?.length > 0 && (
+                <>
+                    <div className="card-header bg-transparent border-bottom py-3 d-flex align-items-center gap-2">
+                        <ClipboardList size={18} />
+                        <h6 className="fw-bold mb-0">Detalle del pedido</h6>
+                    </div>
+                    <div className="card-body p-0">
+                        {orden.detalles.map((detalle, idx) => (
+                            <DetalleOrden key={`${orden.id}-${detalle.id ?? idx}`} detalle={detalle} />
+                        ))}
+                    </div>
+                    <div className="card-footer bg-transparent px-4 py-3">
+                        <div className="d-flex justify-content-between small text-muted">
+                            <span>Subtotal</span>
+                            <span>${Number(orden.subtotal || 0).toFixed(2)}</span>
+                        </div>
+                        {Number(orden.montoDescuento || 0) > 0 && (
+                            <div className="d-flex justify-content-between small text-muted">
+                                <span>Descuento</span>
+                                <span>- ${Number(orden.montoDescuento).toFixed(2)}</span>
+                            </div>
+                        )}
+                        <div className="d-flex justify-content-between fw-bold mt-1">
+                            <span>Total</span>
+                            <span className="text-primary">${Number(orden.total || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
+const OrderTracker = ({ ordenId, numeroMesa, onNuevoPedido }) => {
+    const { ordenActual, fetchOrdenesActivasPorMesa } = useAppStore();
+    const [ordenesActivas, setOrdenesActivas] = useState(() => (ordenActual ? [ordenActual] : []));
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    const cargarOrdenesActivas = async () => {
+        if (!numeroMesa) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setError('');
+            const data = await fetchOrdenesActivasPorMesa(numeroMesa);
+            setOrdenesActivas(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setError(err?.message || 'No se pudieron cargar tus pedidos activos.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        if (!ordenId) return;
-
-        startOrderPolling(ordenId);
-
-        return () => {
-            stopOrderPolling();
-        };
+        cargarOrdenesActivas();
+        const interval = setInterval(cargarOrdenesActivas, POLL_INTERVAL_MS);
+        return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ordenId]);
+    }, [numeroMesa]);
+
+    const ordenesOrdenadas = useMemo(() => {
+        return [...ordenesActivas]
+            .filter((orden) => !estadosFinales.includes((orden?.estado || '').toLowerCase()))
+            .sort((a, b) => Number(b.id) - Number(a.id));
+    }, [ordenesActivas]);
 
     return (
         <div className="d-flex flex-column min-vh-100" style={{ background: '#F4F5F7' }}>
-
-            {/* ── Header ────────────────────────────────────────────── */}
             <header
                 className="text-white px-4 pt-4 pb-5"
                 style={{ background: 'linear-gradient(135deg, #FF7A00, #E06900)' }}
             >
-                <p className="mb-1 opacity-75 small">Pedido #{ordenId}</p>
-                <h1 className="fw-bold fs-4 mb-0">Estado de tu Orden</h1>
+                <p className="mb-1 opacity-75 small">Mesa #{numeroMesa || '-'}</p>
+                <h1 className="fw-bold fs-4 mb-0">Pedidos en preparacion</h1>
+                {ordenId && <p className="small opacity-75 mb-0 mt-1">Ultimo pedido enviado: #{ordenId}</p>}
             </header>
 
             <div className="container px-3" style={{ marginTop: '-2rem' }}>
-
-                {/* ── Tarjeta de estado principal ───────────────────── */}
-                <div
-                    className="card border-0 shadow mb-4"
-                    style={{ borderRadius: '1.25rem' }}
-                >
-                    <div className="card-body p-4 text-center">
-                        {/* Ícono grande animado */}
-                        <div
-                            className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                            style={{
-                                width: 80, height: 80,
-                                transition: 'all 0.5s ease',
-                            }}
-                        >
-                            <IconComponent size={40} style={{ color: config.color }} />
-                            {config.icon}
-                        </div>
-
-                        {/* Estado principal */}
-                        <h2 className="fw-bold fs-5 mb-1" style={{ color: config.color }}>
-                            {config.label}
-                        </h2>
-                        <p className="text-muted small mb-0">{config.sublabel}</p>
-
-                        {/* Indicador de polling activo */}
-                        {!esFinal && (
-                            <div className="mt-3 d-flex align-items-center justify-content-center gap-2 text-muted small">
-                                <span
-                                    className="spinner-grow spinner-grow-sm text-primary"
-                                    role="status"
-                                    style={{ animationDuration: '1.5s' }}
-                                />
-                                Actualizando automáticamente
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* ── Barra de progreso por pasos ───────────────────── */}
-                {estado !== 'cancelada' && (
-                    <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '1rem' }}>
-                        <div className="card-body px-4 py-3">
-                            <div className="d-flex justify-content-between align-items-end position-relative">
-                                {/* Línea de progreso */}
-                                <div
-                                    className="position-absolute"
-                                    style={{
-                                        top: 14, left: '5%', right: '5%', height: 4,
-                                        background: '#E9ECEF', borderRadius: 2, zIndex: 0,
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            height: '100%',
-                                            background: '#FF7A00',
-                                            borderRadius: 2,
-                                            width: `${Math.max(0, ((config.step - 1) / (PASOS_BARRA.length - 1)) * 100)}%`,
-                                            transition: 'width 0.6s ease',
-                                        }}
-                                    />
-                                </div>
-
-                                {/* Pasos */}
-                                {PASOS_BARRA.map(paso => {
-                                    const completado = config.step >= paso.step;
-                                    const activo = config.step === paso.step;
-                                    return (
-                                        <div key={paso.step} className="d-flex flex-column align-items-center" style={{ zIndex: 1, flex: 1 }}>
-                                            <div
-                                                style={{
-                                                    width: 28, height: 28,
-                                                    borderRadius: '50%',
-                                                    background: completado ? '#FF7A00' : '#E9ECEF',
-                                                    border: activo ? '3px solid #FF7A00' : 'none',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: completado ? '#fff' : '#adb5bd',
-                                                    fontWeight: 700,
-                                                    fontSize: 13,
-                                                    boxShadow: activo ? '0 0 0 4px rgba(255,122,0,0.2)' : 'none',
-                                                    transition: 'all 0.4s ease',
-                                                    marginBottom: 4,
-                                                }}
-                                            >
-                                                {completado && !activo ? '✓' : paso.step}
-                                            </div><Check size={14} />
-                                            <span
-                                                style={{
-                                                    fontSize: '0.65rem',
-                                                    fontWeight: completado ? 700 : 400,
-                                                    color: completado ? '#FF7A00' : '#adb5bd',
-                                                }}
-                                            >
-                                                {paso.label}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                {loading && (
+                    <div className="card border-0 shadow mb-4" style={{ borderRadius: '1.25rem' }}>
+                        <div className="card-body text-center p-4 text-muted">
+                            Cargando pedidos...
                         </div>
                     </div>
                 )}
 
-                {/* ── Resumen de la orden ───────────────────────────── */}
-                {orden?.detalles?.length > 0 && (
-                    <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '1rem' }}>
-                        <div className="card-header bg-transparent border-bottom py-3 d-flex align-items-center gap-2">
-                            <ClipboardList size={18} />
-                            <h6 className="fw-bold mb-0">Detalle del Pedido</h6>
-                        </div>
-                        <div className="card-body p-0">
-                            {orden.detalles.map((det, idx) => {
-                                const estadoDet = (det?.estadoPreparacion || '').toString().toUpperCase();
-                                const estadoDetKey = {
-                                    PENDIENTE: 'pendiente',
-                                    EN_PREPARACION: 'en_preparacion',
-                                    LISTO: 'listo',
-                                }[estadoDet] || 'pendiente';
+                {error && (
+                    <div className="alert alert-danger shadow-sm" role="alert">
+                        {error}
+                    </div>
+                )}
 
-                                const estadoBadge = {
-                                    pendiente: { cls: 'bg-warning text-dark', txt: 'Pendiente' },
-                                    en_preparacion: { cls: 'bg-info', txt: 'Preparando...' },
-                                    listo: { cls: 'bg-success', txt: 'Listo ✓' },
-                                }[estadoDetKey] || { cls: 'bg-light', txt: estadoDetKey };
-
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom"
-                                        style={{ borderColor: '#F0F0F0' }}
-                                    >
-                                        <div>
-                                            <span className="fw-semibold small">{det.nombre}</span>
-                                            <span className="text-muted small ms-2">x{det.cantidad}</span>
-                                            {det.nota && (
-                                                <p className="text-muted mb-0 d-flex align-items-center gap-1" style={{ fontSize: '0.72rem' }}>
-                                                    <FileText size={12} /> {det.nota}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <span className={`badge ${estadoBadge.cls} rounded-pill`} style={{ fontSize: '0.7rem' }}>
-                                            {estadoBadge.txt}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        {/* Totales */}
-                        <div className="card-footer bg-transparent px-4 py-3">
-                            <div className="d-flex justify-content-between small text-muted">
-                                <span>Subtotal</span><span>${Number(orden.subtotal).toFixed(2)}</span>
-                            </div>
-                            {Number(orden.montoDescuento || 0) > 0 && (
-                                <div className="d-flex justify-content-between small text-muted">
-                                    <span>Descuento</span><span>- ${Number(orden.montoDescuento).toFixed(2)}</span>
-                                </div>
-                            )}
-                            <div className="d-flex justify-content-between fw-bold mt-1">
-                                <span>Total</span>
-                                <span className="text-primary">${Number(orden.total).toFixed(2)}</span>
-                            </div>
+                {!loading && !error && ordenesOrdenadas.length === 0 && (
+                    <div className="card border-0 shadow mb-4" style={{ borderRadius: '1.25rem' }}>
+                        <div className="card-body text-center p-4">
+                            <PartyPopper size={42} className="text-primary mb-3" />
+                            <h2 className="fw-bold fs-5">No hay pedidos activos</h2>
+                            <p className="text-muted small mb-0">Puedes volver al menu para realizar otro pedido.</p>
                         </div>
                     </div>
                 )}
 
-                {/* ── Acciones finales ──────────────────────────────── */}
-                {estado === 'cerrada' && (
+                {ordenesOrdenadas.map((orden) => (
+                    <OrdenActivaCard key={orden.id} orden={orden} />
+                ))}
+
+                <div className="d-grid gap-2 mb-4">
                     <PrimaryButton
                         type="button"
                         fullWidth
-                        className="fw-bold py-3 mb-4"
+                        className="fw-bold py-3"
                         style={{ borderRadius: '0.75rem' }}
                         onClick={onNuevoPedido}
                     >
-                        Hacer Nuevo Pedido
+                        Hacer otro pedido
                     </PrimaryButton>
-                )}
+
+                    <SecondaryButton
+                        type="button"
+                        fullWidth
+                        className="fw-bold py-3"
+                        style={{ borderRadius: '0.75rem' }}
+                        onClick={cargarOrdenesActivas}
+                    >
+                        Actualizar seguimiento
+                    </SecondaryButton>
+                </div>
             </div>
         </div>
     );

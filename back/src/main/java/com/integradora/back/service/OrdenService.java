@@ -298,6 +298,24 @@ public class OrdenService {
     }
 
     @Transactional(readOnly = true)
+    public List<OrdenResponseDTO> obtenerActivasPorMesa(Integer numeroMesa) {
+        return ordenRepository.findByMesaNumeroAndEstadoPreparacionNotInOrderByIdDesc(
+                        numeroMesa,
+                        List.of(
+                                EstadoOrden.ENTREGADA,
+                                EstadoOrden.CERRADA,
+                                EstadoOrden.CANCELADA
+                        )
+                )
+                .stream()
+                .map(orden -> {
+                    List<DetalleOrden> detalles = detalleRepository.findByOrdenId(orden.getId());
+                    return OrdenMapper.toDTO(orden, detalles);
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<OrdenResponseDTO> obtenerOrdenesDelClienteActual(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new RuntimeException("No autenticado");

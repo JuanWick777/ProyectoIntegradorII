@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,8 +27,6 @@ fun HomeTopBar(
     onSearchChange: (String) -> Unit,
     onToggleCategories: () -> Unit,
     onProfileClick: () -> Unit,
-    mesaActual: Long?,
-    pedidosActivos: Int,
     menuEnabled: Boolean
 ) {
     Column(
@@ -72,10 +69,5 @@ fun HomeTopBar(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Text("Mesa actual: ${mesaActual ?: "Sin asignar"}")
-        Text("Pedidos activos: $pedidosActivos")
     }
 }

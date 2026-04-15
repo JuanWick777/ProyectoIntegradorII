@@ -62,6 +62,9 @@ fun SCart(
     val isSubmittingOrder by cartViewModel.isSubmittingOrder.collectAsState()
 
     var showSuccessDialog by remember { mutableStateOf(false) }
+    fun esOrdenEntregada(estado: String) = estado.trim().lowercase() == "entregada"
+    val ordenActualVisible = orden?.takeUnless { esOrdenEntregada(it.estado) }
+    val ordenesVisibles = ordenes.filterNot { esOrdenEntregada(it.estado) }
 
     LaunchedEffect(Unit) {
         cartViewModel.cargarUsuario()
@@ -104,12 +107,12 @@ fun SCart(
         Spacer(modifier = Modifier.height(10.dp))
 
         when {
-            orden != null -> {
-                val pedidoActual = orden!!
+            ordenActualVisible != null -> {
+                val pedidoActual = ordenActualVisible
 
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .padding(horizontal = 20.dp, vertical = 15.dp)
                 ) {
                     GlobalCard(
@@ -119,7 +122,7 @@ fun SCart(
                             // Columna interna para controlar el padding dentro de la Card
                             Column(
                                 modifier = Modifier
-                                    .fillMaxSize()
+                                    .fillMaxWidth()
                                     .padding(20.dp)
                             ) {
                                 // --- 1. ENCABEZADO: ID Y ESTADO ---
@@ -266,7 +269,7 @@ fun SCart(
                                         alt = 50,
                                         ancho = 300,
                                         bordercolorbutton = MainColor,
-                                        colorbutton = Color.Transparent,
+                                        colorbutton = BackgroundColor,
                                         colortext = MainColor,
                                         onClick = {
                                             cartViewModel.limpiarOrdenActual()
@@ -281,7 +284,7 @@ fun SCart(
 
 
             items.isEmpty() -> {
-                if (ordenes.isEmpty()) {
+                if (ordenesVisibles.isEmpty()) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -358,7 +361,7 @@ fun SCart(
                         LazyColumn(
                             contentPadding = PaddingValues(bottom = 20.dp)
                         ) {
-                            items(ordenes) { pedido ->
+                            items(ordenesVisibles) { pedido ->
                                 GlobalCard(
                                     backgroundColor = BackgroundCardColor,
                                     modifier = Modifier.padding(bottom = 16.dp),
@@ -484,13 +487,13 @@ fun SCart(
                                         ) {
                                             GlobalText(
                                                 texto = item.platillo.nombre,
-                                                tamanio = 16,
+                                                tamanio = 13,
                                                 color = TextColorDark,
                                                 peso = FontWeight.Bold
                                             )
                                             GlobalText(
                                                 texto = "$${item.subtotal()}",
-                                                tamanio = 16,
+                                                tamanio = 14,
                                                 color = MainColor,
                                                 peso = FontWeight.Bold
                                             )
@@ -500,8 +503,8 @@ fun SCart(
 
                                         GlobalText(
                                             texto = "Cantidad: ${item.cantidad}",
-                                            tamanio = 14,
-                                            color = Color.Gray
+                                            tamanio = 12,
+                                            color = TextColorGray
                                         )
 
                                         if (item.nota.isNotBlank()) {
@@ -692,7 +695,7 @@ fun SCart(
                     )
 
                     // Botón Secundario: Cancelar
-                    if (items.isNotEmpty() && orden == null) {
+                    if (items.isNotEmpty() && orden != null) {
                         Spacer(modifier = Modifier.height(12.dp))
                         GlobalButton(
                             text = "Cancelar pedido",
@@ -700,7 +703,7 @@ fun SCart(
                             alt = 50,
                             ancho = 350,
                             bordercolorbutton = AlertColor, // Borde rojo
-                            colorbutton = Color.Transparent, // Fondo transparente
+                            colorbutton = BackgroundColor, // Fondo transparente
                             colortext = AlertColor,          // Letras rojas
                             onClick = {
                                 if (!isSubmittingOrder) {

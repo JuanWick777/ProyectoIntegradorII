@@ -58,7 +58,8 @@ public class MeseroController {
                                     EstadoOrden.CONFIRMADA,
                                     EstadoOrden.EN_PREPARACION,
                                     EstadoOrden.LISTA,
-                                    EstadoOrden.ENTREGADA
+                                    EstadoOrden.ENTREGADA,
+                                    EstadoOrden.CANCELADA
                             )
                     );
         }

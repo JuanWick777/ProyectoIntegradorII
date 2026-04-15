@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -48,14 +50,6 @@ fun ScreenRegister(
 
     val success by viewModel.success.collectAsState()
 
-    LaunchedEffect(success) {
-        if (success) {
-            navController.navigate("Login") {
-                popUpTo("Register") { inclusive = true }
-            }
-        }
-    }
-
     val name by viewModel.name.collectAsState()
     val errorName by viewModel.errorName.collectAsState()
     val email by viewModel.email.collectAsState()
@@ -66,7 +60,6 @@ fun ScreenRegister(
     val errorConfirmPassword by viewModel.errorConfirmPassword.collectAsState()
     val isRegister by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-    val successRegister by viewModel.success.collectAsState()
 
     Column(
         modifier = Modifier
@@ -193,17 +186,35 @@ fun ScreenRegister(
                                 Color.White,
                                 {
                                     viewModel.registrar()
-                                    if (successRegister) {
-                                        navController.navigate("Login") {
-                                            popUpTo("Register") { inclusive = true }
-                                        }
-                                    }
                                 },
                                 Modifier
                             )
                         }
                         ErrorText(errorMessage, 16, Modifier)
                     }
+                }
+            }
+        )
+    }
+
+    if (success) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = {
+                Text("Registro exitoso")
+            },
+            text = {
+                Text("Tu cuenta fue creada correctamente. Ahora puedes iniciar sesion.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        navController.navigate("Login") {
+                            popUpTo("Register") { inclusive = true }
+                        }
+                    }
+                ) {
+                    Text("Aceptar")
                 }
             }
         )

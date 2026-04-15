@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import proyecto.personal.proyectointegradorii.ui.theme.BackgroundCardColor
 import proyecto.personal.proyectointegradorii.utils.ImageUrlResolver
 
 @Composable
@@ -47,8 +48,10 @@ fun PlatilloCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable(enabled = enabled) { onClickCard() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            .clickable(enabled = enabled) { onClickCard() }
+            .background(BackgroundCardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        colors = CardDefaults.cardColors(BackgroundCardColor)
     ) {
         Row(
             modifier = Modifier
