@@ -37,6 +37,7 @@ const MesasAdmin = () => {
     const [creando, setCreando] = useState(false);
     const [eliminando, setEliminando] = useState(null);
     const [actualizando, setActualizando] = useState(null);
+    const [campoError, setCampoError] = useState(''); // Error inline del input de mesa
 
     const resumen = useMemo(() => {
         return mesas.reduce((acc, mesa) => {
@@ -67,13 +68,22 @@ const MesasAdmin = () => {
         e.preventDefault();
         const numero = parseInt(nuevoNumero, 10);
 
+        if (!nuevoNumero) {
+            setCampoError('El número de mesa es obligatorio.');
+            return;
+        }
         if (!numero || numero < 1) {
-            setError('Ingresa un numero de mesa valido.');
+            setCampoError('Ingresa un número de mesa válido (mayor a 0).');
+            return;
+        }
+        if (numero > 999) {
+            setCampoError('El número de mesa no puede ser mayor a 999.');
             return;
         }
 
         try {
             setError('');
+            setCampoError('');
             setSuccess('');
             setCreando(true);
             await crearMesa(numero);
@@ -82,7 +92,7 @@ const MesasAdmin = () => {
             await cargarMesas();
         } catch (err) {
             if (err.status === 409) {
-                setError(`Ya existe una mesa con el numero ${numero}`);
+                setCampoError(`Ya existe una mesa con el número ${numero}.`);
             } else {
                 setError('Error al crear la mesa: ' + (err.message || 'Error desconocido'));
             }
@@ -175,37 +185,50 @@ const MesasAdmin = () => {
                         <div className="card border-0 shadow-sm" style={{ borderRadius: '1rem' }}>
                             <div className="card-body">
                                 <h5 className="card-title fw-bold mb-3">Agregar Nueva Mesa</h5>
-                                <form onSubmit={handleCrearMesa}>
-                                    <label className="form-label fw-semibold small text-secondary">
-                                        Numero de Mesa
-                                    </label>
-                                    <div className="input-group">
-                                        <input
-                                            type="number"
-                                            className="form-control"
-                                            placeholder="1"
-                                            min="1"
-                                            max="999"
-                                            value={nuevoNumero}
-                                            onChange={(e) => setNuevoNumero(e.target.value)}
-                                            disabled={creando}
-                                        />
-                                        <PrimaryButton
-                                            type="submit"
-                                            disabled={creando || !nuevoNumero}
-                                        >
-                                            {creando ? (
-                                                <>
-                                                    <Loader size={16} className="me-2" style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }} />
-                                                    Creando...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Plus size={16} className="me-2" style={{ display: 'inline-block' }} />
-                                                    Crear
-                                                </>
-                                            )}
-                                        </PrimaryButton>
+                                <form onSubmit={handleCrearMesa} noValidate>
+                                    <div className="mb-3">
+                                        <label className="form-label fw-semibold small text-secondary">
+                                            Número de Mesa <span className="text-danger">*</span>
+                                        </label>
+                                        <div className="input-group">
+                                            <input
+                                                type="number"
+                                                className={`form-control ${campoError ? 'is-invalid' : nuevoNumero && !campoError ? 'is-valid' : ''}`}
+                                                placeholder="Ej. 1"
+                                                min="1"
+                                                max="999"
+                                                value={nuevoNumero}
+                                                onKeyDown={(e) => {
+                                                    if (['+', '-', 'e', 'E', '.'].includes(e.key)) e.preventDefault();
+                                                }}
+                                                onChange={(e) => {
+                                                    setNuevoNumero(e.target.value);
+                                                    setCampoError('');
+                                                }}
+                                                disabled={creando}
+                                            />
+                                            <PrimaryButton
+                                                type="submit"
+                                                disabled={creando || !nuevoNumero}
+                                            >
+                                                {creando ? (
+                                                    <>
+                                                        <Loader size={16} className="me-2" style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                                                        Creando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Plus size={16} className="me-2" style={{ display: 'inline-block' }} />
+                                                        Crear
+                                                    </>
+                                                )}
+                                            </PrimaryButton>
+                                        </div>
+                                        {campoError && (
+                                            <div className="invalid-feedback d-flex align-items-center gap-1 mt-1" style={{ display: 'flex !important' }}>
+                                                <span>⚠</span> {campoError}
+                                            </div>
+                                        )}
                                     </div>
                                 </form>
                             </div>

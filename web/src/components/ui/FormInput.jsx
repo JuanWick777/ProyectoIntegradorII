@@ -18,20 +18,22 @@ const FormInput = ({
   wrapperClassName = '',
   ...props
 }) => {
-  const inputClass = className || (as === 'select' ? 'form-select' : 'form-control');
+  const baseClass = as === 'select' ? 'form-select' : 'form-control';
+  const errorClass = error ? 'is-invalid' : '';
+  const inputClass = className || `${baseClass} ${errorClass}`.trim();
 
   return (
     <div className={`mb-3 ${wrapperClassName}`.trim()}>
       {label && (
         <label htmlFor={id} className="form-label fw-semibold small">
-          {label}{required ? ' *' : ''}
+          {label}{required ? <span className="text-danger ms-1">*</span> : ''}
         </label>
       )}
 
       {as === 'textarea' ? (
         <textarea
           id={id}
-          className={inputClass}
+          className={`${baseClass} ${errorClass} ${className}`.trim()}
           rows={rows}
           value={value}
           onChange={onChange}
@@ -41,7 +43,7 @@ const FormInput = ({
       ) : as === 'select' ? (
         <select
           id={id}
-          className={inputClass}
+          className={`${baseClass} ${errorClass} ${className}`.trim()}
           value={value}
           onChange={onChange}
           {...props}
@@ -66,8 +68,12 @@ const FormInput = ({
         />
       )}
 
-      {helperText && <div className="form-text">{helperText}</div>}
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+      {helperText && !error && <div className="form-text text-muted">{helperText}</div>}
+      {error && (
+        <div className="invalid-feedback d-flex align-items-center gap-1 mt-1">
+          <span>⚠</span> {error}
+        </div>
+      )}
     </div>
   );
 };

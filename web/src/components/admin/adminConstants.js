@@ -82,3 +82,26 @@ export const EMPTY_NEW = {
     categoria_id: '',
     disponibilidad: 'DISPONIBLE',
 };
+
+export const COCINAS = [
+    { id: 1, nombre: '🍳 Cocina Principal' },
+    { id: 2, nombre: '☕ Barra / Bar' },
+    { id: 3, nombre: '🔥 Parrilla' },
+    { id: 4, nombre: '🍰 Repostería' },
+];
+
+export const CATEGORIAS = [
+    { id: 1, nombre: '🍔 Comida' },
+    { id: 2, nombre: '🥤 Bebidas' },
+    { id: 3, nombre: '🍰 Postres' },
+    { id: 4, nombre: '🥗 Entradas' },
+    { id: 5, nombre: '🍕 Especialidades' },
+];
+
+export const MAPA_COCINAS_POR_CATEGORIA = {
+    1: [1, 3], // Comida → Cocina Principal, Parrilla
+    2: [2],    // Bebidas → Barra
+    3: [4],    // Postres → Repostería
+    4: [1],    // Entradas → Cocina Principal
+    5: [1, 3], // Especialidades → Cocina Principal, Parrilla
+};

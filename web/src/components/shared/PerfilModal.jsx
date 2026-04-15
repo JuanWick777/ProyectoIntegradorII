@@ -1,10 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Check, Loader, User, X } from 'lucide-react';
+import { AlertTriangle, Check, Loader, User, X, Eye, EyeOff } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import Modal from '../ui/Modal';
-import FormInput from '../ui/FormInput';
 import AlertMessage from '../ui/AlertMessage';
 import { PrimaryButton, SecondaryButton } from '../ui/Button';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const validate = (form) => {
+  const errs = {};
+  if (!form.nombre?.trim()) errs.nombre = 'El nombre es obligatorio.';
+  if (form.correo && !EMAIL_REGEX.test(form.correo.trim()))
+    errs.correo = 'Formato de correo inválido.';
+  if (form.contrasena && form.contrasena.length < 6)
+    errs.contrasena = 'La contraseña debe tener al menos 6 caracteres.';
+  if (form.contrasena && form.contrasena !== form.confirmar)
+    errs.confirmar = 'Las contraseñas no coinciden.';
+  return errs;
+};
 
 const PerfilModal = ({ usuario, onClose, onGuardado }) => {
   const { actualizarPerfil } = useAppStore();
@@ -15,9 +28,13 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
     contrasena: '',
     confirmar: '',
   });
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     setForm({
@@ -26,26 +43,32 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
       contrasena: '',
       confirmar: '',
     });
+    setErrors({});
+    setTouched({});
     setError('');
     setOk('');
     setLoading(false);
   }, [usuario]);
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k, v) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    if (errors[k]) setErrors((prev) => ({ ...prev, [k]: undefined }));
+  };
+
+  const handleBlur = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const errs = validate(form);
+    setErrors((prev) => ({ ...prev, [field]: errs[field] }));
+  };
 
   const handleGuardar = async () => {
+    setTouched({ nombre: true, correo: true, contrasena: true, confirmar: true });
+    const errs = validate(form);
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
     setError('');
     setOk('');
-
-    if (form.contrasena && form.contrasena !== form.confirmar) {
-      setError('Las contraseñas no coinciden');
-      return;
-    }
-    if (form.contrasena && form.contrasena.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
     setLoading(true);
     try {
       await actualizarPerfil({
@@ -64,6 +87,16 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
       setLoading(false);
     }
   };
+
+  const fc = (field) =>
+    `form-control ${touched[field] && errors[field] ? 'is-invalid' : touched[field] && !errors[field] && form[field] ? 'is-valid' : ''}`;
+
+  const errMsg = (field) =>
+    touched[field] && errors[field] ? (
+      <div className="invalid-feedback d-flex align-items-center gap-1 mt-1">
+        <span>⚠</span> {errors[field]}
+      </div>
+    ) : null;
 
   return (
     <Modal
@@ -88,14 +121,9 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
       >
         <div
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            background: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px solid #f97316',
+            width: 44, height: 44, borderRadius: '50%',
+            background: '#ffffff', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', border: '2px solid #f97316',
           }}
         >
           <User size={20} style={{ color: '#f97316' }} />
@@ -108,14 +136,7 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
         </div>
         <button
           onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#ffffff',
-            cursor: 'pointer',
-            lineHeight: 1,
-            opacity: 0.8,
-          }}
+          style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', lineHeight: 1, opacity: 0.8 }}
           aria-label="Cerrar"
           type="button"
         >
@@ -131,61 +152,135 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
           icon={<AlertTriangle size={16} />}
           showBootstrapIcon={false}
         />
-        {ok ? (
-          <div
-            style={{
-              background: '#f0fff4',
-              border: '1px solid #9ae6b4',
-              borderRadius: '0.75rem',
-              padding: '0.75rem 1rem',
-              color: '#276749',
-              fontSize: '0.875rem',
-              marginBottom: 16,
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 8,
-            }}
-          >
+        {ok && (
+          <div style={{
+            background: '#f0fff4', border: '1px solid #9ae6b4', borderRadius: '0.75rem',
+            padding: '0.75rem 1rem', color: '#276749', fontSize: '0.875rem',
+            marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 8,
+          }}>
             <Check size={18} style={{ flexShrink: 0, marginTop: 2 }} />
             <span>{ok}</span>
           </div>
-        ) : null}
+        )}
 
-        <FormInput
-          id="perfil-nombre"
-          label="Nombre completo"
-          value={form.nombre}
-          onChange={(e) => set('nombre', e.target.value)}
-          placeholder="Tu nombre"
-        />
+        {/* Nombre */}
+        <div className="mb-3">
+          <label htmlFor="perfil-nombre" className="form-label fw-semibold small">
+            Nombre completo <span className="text-danger">*</span>
+          </label>
+          <input
+            id="perfil-nombre"
+            className={fc('nombre')}
+            value={form.nombre}
+            onChange={(e) => {
+              // Bloquear números en el nombre
+              if (/\d/.test(e.target.value.slice(-1))) return;
+              set('nombre', e.target.value);
+            }}
+            onBlur={() => handleBlur('nombre')}
+            placeholder="Tu nombre"
+          />
+          {errMsg('nombre')}
+        </div>
 
-        <FormInput
-          id="perfil-correo"
-          label="Correo electrónico"
-          type="email"
-          value={form.correo}
-          onChange={(e) => set('correo', e.target.value)}
-          placeholder="tu@email.com"
-        />
+        {/* Correo */}
+        <div className="mb-3">
+          <label htmlFor="perfil-correo" className="form-label fw-semibold small">
+            Correo electrónico
+          </label>
+          <input
+            id="perfil-correo"
+            type="email"
+            className={fc('correo')}
+            value={form.correo}
+            onChange={(e) => set('correo', e.target.value)}
+            onBlur={() => handleBlur('correo')}
+            placeholder="tu@email.com"
+          />
+          {errMsg('correo')}
+        </div>
 
-        <FormInput
-          id="perfil-contrasena"
-          label="Nueva contraseña"
-          type="password"
-          value={form.contrasena}
-          onChange={(e) => set('contrasena', e.target.value)}
-          placeholder="Dejar vacío para no cambiar"
-        />
+        {/* Nueva contraseña */}
+        <div className="mb-3">
+          <label htmlFor="perfil-contrasena" className="form-label fw-semibold small">
+            Nueva contraseña
+            <span className="text-muted ms-1 fw-normal">(dejar vacío para no cambiar)</span>
+          </label>
+          <div className="input-group">
+            <input
+              id="perfil-contrasena"
+              type={showPass ? 'text' : 'password'}
+              className={`form-control ${touched.contrasena && errors.contrasena ? 'is-invalid' : ''}`}
+              style={{ borderRight: 0 }}
+              value={form.contrasena}
+              onChange={(e) => {
+                set('contrasena', e.target.value);
+                if (touched.confirmar) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    confirmar: e.target.value !== form.confirmar ? 'Las contraseñas no coinciden.' : undefined,
+                  }));
+                }
+              }}
+              onBlur={() => handleBlur('contrasena')}
+              placeholder="Dejar vacío para no cambiar"
+            />
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              style={{ borderLeft: 0 }}
+              onClick={() => setShowPass((v) => !v)}
+              tabIndex={-1}
+              aria-label={showPass ? 'Ocultar' : 'Mostrar'}
+            >
+              {showPass ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
+          {errMsg('contrasena')}
+          {form.contrasena && !errors.contrasena && (
+            <div className="form-text">
+              Seguridad: {form.contrasena.length >= 8 ? '🟢 Buena' : '🟡 Mínima (6 caracteres)'}
+            </div>
+          )}
+        </div>
 
-        <FormInput
-          id="perfil-confirmar"
-          label="Confirmar contraseña"
-          type="password"
-          value={form.confirmar}
-          onChange={(e) => set('confirmar', e.target.value)}
-          placeholder="••••••"
-          wrapperClassName="mb-0"
-        />
+        {/* Confirmar contraseña */}
+        <div className="mb-0">
+          <label htmlFor="perfil-confirmar" className="form-label fw-semibold small">
+            Confirmar contraseña
+          </label>
+          <div className="input-group">
+            <input
+              id="perfil-confirmar"
+              type={showConfirm ? 'text' : 'password'}
+              className={`form-control ${touched.confirmar && errors.confirmar ? 'is-invalid' : touched.confirmar && form.contrasena && form.confirmar && !errors.confirmar ? 'is-valid' : ''}`}
+              style={{ borderRight: 0 }}
+              value={form.confirmar}
+              onChange={(e) => {
+                set('confirmar', e.target.value);
+                if (touched.confirmar) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    confirmar: form.contrasena !== e.target.value ? 'Las contraseñas no coinciden.' : undefined,
+                  }));
+                }
+              }}
+              onBlur={() => handleBlur('confirmar')}
+              placeholder="••••••"
+            />
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              style={{ borderLeft: 0 }}
+              onClick={() => setShowConfirm((v) => !v)}
+              tabIndex={-1}
+              aria-label={showConfirm ? 'Ocultar' : 'Mostrar'}
+            >
+              {showConfirm ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
+          {errMsg('confirmar')}
+        </div>
       </div>
 
       {/* Footer */}
@@ -225,4 +320,3 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
 };
 
 export default PerfilModal;
-

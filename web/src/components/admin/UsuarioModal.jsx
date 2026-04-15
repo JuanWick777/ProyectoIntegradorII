@@ -1,166 +1,267 @@
 import React, { useState } from 'react';
-import Modal from '../ui/Modal';
-import FormInput from '../ui/FormInput';
-import { PrimaryButton, SecondaryButton } from '../ui/Button';
-import { Plus, Edit, Save } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { MESAS_OPCIONES } from './adminConstants';
 
-const UsuarioModal = ({ usuario, mesas = [], onSave, onClose, saving }) => {
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const validate = (form, isNew) => {
+    const errs = {};
+
+    // Nombre siempre obligatorio
+    if (!form.nombre?.trim()) errs.nombre = 'El nombre es obligatorio.';
+    else if (form.nombre.trim().length < 2) errs.nombre = 'El nombre debe tener al menos 2 caracteres.';
+
+    // Email: obligatorio si es nuevo, o si escribió algo al editar
+    if (isNew) {
+        if (!form.email?.trim()) errs.email = 'El correo es obligatorio.';
+        else if (!EMAIL_REGEX.test(form.email.trim())) errs.email = 'Formato de correo inválido (ej. empleado@rest.com).';
+    } else if (form.email?.trim() && !EMAIL_REGEX.test(form.email.trim())) {
+        errs.email = 'Formato de correo inválido (ej. empleado@rest.com).';
+    }
+
+    // Contraseña: obligatoria si es nuevo, o si escribió algo al editar
+    if (isNew) {
+        if (!form.password) errs.password = 'La contraseña es obligatoria para nuevos empleados.';
+        else if (form.password.length < 6) errs.password = 'La contraseña debe tener al menos 6 caracteres.';
+    } else if (form.password && form.password.length < 6) {
+        errs.password = 'La contraseña debe tener al menos 6 caracteres.';
+    }
+
+    // Rol siempre obligatorio
+    if (!form.rol) errs.rol = 'Selecciona un rol.';
+    return errs;
+};
+
+const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
     const isNew = !usuario?.id;
 
-    const normalizeUsuarioForm = (user) => ({
-        nombre: user?.nombre ?? '',
-        email: user?.email ?? user?.correo ?? '',
-        password: '',
-        rol: (user?.rol ?? 'mesero').toLowerCase(),
-        mesaIds: user?.mesaIds ?? [],
-    });
+    const [form, setForm] = useState(
+        usuario || {
+            nombre: '',
+            email: '',
+            password: '',
+            rol: 'mesero',
+            especialidad: '',
+            mesaId: null,
+        }
+    );
 
-    const [form, setForm] = useState(normalizeUsuarioForm(usuario));
+    const [errors, setErrors] = useState({});
+    const [touched, setTouched] = useState({});
+    const [showPassword, setShowPassword] = useState(false);
 
-    React.useEffect(() => {
-        setForm(normalizeUsuarioForm(usuario));
-    }, [usuario]);
-
-    const set = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
-    const rolForm = form.rol?.toLowerCase() || 'mesero';
-    const esMesero = rolForm === 'mesero';
-
-    const toggleMesa = (mesaId) => {
-        setForm((prev) => {
-            const actual = prev.mesaIds || [];
-            const existe = actual.includes(mesaId);
-            const next = existe
-                ? actual.filter((id) => id !== mesaId)
-                : [...actual, mesaId];
-
-            return {
-                ...prev,
-                mesaIds: next,
-            };
-        });
+    const set = (k, v) => {
+        setForm((prev) => ({ ...prev, [k]: v }));
+        // Limpiar error del campo al escribir
+        if (errors[k]) setErrors((prev) => ({ ...prev, [k]: undefined }));
     };
 
+    const handleBlur = (field) => {
+        setTouched((prev) => ({ ...prev, [field]: true }));
+        const errs = validate(form, isNew);
+        setErrors((prev) => ({ ...prev, [field]: errs[field] }));
+    };
+
+    const handleSubmit = () => {
+        // Marcar todo como tocado
+        setTouched({ nombre: true, email: true, password: true, rol: true });
+        const errs = validate(form, isNew);
+        setErrors(errs);
+        if (Object.keys(errs).length > 0) return;
+        onSave(form);
+    };
+
+    const rolForm = form.rol?.toLowerCase() || 'mesero';
+    const esCocinero = rolForm === 'cocinero' || rolForm === 'chef';
+    const esMesero = rolForm === 'mesero';
+
+    const fieldClass = (field) =>
+        `form-control ${touched[field] && errors[field] ? 'is-invalid' : touched[field] && !errors[field] ? 'is-valid' : ''}`;
+
+    const selectClass = (field) =>
+        `form-select ${touched[field] && errors[field] ? 'is-invalid' : ''}`;
+
     return (
-        <Modal
-            title={isNew ? <><Plus size={18} className="me-2" />Nuevo Empleado</> : <><Edit size={18} className="me-2" />Editar Empleado</>}
-            onClose={onClose}
-            className="border-0"
-            bodyClassName=""
-            size="md"
-            footerClassName="d-flex gap-3 justify-content-end"
-            footer={(
-                <>
-                    <SecondaryButton
-                        type="button"
-                        onClick={onClose}
-                        disabled={saving}
-                        style={{ borderRadius: '0.75rem', minWidth: '120px' }}
-                    >
-                        Cancelar
-                    </SecondaryButton>
-                    <PrimaryButton
-                        type="button"
-                        className="fw-bold"
-                        style={{ borderRadius: '0.75rem', minWidth: '120px' }}
-                        onClick={() => onSave(form)}
-                        disabled={
-                            saving ||
-                            !form.nombre?.trim() ||
-                            !form.email?.trim() ||
-                            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ||
-                            (isNew && (!form.password || form.password.length < 6)) ||
-                            (esMesero && ((form.mesaIds || []).length < 1 || (form.mesaIds || []).length > 3))
-                        }
-                    >
-                        {saving ? (
-                            <>
-                                <span className="spinner-border spinner-border-sm me-2" />
-                                Guardando...
-                            </>
-                        ) : isNew ? <><Plus size={16} className="me-2" />Crear</> : <><Save size={16} className="me-2" />Guardar</>}
-                    </PrimaryButton>
-                </>
-            )}
-        >
-            <FormInput
-                id="nombre"
-                label="Nombre completo *"
-                value={form.nombre}
-                onChange={(e) => set('nombre', e.target.value)}
-                placeholder="Ej. Juan Perez"
-            />
-
-            <FormInput
-                id="email"
-                label="Correo electronico *"
-                type="email"
-                value={form.email}
-                onChange={(e) => set('email', e.target.value)}
-                placeholder="empleado@rest.com"
-            />
-
-            <FormInput
-                id="password"
-                label={
-                    <>
-                        Contrasena {!isNew && <span className="text-muted">(dejar vacio para no cambiar)</span>}
-                    </>
-                }
-                type="password"
-                value={form.password}
-                onChange={(e) => set('password', e.target.value)}
-                placeholder={isNew ? 'Minimo 6 caracteres' : '******'}
-            />
-
-            <FormInput
-                id="rol"
-                label="Rol *"
-                as="select"
-                value={rolForm}
-                onChange={(e) => setForm((prev) => ({
-                    ...prev,
-                    rol: e.target.value,
-                    mesaIds: e.target.value === 'mesero' ? prev.mesaIds : [],
-                }))}
-                options={[
-                    { value: 'mesero', label: 'Mesero' },
-                    { value: 'cocinero', label: 'Cocinero' },
-                    { value: 'chef', label: 'Chef' },
-                    { value: 'admin', label: 'Administrador' },
-                ]}
-            />
-
-            {esMesero && (
-                <div className="mb-3">
-                    <div className="form-label fw-semibold small text-secondary">
-                        Mesas asignadas * <span className="text-muted">(elige de 1 a 3)</span>
+        <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
+            <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.25rem' }}>
+                    <div className="modal-header border-0 pb-0">
+                        <h5 className="modal-title fw-bold">
+                            {isNew ? '➕ Nuevo Empleado' : '✏️ Editar Empleado'}
+                        </h5>
+                        <button type="button" className="btn-close" onClick={onClose} />
                     </div>
-                    <div className="d-flex flex-wrap gap-2">
-                        {mesas.map((mesa) => {
-                            const checked = (form.mesaIds || []).includes(mesa.id);
-                            return (
+
+                    <div className="modal-body pt-2">
+                        {/* Nombre */}
+                        <div className="mb-3">
+                            <label className="form-label fw-semibold small">
+                                Nombre completo <span className="text-danger">*</span>
+                            </label>
+                            <input
+                                className={fieldClass('nombre')}
+                                value={form.nombre}
+                                onChange={(e) => {
+                                    // Bloquear caracteres numéricos y especiales que no son letras
+                                    const val = e.target.value;
+                                    if (/[0-9@#$%^&*()_+=[\]{};:'",<>?/\\|`~]/.test(val.slice(-1))) return;
+                                    set('nombre', val);
+                                }}
+                                onBlur={() => handleBlur('nombre')}
+                                placeholder="Ej. Juan Pérez"
+                            />
+                            {touched.nombre && errors.nombre && (
+                                <div className="invalid-feedback d-flex align-items-center gap-1">
+                                    <span>⚠</span> {errors.nombre}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Email */}
+                        <div className="mb-3">
+                            <label className="form-label fw-semibold small">
+                                Correo electrónico <span className="text-danger">*</span>
+                            </label>
+                            <input
+                                className={fieldClass('email')}
+                                type="email"
+                                value={form.email}
+                                onChange={(e) => set('email', e.target.value)}
+                                onBlur={() => handleBlur('email')}
+                                placeholder="empleado@rest.com"
+                            />
+                            {touched.email && errors.email && (
+                                <div className="invalid-feedback d-flex align-items-center gap-1">
+                                    <span>⚠</span> {errors.email}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Contraseña */}
+                        <div className="mb-3">
+                            <label className="form-label fw-semibold small">
+                                Contraseña{' '}
+                                {isNew
+                                    ? <span className="text-danger">*</span>
+                                    : <span className="text-muted">(dejar vacío para no cambiar)</span>}
+                            </label>
+                            <div className="input-group">
+                                <input
+                                    className={fieldClass('password')}
+                                    type={showPassword ? 'text' : 'password'}
+                                    style={{ borderRight: 0 }}
+                                    value={form.password}
+                                    onChange={(e) => set('password', e.target.value)}
+                                    onBlur={() => handleBlur('password')}
+                                    placeholder={isNew ? 'Mínimo 6 caracteres' : '••••••'}
+                                />
                                 <button
-                                    key={mesa.id}
                                     type="button"
-                                    className={`btn btn-sm fw-semibold ${checked ? 'btn-primary' : 'btn-outline-secondary'}`}
-                                    style={{ borderRadius: '999px' }}
-                                    onClick={() => toggleMesa(mesa.id)}
-                                    disabled={!checked && (form.mesaIds || []).length >= 3}
+                                    className="btn btn-outline-secondary"
+                                    style={{ borderLeft: 0 }}
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    tabIndex={-1}
+                                    aria-label={showPassword ? 'Ocultar' : 'Mostrar'}
                                 >
-                                    Mesa {mesa.numero}
+                                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                                 </button>
-                            );
-                        })}
+                            </div>
+                            {touched.password && errors.password && (
+                                <div className="invalid-feedback d-flex align-items-center gap-1" style={{ display: 'flex !important' }}>
+                                    <span>⚠</span> {errors.password}
+                                </div>
+                            )}
+                            {form.password && !errors.password && (
+                                <div className="form-text text-muted">
+                                    Seguridad: {form.password.length >= 8 ? '🟢 Buena' : '🟡 Mínima'}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Rol y Especialidad */}
+                        <div className="row g-3 mb-3">
+                            <div className="col-6">
+                                <label className="form-label fw-semibold small">
+                                    Rol <span className="text-danger">*</span>
+                                </label>
+                                <select
+                                    className={selectClass('rol')}
+                                    value={rolForm}
+                                    onChange={(e) => {
+                                        set('rol', e.target.value);
+                                        setTouched((p) => ({ ...p, rol: true }));
+                                    }}
+                                >
+                                    <option value="mesero">🧑‍🍽️ Mesero</option>
+                                    <option value="cocinero">👨‍🍳 Cocinero</option>
+                                    <option value="chef">👨‍🍳 Chef</option>
+                                    <option value="admin">🛡️ Administrador</option>
+                                </select>
+                                {touched.rol && errors.rol && (
+                                    <div className="invalid-feedback d-flex align-items-center gap-1">
+                                        <span>⚠</span> {errors.rol}
+                                    </div>
+                                )}
+                            </div>
+
+                            {esCocinero && (
+                                <div className="col-6">
+                                    <label className="form-label fw-semibold small">Especialidad</label>
+                                    <select
+                                        className="form-select"
+                                        value={form.especialidad}
+                                        onChange={(e) => set('especialidad', e.target.value)}
+                                    >
+                                        <option value="">— Sin especialidad —</option>
+                                        <option value="parrillero">🔥 Parrillero</option>
+                                        <option value="barista">☕ Barista</option>
+                                        <option value="repostero">🍰 Repostero</option>
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Mesa (solo mesero) */}
+                        {esMesero && (
+                            <div className="mb-3">
+                                <label className="form-label fw-semibold small">🪑 Mesa asignada</label>
+                                <select
+                                    className="form-select"
+                                    value={form.mesaId || ''}
+                                    onChange={(e) => set('mesaId', e.target.value ? Number(e.target.value) : null)}
+                                >
+                                    <option value="">— Sin mesa —</option>
+                                    {MESAS_OPCIONES.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
-                    {mesas.length === 0 && (
-                        <div className="text-muted small mt-2">No hay mesas registradas.</div>
-                    )}
-                    {((form.mesaIds || []).length < 1 || (form.mesaIds || []).length > 3) && (
-                        <div className="text-danger small mt-2">Un mesero debe tener entre 1 y 3 mesas.</div>
-                    )}
+
+                    <div className="modal-footer border-0 pt-0">
+                        <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
+                            Cancelar
+                        </button>
+                        <button
+                            className="btn btn-primary fw-bold px-4"
+                            style={{ borderRadius: '0.75rem' }}
+                            onClick={handleSubmit}
+                            disabled={saving}
+                        >
+                            {saving ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm me-2" />
+                                    Guardando...
+                                </>
+                            ) : isNew ? '➕ Crear' : '💾 Guardar'}
+                        </button>
+                    </div>
                 </div>
-            )}
-        </Modal>
+            </div>
+        </div>
     );
 };
 
