@@ -20,12 +20,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import proyecto.personal.proyectointegradorii.ui.components.alerts.successful.SuccessOrderDialog
 import proyecto.personal.proyectointegradorii.ui.components.buttons.GlobalButton
+import proyecto.personal.proyectointegradorii.ui.components.cards.GlobalCard
 import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
 import proyecto.personal.proyectointegradorii.ui.components.headers.InternalHeader
 import proyecto.personal.proyectointegradorii.ui.theme.AlertColor
@@ -193,18 +197,59 @@ fun SCart(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(24.dp),
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally // Centramos la card en la pantalla
                     ) {
-                        GlobalText(
-                            "No se ha realizado ningún pedido",
-                            22,
-                            TextColorDark,
-                            Modifier
+                        GlobalCard(
+                            backgroundColor = Color.White, // Forzamos el fondo blanco de la tarjeta
+                            modifier = Modifier.fillMaxWidth(),
+                            content = {
+                                // Agregamos una columna interna con padding para darle "aire" al contenido
+                                Column(
+                                    modifier = Modifier.padding(32.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+
+                                    // Título principal
+                                    GlobalText(
+                                        texto = "Tu carrito está vacío",
+                                        tamanio = 20,
+                                        color = TextColorDark,
+                                        textAlign = TextAlign.Center,
+                                        peso = FontWeight.SemiBold
+                                    )
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    // Subtítulo
+                                    GlobalText(
+                                        texto = "Agrega platillos desde el menú",
+                                        tamanio = 16,
+                                        color = TextColorDark,
+                                        textAlign = TextAlign.Center
+                                    )
+
+                                    Spacer(modifier = Modifier.height(28.dp))
+
+                                    // Botón de navegación
+                                    GlobalButton(
+                                        text = "Ir al menú",
+                                        textsize = 16,
+                                        alt = 65,
+                                        ancho = 250,
+                                        bordercolorbutton = MainColor, // Reemplaza con el color primario de tu app
+                                        colorbutton = MainColor,       // Reemplaza con el color primario de tu app
+                                        colortext = TextColorWhite,
+                                        onClick = {
+                                            navController.navigate("home") {
+                                                launchSingleTop = true
+                                            }
+                                        }
+                                    )
+                                }
+                            }
                         )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text("Agrega productos desde el menú para comenzar.")
                     }
                 } else {
                     Column(
