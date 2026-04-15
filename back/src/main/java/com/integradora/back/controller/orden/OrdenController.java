@@ -6,11 +6,11 @@ import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
 import com.integradora.back.model.orden.Orden;
 import com.integradora.back.repository.DetalleOrdenRepository;
 import com.integradora.back.service.OrdenService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -23,24 +23,6 @@ public class OrdenController {
     private final OrdenService service;
     private final DetalleOrdenRepository detalleOrdenRepository;
 
-    // ── Crear orden simple (solo ids, sin detalles) ───────────────────────────
-    @PostMapping
-    public OrdenResponseDTO crear(
-            @RequestParam Long clienteId,
-            @RequestParam Long mesaId) {
-        Orden orden = service.crear(clienteId, mesaId);
-        return OrdenMapper.toDTO(orden, detalleOrdenRepository.findByOrdenId(orden.getId()));
-    }
-
-    // ── Listar todas ─────────────────────────────────────────────────────────
-    @GetMapping
-    public List<OrdenResponseDTO> listar() {
-        return service.listar().stream()
-                .map(o -> OrdenMapper.toDTO(o, detalleOrdenRepository.findByOrdenId(o.getId())))
-                .toList();
-    }
-
-    // ── Órdenes activas (para el mesero) ──────────────────────────────────────
     @GetMapping("/activas")
     public List<OrdenResponseDTO> obtenerActivas() {
         return service.obtenerActivas().stream()
@@ -48,29 +30,11 @@ public class OrdenController {
                 .toList();
     }
 
-    // ── Órdenes por cliente ───────────────────────────────────────────────────
-    @GetMapping("/cliente/{clienteId}")
-    public List<OrdenResponseDTO> porCliente(@PathVariable Long clienteId) {
-        return service.porCliente(clienteId).stream()
-                .map(o -> OrdenMapper.toDTO(o, detalleOrdenRepository.findByOrdenId(o.getId())))
-                .toList();
-    }
-
-    // ── Historial ─────────────────────────────────────────────────────────────
-    @GetMapping("/historial")
-    public List<OrdenResponseDTO> historial() {
-        return service.historial().stream()
-                .map(o -> OrdenMapper.toDTO(o, detalleOrdenRepository.findByOrdenId(o.getId())))
-                .toList();
-    }
-
-    // ── Obtener orden por ID (usado por el OrderTracker del cliente) ──────────
     @GetMapping("/{id}")
     public ResponseEntity<OrdenResponseDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(service.obtenerPorId(id));
     }
 
-    // ── Actualizar estado (mesero/cocina) ─────────────────────────────────────
     @PutMapping("/{id}/estado")
     public OrdenResponseDTO actualizarEstado(
             @PathVariable Long id,
@@ -79,10 +43,13 @@ public class OrdenController {
         return OrdenMapper.toDTO(orden, detalleOrdenRepository.findByOrdenId(orden.getId()));
     }
 
-    // ── Crear orden completa con detalles (cliente → POST /ordenes/completa) ──
     @PostMapping("/completa")
-    public OrdenResponseDTO crearCompleta(@Valid @RequestBody OrdenRequestDTO request) {
-        return service.crearOrdenCompleta(request);
+    public ResponseEntity<?> crearCompleta(@Valid @RequestBody OrdenRequestDTO request) {
+        try {
+            return ResponseEntity.ok(service.crearOrdenCompleta(request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/mis-ordenes")
@@ -91,9 +58,11 @@ public class OrdenController {
     }
 
     @PostMapping("/preview")
-    public ResponseEntity<OrdenPreviewDTO> preview(@Valid @RequestBody OrdenRequestDTO request) {
-        return ResponseEntity.ok(service.previsualizarOrden(request));
+    public ResponseEntity<?> preview(@Valid @RequestBody OrdenRequestDTO request) {
+        try {
+            return ResponseEntity.ok(service.previsualizarOrden(request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
-
-
 }

@@ -11,35 +11,6 @@ export const resolveImageUrl = (pathOrUrl) => {
     return `${base}${path}`;
 };
 
-export const CATEGORIAS = [
-    { id: 21, nombre: 'Entradas y Snacks' },
-    { id: 24, nombre: 'Platos Fuertes' },
-    { id: 27, nombre: 'Coctelería' },
-    { id: 23, nombre: 'Postres Gourmet' },
-    { id: 2, nombre: 'Bebidas Frías' },
-    { id: 22, nombre: 'Pizzas Artesanales' },
-    { id: 25, nombre: 'Ensaladas y Bowls' },
-    { id: 26, nombre: 'Mariscos y Pescados' },
-];
-
-export const COCINAS = [
-    { id: 1, nombre: 'Cocina Caliente' },
-    { id: 2, nombre: 'Parrilla' },
-    { id: 3, nombre: 'Bebidas' },
-    { id: 4, nombre: 'Repostería' },
-];
-
-export const MAPA_COCINAS_POR_CATEGORIA = {
-    21: [1, 2], // Entradas
-    24: [1, 2], // Platos Fuertes
-    27: [3],    // Cocteleria
-    23: [4],    // Postres
-    2: [3],     // Bebidas
-    22: [1, 2], // Pizzas
-    25: [1],    // Ensaladas
-    26: [1, 2], // Mariscos
-};
-
 export const MESAS_OPCIONES = Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
     nombre: `Mesa ${i + 1}`,
@@ -73,7 +44,7 @@ export const getProductKitchenId = (p) => {
     if (p?.cocina?.id) return Number(p.cocina.id);
     if (p?.kitchen_id) return Number(p.kitchen_id);
     if (p?.kitchenId) return Number(p.kitchenId);
-    return COCINAS?.[0]?.id ?? 1;
+    return null;
 };
 
 export const getProductImage = (p) =>
@@ -104,6 +75,6 @@ export const EMPTY_NEW = {
     imagenFile: null,
     imagenRemoved: false,
     categoria_id: '',
-    kitchen_id: COCINAS?.[0]?.id ?? 1,
+    kitchen_id: '',
     disponibilidad: 'DISPONIBLE',
 };

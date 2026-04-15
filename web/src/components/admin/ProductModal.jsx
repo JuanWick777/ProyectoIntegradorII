@@ -2,16 +2,14 @@ import React, { useMemo, useState } from 'react';
 import {
     EMPTY_NEW,
     getProductImage,
-    getProductDisponibilidad,
-    MAPA_COCINAS_POR_CATEGORIA,
-    COCINAS
+    getProductDisponibilidad
 } from './adminConstants';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 import { Plus, Edit, Save } from 'lucide-react';
 
-const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => {
+const ProductModal = ({ product, onSave, onClose, saving, categorias = [], cocinas = [] }) => {
     const isNew = !product?.id;
     const [form, setForm] = useState(
         product
@@ -28,6 +26,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
             : {
                 ...EMPTY_NEW,
                 categoria_id: categorias?.[0]?.id ?? '',
+                kitchen_id: cocinas?.[0]?.id ?? '',
             }
     );
 
@@ -40,6 +39,15 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
         }
     }, [categorias, product, form.categoria_id]);
 
+    React.useEffect(() => {
+        if (!product?.id && !form.kitchen_id && cocinas.length > 0) {
+            setForm(prev => ({
+                ...prev,
+                kitchen_id: cocinas[0].id
+            }));
+        }
+    }, [cocinas, product, form.kitchen_id]);
+
     const set = (field, val) => setForm((prev) => ({ ...prev, [field]: val }));
     const imgPreview = useMemo(() => {
         if (form.imagenFile instanceof File) {
@@ -50,23 +58,11 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
 
     const handleCategoriaChange = (e) => {
         const nuevaCat = Number(e.target.value);
-        const permitidas = MAPA_COCINAS_POR_CATEGORIA[nuevaCat] || COCINAS.map(c => c.id);
-
-        let nuevaCocina = form.kitchen_id;
-        if (!permitidas.includes(nuevaCocina)) {
-            nuevaCocina = permitidas[0];
-        }
-
         setForm(prev => ({
             ...prev,
-            categoria_id: nuevaCat,
-            kitchen_id: nuevaCocina
+            categoria_id: nuevaCat
         }));
     };
-
-    const cocinasDisponibles = COCINAS.filter(c =>
-        (MAPA_COCINAS_POR_CATEGORIA[form.categoria_id] || COCINAS.map(x => x.id)).includes(c.id)
-    );
 
     return (
         <Modal
@@ -150,7 +146,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                         as="select"
                         value={form.kitchen_id}
                         onChange={(e) => set('kitchen_id', Number(e.target.value))}
-                        options={cocinasDisponibles.map((c) => ({ value: c.id, label: c.nombre }))}
+                        options={cocinas.map((c) => ({ value: c.id, label: c.nombre }))}
                     />
                 </div>
             </div>

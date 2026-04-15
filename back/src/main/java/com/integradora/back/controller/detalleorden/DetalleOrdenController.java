@@ -6,7 +6,6 @@ import com.integradora.back.service.DetalleOrdenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -15,26 +14,6 @@ import java.util.Map;
 public class DetalleOrdenController {
 
     private final DetalleOrdenService service;
-
-    @PostMapping
-    public DetalleOrdenDTO agregar(
-            @RequestParam Long ordenId,
-            @RequestParam Long platilloId,
-            @RequestParam Integer cantidad,
-            @RequestParam(required = false) String nota
-    ) {
-        return toDTO(service.agregarDetalle(ordenId, platilloId, cantidad, nota));
-    }
-
-    @GetMapping("/orden/{ordenId}")
-    public List<DetalleOrdenDTO> obtenerPorOrden(@PathVariable Long ordenId) {
-        return service.obtenerPorOrden(ordenId).stream().map(DetalleOrdenController::toDTO).toList();
-    }
-
-    @GetMapping("/pendientes")
-    public List<DetalleOrdenDTO> obtenerPendientes() {
-        return service.obtenerPendientes().stream().map(DetalleOrdenController::toDTO).toList();
-    }
 
     @PutMapping("/{id}/estado")
     public DetalleOrdenDTO cambiarEstado(

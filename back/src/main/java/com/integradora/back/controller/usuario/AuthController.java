@@ -25,11 +25,6 @@ public class AuthController {
         return UsuarioResponseDTO.from(usuario);
     }
 
-    @GetMapping("/test")
-    public String test() {
-        return "Backend jalando al 100 papu";
-    }
-
     @PostMapping("/login")
     public LoginResponseDTO login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);

@@ -48,6 +48,7 @@ fun SCart(
     val ordenes by cartViewModel.ordenes.collectAsState()
     val preview by cartViewModel.previewOrden.collectAsState()
     val pedidoConfirmado by cartViewModel.pedidoConfirmado.collectAsState()
+    val pedidoError by cartViewModel.pedidoError.collectAsState()
 
     var showSuccessDialog by remember { mutableStateOf(false) }
 
@@ -373,6 +374,14 @@ fun SCart(
                             Modifier
                         )
 
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                    if (!pedidoError.isNullOrBlank()) {
+                        Text(
+                            text = pedidoError!!,
+                            color = AlertColor
+                        )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 

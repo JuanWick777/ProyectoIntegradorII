@@ -19,7 +19,7 @@ import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRespons
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 import proyecto.personal.proyectointegradorii.data.repositories.OrdenRepository
 import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
-import retrofit2.Retrofit
+import retrofit2.HttpException
 
 class CartViewModel : ViewModel() {
     private val repository = OrdenRepository(RetrofitClient.api)
@@ -164,6 +164,9 @@ class CartViewModel : ViewModel() {
     private val _pedidoConfirmado = MutableStateFlow(false)
     val pedidoConfirmado = _pedidoConfirmado.asStateFlow()
 
+    private val _pedidoError = MutableStateFlow<String?>(null)
+    val pedidoError = _pedidoError.asStateFlow()
+
     fun togglePuntos() {
         _usarPuntos.value = !_usarPuntos.value
         cargarPreviewOrden()
@@ -247,6 +250,7 @@ class CartViewModel : ViewModel() {
         )
 
         viewModelScope.launch {
+            _pedidoError.value = null
             try {
                 val orden = repository.crearOrden(request)
                 _ordenActual.value = orden
@@ -260,6 +264,27 @@ class CartViewModel : ViewModel() {
                 _pedidoConfirmado.value = true
             } catch (e: Exception) {
                 _pedidoConfirmado.value = false
+                _pedidoError.value = when (e) {
+                    is HttpException -> {
+                        try {
+                            val raw = e.response()?.errorBody()?.string().orEmpty()
+                            when {
+                                raw.contains("\"message\"") -> {
+                                    Regex("\"message\"\\s*:\\s*\"([^\"]+)\"")
+                                        .find(raw)
+                                        ?.groupValues
+                                        ?.getOrNull(1)
+                                        ?: "HTTP ${e.code()}"
+                                }
+                                raw.isNotBlank() -> raw
+                                else -> "HTTP ${e.code()}"
+                            }
+                        } catch (_: Exception) {
+                            "HTTP ${e.code()}"
+                        }
+                    }
+                    else -> e.message ?: "No se pudo realizar el pedido"
+                }
                 e.printStackTrace()
             }
         }

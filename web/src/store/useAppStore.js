@@ -83,6 +83,7 @@ export const useAppStore = create(
             carrito: [],
             products: [],
             categorias: [],
+            cocinas: [],
             loadingProducts: true,
             orders: [],
             ordenActual: null,
@@ -370,6 +371,19 @@ export const useAppStore = create(
                     return data || [];
                 } catch (e) {
                     console.error('Error cargando categorías:', e);
+                    return [];
+                }
+            },
+
+            fetchCocinas: async () => {
+                const { token } = get();
+                try {
+                    const data = await apiFetch('/cocina', { token });
+                    set({ cocinas: data || [] });
+                    return data || [];
+                } catch (e) {
+                    console.error('Error cargando cocinas:', e);
+                    set({ cocinas: [] });
                     return [];
                 }
             },

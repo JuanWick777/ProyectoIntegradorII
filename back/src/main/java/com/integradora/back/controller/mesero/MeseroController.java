@@ -65,15 +65,4 @@ public class MeseroController {
 
         return ResponseEntity.ok(dto);
     }
-
-    /*@GetMapping("/mesero")
-    public List<Orden> porMesero(Authentication auth) {
-        String correo = auth.getName();
-        Usuario mesero = usuarioRepository.findByCorreo(correo).orElseThrow();
-
-        return ordenRepository.findByMeseroIdAndEstadoPreparacionNotIn(
-                mesero.getId(),
-                List.of(EstadoOrden.CERRADA, EstadoOrden.CANCELADA)
-        );
-    }*/
 }
