@@ -18,3 +18,22 @@
         border-radius: 20px;
     }
 }
+
+@layer components {
+    .btn-filter {
+        border: 2px solid #f97316;
+        background: #ffffff;
+        color: #f97316;
+        border-radius: 9999px;
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    }
+    .btn-filter:hover {
+        background: rgba(249, 115, 22, 0.16);
+        color: #d97706;
+    }
+    .btn-filter.active-filter {
+        background: #f97316;
+        color: #ffffff;
+        border-color: #f97316;
+    }
+}

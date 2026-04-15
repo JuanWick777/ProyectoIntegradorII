@@ -3,7 +3,10 @@ import { useAppStore } from '../../store/useAppStore';
 import SectionHeader from '../ui/SectionHeader';
 import DataTable from '../ui/DataTable';
 import { Heart, Mail, Calendar, MapPin, AlertTriangle, User, Search, SlidersHorizontal, Trash2, Eye } from 'lucide-react';
-import { getUserEmail } from './adminConstants';
+import { getUserEmail, resolveImageUrl, isUserActive } from './adminConstants';
+import { SecondaryButton, DangerButton } from '../ui/Button';
+import ConfirmModal from '../ui/ConfirmModal';
+import ClienteDetalleModal from '../shared/ClienteDetalleModal';
 
 const ClientesAdmin = ({ mostrarToast }) => {
     const { fetchUsuarios, deleteUsuario } = useAppStore();
@@ -35,7 +38,7 @@ const ClientesAdmin = ({ mostrarToast }) => {
         const filtered = clientes.filter((c) => {
             const nombre = (c.nombre || '').toString().toLowerCase();
             const email = getUserEmail(c).toLowerCase();
-            const estado = c.activo ? 'activo' : 'inactivo';
+            const estado = isUserActive(c) ? 'activo' : 'inactivo';
             const query = searchQuery.toLowerCase().trim();
 
             if (query && !(nombre.includes(query) || email.includes(query))) {
@@ -76,10 +79,22 @@ const ClientesAdmin = ({ mostrarToast }) => {
                 const email = getUserEmail(c);
                 return (
                     <div className="d-flex align-items-center gap-2">
-                        <div className="rounded-circle d-flex align-items-center justify-content-center" 
-                            style={{ width: 32, height: 32, background: '#e8f4f8', color: '#00a8cc' }}>
-                            <User size={16} />
-                        </div>
+                        {(() => {
+                            const fotoUrl = resolveImageUrl(c?.imagenUrl ?? c?.imagen_url ?? c?.urlImagen ?? c?.url_imagen ?? c?.foto ?? c?.photo ?? '');
+                            return fotoUrl ? (
+                                <img
+                                    src={fotoUrl}
+                                    alt={c.nombre || 'Cliente'}
+                                    className="rounded-circle"
+                                    style={{ width: 32, height: 32, objectFit: 'cover', border: '1px solid #dee2e6' }}
+                                />
+                            ) : (
+                                <div className="rounded-circle d-flex align-items-center justify-content-center" 
+                                    style={{ width: 32, height: 32, background: '#e8f4f8', color: '#00a8cc' }}>
+                                    <User size={16} />
+                                </div>
+                            );
+                        })()}
                         <div className="fw-semibold">{c.nombre}</div>
                     </div>
                 );
@@ -101,19 +116,22 @@ const ClientesAdmin = ({ mostrarToast }) => {
         {
             key: 'estado',
             label: 'Estado',
-            render: (c) => (
-                <span
-                    className="badge fw-semibold"
-                    style={{
-                        background: c.activo ? '#52C41A' : '#CCCCCC',
-                        borderRadius: '2rem',
-                        fontSize: '0.8rem',
-                        color: c.activo ? '#FFFFFF' : '#666666',
-                    }}
-                >
-                    {c.activo ? 'Activo' : 'Inactivo'}
-                </span>
-            ),
+            render: (c) => {
+                const activo = isUserActive(c);
+                return (
+                    <span
+                        className="badge fw-semibold"
+                        style={{
+                            background: activo ? '#52C41A' : '#CCCCCC',
+                            borderRadius: '2rem',
+                            fontSize: '0.8rem',
+                            color: activo ? '#FFFFFF' : '#666666',
+                        }}
+                    >
+                        {activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                );
+            },
         },
         {
             key: 'registro',
@@ -133,22 +151,23 @@ const ClientesAdmin = ({ mostrarToast }) => {
             className: 'text-end pe-4',
             render: (c) => (
                 <div className="d-flex gap-2 justify-content-end">
-                    <button
-                        className="btn btn-sm btn-outline-info"
+                    <SecondaryButton
+                        type="button"
+                        size="sm"
+                        className="me-2"
                         style={{ borderRadius: '0.5rem' }}
-                        title="Ver detalles"
                         onClick={() => setModalDetalle(c)}
                     >
                         <Eye size={16} />
-                    </button>
-                    <button
-                        className="btn btn-sm btn-outline-danger"
+                    </SecondaryButton>
+                    <DangerButton
+                        type="button"
+                        size="sm"
                         style={{ borderRadius: '0.5rem' }}
-                        title="Eliminar cliente"
                         onClick={() => setConfirmDel(c)}
                     >
                         <Trash2 size={16} />
-                    </button>
+                    </DangerButton>
                 </div>
             ),
         },
@@ -211,152 +230,29 @@ const ClientesAdmin = ({ mostrarToast }) => {
             />
 
             {/* Modal de detalles del cliente */}
-            {modalDetalle && (
-                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.35)' }}>
-                    <div className="modal-dialog modal-dialog-centered modal-lg">
-                        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.5rem', overflow: 'hidden' }}>
-                            <div style={{ background: '#0f4c81', padding: '1.5rem 1.75rem' }}>
-                                <div className="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <div className="d-flex align-items-center gap-3 mb-2">
-                                            <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: 46, height: 46, background: 'rgba(255,255,255,0.18)', color: 'white' }}>
-                                                <User size={24} />
-                                            </div>
-                                            <div>
-                                                <h5 className="fw-bold text-white mb-1">{modalDetalle.nombre}</h5>
-                                                <div className="text-white-50" style={{ fontSize: '0.9rem' }}>Cliente registrado</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button type="button" className="btn btn-close btn-close-white" onClick={() => setModalDetalle(null)} />
-                                </div>
-                            </div>
+            <ClienteDetalleModal
+                cliente={modalDetalle}
+                onClose={() => setModalDetalle(null)}
+                onEliminar={() => {
+                    setConfirmDel(modalDetalle);
+                    setModalDetalle(null);
+                }}
+            />
 
-                            <div className="p-4" style={{ background: '#f8f9fa' }}>
-                                <div className="row g-4">
-                                    <div className="col-12 col-md-6">
-                                        <div className="bg-white rounded-4 p-3 h-100 border" style={{ borderColor: '#e8eaef' }}>
-                                            <div className="text-uppercase fw-semibold text-muted small mb-3">Email</div>
-                                            <div className="d-flex align-items-center gap-2 py-2 px-3 rounded-3" style={{ background: '#f4f7fb' }}>
-                                                <Mail size={18} className="text-secondary" />
-                                                <span className="fw-semibold">{getUserEmail(modalDetalle)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-12 col-md-6">
-                                        <div className="bg-white rounded-4 p-3 h-100 border" style={{ borderColor: '#e8eaef' }}>
-                                            <div className="text-uppercase fw-semibold text-muted small mb-3">Estado</div>
-                                            <div>
-                                                <span
-                                                    className="badge fw-semibold"
-                                                    style={{
-                                                        background: modalDetalle.activo ? '#d1fae5' : '#e2e3e5',
-                                                        borderRadius: '2rem',
-                                                        padding: '0.55rem 1rem',
-                                                        fontSize: '0.9rem',
-                                                        color: modalDetalle.activo ? '#065f46' : '#6c757d',
-                                                    }}
-                                                >
-                                                    {modalDetalle.activo ? 'Activo' : 'Inactivo'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {modalDetalle.createdAt && (
-                                        <div className="col-12">
-                                            <div className="bg-white rounded-4 p-3 border" style={{ borderColor: '#e8eaef' }}>
-                                                <div className="text-uppercase fw-semibold text-muted small mb-3">Fecha de Registro</div>
-                                                <div className="d-flex align-items-center gap-2 py-2 px-3 rounded-3" style={{ background: '#f4f7fb' }}>
-                                                    <Calendar size={18} className="text-secondary" />
-                                                    <span>{new Date(modalDetalle.createdAt).toLocaleDateString('es-ES', {
-                                                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                                                    })}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="p-4 border-top" style={{ background: '#ffffff' }}>
-                                <div className="d-flex flex-column flex-sm-row align-items-stretch gap-2">
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-secondary flex-fill"
-                                        onClick={() => setModalDetalle(null)}
-                                    >
-                                        Cerrar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-danger flex-fill fw-bold"
-                                        onClick={() => {
-                                            setConfirmDel(modalDetalle);
-                                            setModalDetalle(null);
-                                        }}
-                                    >
-                                        <Trash2 size={16} className="me-2" />Eliminar cliente
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+            <ConfirmModal
+                open={!!confirmDel}
+                title="¿Eliminar cliente?"
+                subtitle="Esta acción no se puede deshacer."
+                description={confirmDel ? (
+                    <div>
+                        <div className="fw-semibold">{confirmDel.nombre}</div>
+                        <div className="text-muted small">Se borrará toda la información del cliente.</div>
                     </div>
-                </div>
-            )}
-
-            {/* Modal de confirmación de eliminación */}
-            {confirmDel && (
-                <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.35)' }}>
-                    <div className="modal-dialog modal-dialog-centered modal-sm">
-                        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.5rem', overflow: 'hidden' }}>
-                            <div style={{
-                                background: 'linear-gradient(135deg, #fff4e6 0%, #fff7f0 100%)',
-                                padding: '1.6rem 1.4rem',
-                                textAlign: 'center'
-                            }}>
-                                <div style={{
-                                    width: 64,
-                                    height: 64,
-                                    borderRadius: '50%',
-                                    background: 'rgba(255, 221, 178, 0.45)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    marginBottom: 14,
-                                }}>
-                                    <AlertTriangle size={28} className="text-warning" />
-                                </div>
-                                <h5 className="fw-bold mb-2">¿Eliminar cliente?</h5>
-                                <p className="text-muted small mb-0">Esta acción no se puede deshacer.</p>
-                            </div>
-                            <div className="p-4">
-                                <div className="text-center mb-3">
-                                    <div className="fw-semibold">{confirmDel.nombre}</div>
-                                    <div className="text-muted small">Se borrará toda la información del cliente.</div>
-                                </div>
-                                <div className="d-flex gap-2">
-                                    <button
-                                        className="btn btn-outline-secondary flex-fill"
-                                        style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
-                                        onClick={() => setConfirmDel(null)}
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        className="btn btn-danger flex-fill fw-bold"
-                                        style={{ borderRadius: '0.85rem', padding: '0.9rem 1rem' }}
-                                        onClick={() => handleDelete(confirmDel.id)}
-                                    >
-                                        Sí, eliminar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+                ) : null}
+                confirmText="Sí, eliminar"
+                onClose={() => setConfirmDel(null)}
+                onConfirm={() => confirmDel && handleDelete(confirmDel.id)}
+            />
         </div>
     );
 };

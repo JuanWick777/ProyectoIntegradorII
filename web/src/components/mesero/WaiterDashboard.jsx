@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ClipboardList, Clock, CheckCircle, ChefHat, UtensilsCrossed, Handshake, RefreshCw, User, Check, AlertTriangle } from 'lucide-react';
+import { ClipboardList, Clock, CheckCircle, ChefHat, UtensilsCrossed, Handshake, RefreshCw, User, Check, AlertTriangle, History, LogOut } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import OrderCard from './OrderCard';
 import HamburgerMenu from '../shared/HamburgerMenu';
 import { PrimaryButton, SecondaryButton } from '../ui/Button';
+import PerfilModal from '../shared/PerfilModal';
 
 const FILTROS = [
     { key: 'todos', label: 'Todos', Icon: ClipboardList },
@@ -31,6 +32,8 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
     const [promoOrdenId, setPromoOrdenId] = useState('');
     const [promoCodigo, setPromoCodigo] = useState('');
     const [promoMsg, setPromoMsg] = useState(null);
+    const [vista, setVista] = useState('pedidos');
+    const [perfilAbierto, setPerfilAbierto] = useState(false);
 
     // ── Detectar sesión expirada (server restart) ────────────
     useEffect(() => {
@@ -107,51 +110,160 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
     }));
 
     return (
-        <div className="min-vh-100" style={{ background: '#f8f9fa' }}>
-
-            {/* ── Header ──────────────────────────────────── */}
+        <div className="min-vh-100" style={{ background: '#ffffff' }}>
             <header
-                className="sticky-top shadow-sm"
-                style={{ background: 'linear-gradient(90deg, #1a1a2e, #0f3460)', zIndex: 100 }}
+                className="sticky-top shadow-sm py-3 px-3"
+                style={{
+                    background: '#ffffff',
+                    borderBottom: '1px solid #e5e7eb',
+                }}
             >
-                <div className="container-fluid px-3 py-2 d-flex align-items-center justify-content-between">
-                    <div className="d-flex align-items-center gap-2">
-                        <User size={20} className="text-white" />
+                <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+                    <div className="d-flex align-items-start gap-3">
+                        <div
+                            className="rounded-3 d-flex align-items-center justify-content-center"
+                            style={{ width: 48, height: 48, background: '#f97316', color: '#ffffff' }}
+                        >
+                            <ClipboardList size={24} />
+                        </div>
                         <div>
-                            <div className="fw-bold text-white lh-1" style={{ fontSize: '0.95rem' }}>
-                                Panel Mesero
-                            </div>
-                            <div className="text-white-50" style={{ fontSize: '0.72rem' }}>
-                                {usuario?.nombre}
+                            <h1 className="fw-bold mb-1" style={{ fontSize: '1.25rem', color: '#111827' }}>
+                                RestoApp Mesero
+                            </h1>
+                            <div className="text-muted" style={{ fontSize: '0.9rem' }}>
+                                Sistema de gestión de pedidos en tiempo real
                             </div>
                         </div>
-                        {pendientes > 0 && (
-                            <span
-                                className="badge rounded-pill ms-2 fw-bold"
-                                style={{ background: '#e67e22', fontSize: '0.75rem' }}
-                            >
-                                {pendientes} nuevos
-                            </span>
-                        )}
                     </div>
-                    <div className="d-flex align-items-center gap-2">
-                        {ultimaSync && (
-                            <span className="text-white-50 d-none d-md-inline d-flex align-items-center gap-1" style={{ fontSize: '0.7rem' }}>
-                                <RefreshCw size={14} /> {ultimaSync.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                        )}
-                        <HamburgerMenu
-                            loginPath="/login"
-                            accentColor="#e67e22"
-                            onLogout={onLogout}
-                            navItems={navItemsFiltrosOcultos}
-                            activeItem={filtro}
-                            onNavItemClick={(id) => setFiltro(id)}
-                        />
+
+                    <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
+                        <span
+                            className="rounded-pill px-3 py-2 d-flex align-items-center gap-2"
+                            style={{ background: '#eef2ff', color: '#3730a3', fontSize: '0.85rem' }}
+                        >
+                            <Clock size={16} /> Turno: Mañana
+                        </span>
+                        <button
+                            type="button"
+                            className="btn fw-semibold d-flex align-items-center gap-2"
+                            style={{ borderRadius: '9999px', borderColor: '#f97316', backgroundColor: '#ffffff', border: '2px solid #f97316', color: '#f97316' }}
+                            onClick={() => setPerfilAbierto(true)}
+                        >
+                            <User size={16} /> Perfil
+                        </button>
+                        <button
+                            type="button"
+                            className="btn fw-semibold px-4 py-2 d-flex align-items-center gap-2"
+                            style={{ borderRadius: '9999px', backgroundColor: '#f97316', borderColor: '#f97316', color: '#ffffff' }}
+                            onClick={onLogout}
+                        >
+                            <LogOut size={16} /> Salir
+                        </button>
                     </div>
+                </div>
+
+                <div className="mt-3 d-flex flex-wrap align-items-center gap-2">
+                    <button
+                        type="button"
+                        className="btn rounded-pill px-4 py-2 fw-semibold"
+                        style={vista === 'pedidos' ? { borderColor: '#f97316', backgroundColor: '#f97316', color: '#ffffff', border: '2px solid #f97316' } : { borderColor: '#f97316', backgroundColor: '#ffffff', color: '#f97316', border: '2px solid #f97316' }}
+                        onClick={() => setVista('pedidos')}
+                    >
+                        Pedidos
+                    </button>
+                    <button
+                        type="button"
+                        className="btn rounded-pill px-4 py-2 fw-semibold"
+                        style={vista === 'entregadas' ? { borderColor: '#f97316', backgroundColor: '#f97316', color: '#ffffff', border: '2px solid #f97316' } : { borderColor: '#f97316', backgroundColor: '#ffffff', color: '#f97316', border: '2px solid #f97316' }}
+                        onClick={() => setVista('entregadas')}
+                    >
+                        Entregadas
+                    </button>
+                    <button
+                        type="button"
+                        className="btn rounded-pill px-4 py-2 fw-semibold"
+                        style={vista === 'historial' ? { borderColor: '#f97316', backgroundColor: '#f97316', color: '#ffffff', border: '2px solid #f97316' } : { borderColor: '#f97316', backgroundColor: '#ffffff', color: '#f97316', border: '2px solid #f97316' }}
+                        onClick={() => setVista('historial')}
+                    >
+                        Historial
+                    </button>
                 </div>
             </header>
 
+            {vista === 'historial' ? (
+                <div className="container-fluid px-3 py-3">
+                    <div className="row g-3">
+                        <div className="col-12">
+                            <div className="d-flex align-items-center gap-2 mb-2">
+                                <History size={18} style={{ color: '#6c757d' }} />
+                                <h5 className="fw-bold mb-0">Historial de pedidos</h5>
+                                <span className="text-muted small ms-2">{ordenes.filter(o => ['cerrada', 'entregada'].includes(o.estado)).length} pedidos</span>
+                            </div>
+                        </div>
+
+                        <div className="col-12">
+                            {ordenes.filter(o => ['cerrada', 'entregada'].includes(o.estado)).length === 0 ? (
+                                <div className="text-center py-5 text-muted">
+                                    <p style={{ fontSize: 48 }}>📦</p>
+                                    <p className="fw-semibold">Sin historial por ahora</p>
+                                </div>
+                            ) : (
+                                <div className="row g-3">
+                                    {ordenes.filter(o => ['cerrada', 'entregada'].includes(o.estado)).map(orden => (
+                                        <div key={orden.id} className="col-12 col-md-6 col-xl-4">
+                                            <OrderCard
+                                                orden={orden}
+                                                loading={false}
+                                                onAceptar={() => {}}
+                                                onCancelar={() => {}}
+                                                onEntregar={() => {}}
+                                                onCobrar={() => {}}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            ) : vista === 'entregadas' ? (
+                <div className="container-fluid px-3 py-3">
+                    <div className="row g-3">
+                        <div className="col-12">
+                            <div className="d-flex align-items-center gap-2 mb-2">
+                                <History size={18} style={{ color: '#6c757d' }} />
+                                <h5 className="fw-bold mb-0">Entregadas</h5>
+                                <span className="text-muted small ms-2">{ordenes.filter(o => o.estado === 'entregada').length} pedidos</span>
+                            </div>
+                        </div>
+
+                        <div className="col-12">
+                            {ordenes.filter(o => o.estado === 'entregada').length === 0 ? (
+                                <div className="text-center py-5 text-muted">
+                                    <p style={{ fontSize: 48 }}>📦</p>
+                                    <p className="fw-semibold">No hay entregas recientes</p>
+                                </div>
+                            ) : (
+                                <div className="row g-3">
+                                    {ordenes.filter(o => o.estado === 'entregada').map(orden => (
+                                        <div key={orden.id} className="col-12 col-md-6 col-xl-4">
+                                            <OrderCard
+                                                orden={orden}
+                                                loading={false}
+                                                onAceptar={() => {}}
+                                                onCancelar={() => {}}
+                                                onEntregar={() => {}}
+                                                onCobrar={() => {}}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <>
             {/* ── Filtros ─────────────────────────────────── */}
             <div
                 className="border-bottom bg-white px-3 py-2"
@@ -161,8 +273,8 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                     {filtrosVisibles.map(f => (
                         <button
                             key={f.key}
-                            className={`btn btn-sm ${filtro === f.key ? 'btn-primary' : 'btn-outline-secondary'} d-flex align-items-center gap-1`}
-                            style={{ borderRadius: '2rem', fontSize: '0.8rem' }}
+                            className={`btn btn-sm btn-filter ${filtro === f.key ? 'active-filter' : ''} d-flex align-items-center gap-1`}
+                            style={{ fontSize: '0.8rem' }}
                             onClick={() => setFiltro(f.key)}
                         >
                             <f.Icon size={16} /> {f.label}
@@ -278,6 +390,16 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                     </div>
                 )}
             </div>
+                </>
+            )}
+
+            {perfilAbierto && (
+                <PerfilModal
+                    usuario={usuario}
+                    onClose={() => setPerfilAbierto(false)}
+                    onGuardado={() => setPerfilAbierto(false)}
+                />
+            )}
         </div>
     );
 };

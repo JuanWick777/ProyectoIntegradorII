@@ -78,7 +78,7 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
       {/* Header */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #1a1a2e, #0f3460)',
+          background: '#f97316',
           padding: '1.25rem 1.5rem',
           display: 'flex',
           alignItems: 'center',
@@ -91,17 +91,18 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
             width: 44,
             height: 44,
             borderRadius: '50%',
-            background: 'rgba(230,126,34,0.25)',
+            background: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            border: '2px solid #f97316',
           }}
         >
-          <User size={20} />
+          <User size={20} style={{ color: '#f97316' }} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: '1rem' }}>Mi Perfil</div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: '#ffffff' }}>Mi Perfil</div>
+          <div style={{ color: '#ffffff', fontSize: '0.8rem', opacity: 0.8 }}>
             {usuario?.rol || 'Empleado'}
           </div>
         </div>
@@ -110,9 +111,10 @@ const PerfilModal = ({ usuario, onClose, onGuardado }) => {
           style={{
             background: 'none',
             border: 'none',
-            color: 'rgba(255,255,255,0.7)',
+            color: '#ffffff',
             cursor: 'pointer',
             lineHeight: 1,
+            opacity: 0.8,
           }}
           aria-label="Cerrar"
           type="button"
