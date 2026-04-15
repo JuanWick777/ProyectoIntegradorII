@@ -5,6 +5,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
 import proyecto.personal.proyectointegradorii.App
+import proyecto.personal.proyectointegradorii.BuildConfig
 import proyecto.personal.proyectointegradorii.data.local.AppStateCleaner
 import proyecto.personal.proyectointegradorii.data.remote.api.ApiService
 import retrofit2.Retrofit
@@ -12,7 +13,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private val BASE_URL = proyecto.personal.proyectointegradorii.BuildConfig.BASE_URL
+    private val BASE_URL = BuildConfig.BASE_URL
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BASIC
