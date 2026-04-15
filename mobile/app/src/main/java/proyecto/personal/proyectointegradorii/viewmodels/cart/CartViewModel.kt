@@ -85,6 +85,7 @@ class CartViewModel : ViewModel() {
     }
 
     fun cancelarPedidoAntesDeConfirmar() {
+        if (_isSubmittingOrder.value) return
         _cartItems.value = emptyList()
         _usarPuntos.value = false
         _previewOrden.value = null
@@ -167,7 +168,11 @@ class CartViewModel : ViewModel() {
     private val _pedidoError = MutableStateFlow<String?>(null)
     val pedidoError = _pedidoError.asStateFlow()
 
+    private val _isSubmittingOrder = MutableStateFlow(false)
+    val isSubmittingOrder = _isSubmittingOrder.asStateFlow()
+
     fun togglePuntos() {
+        if (_isSubmittingOrder.value) return
         _usarPuntos.value = !_usarPuntos.value
         cargarPreviewOrden()
     }
@@ -235,6 +240,9 @@ class CartViewModel : ViewModel() {
     }
 
     fun confirmarPedido(mesaId: Long) {
+        if (_isSubmittingOrder.value) return
+        if (_cartItems.value.isEmpty()) return
+
         val detalles = _cartItems.value.map {
             DetalleOrdenRequest(
                 platilloId = it.platillo.id,
@@ -250,6 +258,7 @@ class CartViewModel : ViewModel() {
         )
 
         viewModelScope.launch {
+            _isSubmittingOrder.value = true
             _pedidoError.value = null
             try {
                 val orden = repository.crearOrden(request)
@@ -286,6 +295,8 @@ class CartViewModel : ViewModel() {
                     else -> e.message ?: "No se pudo realizar el pedido"
                 }
                 e.printStackTrace()
+            } finally {
+                _isSubmittingOrder.value = false
             }
         }
     }

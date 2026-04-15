@@ -49,6 +49,7 @@ fun SCart(
     val preview by cartViewModel.previewOrden.collectAsState()
     val pedidoConfirmado by cartViewModel.pedidoConfirmado.collectAsState()
     val pedidoError by cartViewModel.pedidoError.collectAsState()
+    val isSubmittingOrder by cartViewModel.isSubmittingOrder.collectAsState()
 
     var showSuccessDialog by remember { mutableStateOf(false) }
 
@@ -309,10 +310,11 @@ fun SCart(
                         Switch(
                             checked = usarPuntos,
                             onCheckedChange = {
-                                if (puntos > 0) {
+                                if (puntos > 0 && !isSubmittingOrder) {
                                     cartViewModel.togglePuntos()
                                 }
-                            }
+                            },
+                            enabled = !isSubmittingOrder
                         )
                     }
 
@@ -369,9 +371,12 @@ fun SCart(
                             AlertColor,
                             Color.White,
                             {
-                                cartViewModel.cancelarPedidoAntesDeConfirmar()
+                                if (!isSubmittingOrder) {
+                                    cartViewModel.cancelarPedidoAntesDeConfirmar()
+                                }
                             },
-                            Modifier
+                            Modifier,
+                            enabled = !isSubmittingOrder
                         )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -386,7 +391,7 @@ fun SCart(
                     }
 
                     GlobalButton(
-                        "Confirmar Pedido",
+                        if (isSubmittingOrder) "Enviando pedido..." else "Confirmar Pedido",
                         16,
                         50,
                         350,
@@ -394,12 +399,12 @@ fun SCart(
                         MainColor,
                         TextColorWhite,
                         {
-                            if (mesaId != null) {
+                            if (mesaId != null && !isSubmittingOrder) {
                                 cartViewModel.confirmarPedido(mesaId!!)
                             }
                         },
                         Modifier,
-                        enabled = items.isNotEmpty() && mesaId != null
+                        enabled = items.isNotEmpty() && mesaId != null && !isSubmittingOrder
                     )
                 }
             }
