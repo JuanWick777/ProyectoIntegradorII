@@ -71,8 +71,9 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
         onSave(form);
     };
 
-    const rolForm = form.rol?.toLowerCase() || 'mesero';
-    const esCocinero = rolForm === 'cocinero' || rolForm === 'chef';
+    const rolFormRaw = form.rol?.toLowerCase() || 'mesero';
+    const rolForm = rolFormRaw === 'cocinero' ? 'chef' : rolFormRaw;
+    const esCocinero = rolForm === 'chef';
     const esMesero = rolForm === 'mesero';
 
     const fieldClass = (field) =>
@@ -193,7 +194,6 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
                                     }}
                                 >
                                     <option value="mesero">🧑‍🍽️ Mesero</option>
-                                    <option value="cocinero">👨‍🍳 Cocinero</option>
                                     <option value="chef">👨‍🍳 Chef</option>
                                     <option value="admin">🛡️ Administrador</option>
                                 </select>
