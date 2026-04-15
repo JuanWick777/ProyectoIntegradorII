@@ -3,6 +3,7 @@ package proyecto.personal.proyectointegradorii.ui.screens.internal.cart
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -102,90 +104,183 @@ fun SCart(
                 val pedidoActual = orden!!
 
                 Column(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp, vertical = 15.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    GlobalText(
-                        "Pedido #${pedidoActual.id}",
-                        22,
-                        TextColorDark,
-                        Modifier
-                    )
+                    // 1. TARJETA DE ESTADO DEL PEDIDO
+                    GlobalCard(
+                        backgroundColor = Color.White,
+                        content = {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                GlobalText(
+                                    texto = "Pedido #${pedidoActual.id}",
+                                    tamanio = 22,
+                                    color = TextColorDark,
+                                    peso = FontWeight.Bold
+                                )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = when (pedidoActual.estado.lowercase()) {
-                            "pendiente_confirmacion" -> "Confirmando..."
-                            "confirmada" -> "Orden recibida"
-                            "en_preparacion" -> "En preparación"
-                            "lista" -> "Lista para servir"
-                            "entregada" -> "Entregada"
-                            "cancelada" -> "Cancelada"
-                            "cerrada" -> "Cerrada"
-                            else -> pedidoActual.estado
-                        }
-                    )
+                                val estadoStr = when (pedidoActual.estado.lowercase()) {
+                                    "pendiente_confirmacion" -> "Confirmando..."
+                                    "confirmada" -> "Orden recibida"
+                                    "en_preparacion" -> "En preparación"
+                                    "lista" -> "Lista para servir"
+                                    "entregada" -> "Entregada"
+                                    "cancelada" -> "Cancelada"
+                                    "cerrada" -> "Cerrada"
+                                    else -> pedidoActual.estado
+                                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    LazyColumn {
-                        items(pedidoActual.detalles) { item ->
-                            Column(modifier = Modifier.padding(bottom = 10.dp)) {
-                                Text(item.nombre ?: "Platillo")
-                                Text("Cantidad: ${item.cantidad}")
-                                Text("Nota: ${item.nota ?: "-"}")
+                                GlobalText(
+                                    texto = estadoStr,
+                                    tamanio = 18,
+                                    color = MainColor, // Usamos el color principal para resaltar el estado
+                                    peso = FontWeight.SemiBold
+                                )
                             }
                         }
-                    }
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Subtotal: $${"%.2f".format(pedidoActual.subtotal)}")
 
-                    if (pedidoActual.montoDescuento > 0) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text("Descuento aplicado: -$${"%.2f".format(pedidoActual.montoDescuento)}")
+                    // Usamos weight(1f) para que la lista tome el espacio medio y empuje los botones abajo
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        // 2. LISTA DE PLATILLOS (Cada item en una tarjeta limpia)
+                        items(pedidoActual.detalles) { item ->
+                            GlobalCard(
+                                backgroundColor = Color.White,
+                                modifier = Modifier.padding(bottom = 10.dp),
+                                content = {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            GlobalText(
+                                                texto = item.nombre ?: "Platillo",
+                                                tamanio = 16,
+                                                color = TextColorDark,
+                                                peso = FontWeight.Bold
+                                            )
+                                            if (!item.nota.isNullOrBlank()) {
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                GlobalText(
+                                                    texto = "Nota: ${item.nota}",
+                                                    tamanio = 14,
+                                                    color = Color.Gray
+                                                )
+                                            }
+                                        }
+                                        GlobalText(
+                                            texto = "x${item.cantidad}",
+                                            tamanio = 16,
+                                            color = MainColor,
+                                            peso = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            )
+                        }
 
-                        if (!pedidoActual.codigoPromoAplicado.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Código aplicado: ${pedidoActual.codigoPromoAplicado}")
-                        } else {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Promoción automática aplicada")
+                        // 3. TARJETA DE RESUMEN DE PAGO (Al final de la lista)
+                        item {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            GlobalCard(
+                                backgroundColor = Color.White,
+                                content = {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            GlobalText("Subtotal", 16, Color.Gray)
+                                            GlobalText("$${"%.2f".format(pedidoActual.subtotal)}", 16, Color.Gray)
+                                        }
+
+                                        if (pedidoActual.montoDescuento > 0) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                GlobalText("Descuento", 16, Color(0xFF4CAF50)) // Verde para descuento
+                                                GlobalText("-$${"%.2f".format(pedidoActual.montoDescuento)}", 16, Color(0xFF4CAF50))
+                                            }
+
+                                            val promoText = if (!pedidoActual.codigoPromoAplicado.isNullOrBlank()) {
+                                                "Código: ${pedidoActual.codigoPromoAplicado}"
+                                            } else {
+                                                "Promoción automática"
+                                            }
+                                            GlobalText(promoText, 12, Color.Gray)
+                                        }
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 1.dp)
+                                        Spacer(modifier = Modifier.height(12.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            GlobalText("Total", 18, TextColorDark, peso = FontWeight.Bold)
+                                            GlobalText("$${"%.2f".format(pedidoActual.total)}", 18, MainColor, peso = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("Total: $${"%.2f".format(pedidoActual.total)}")
+                    Spacer(modifier = Modifier.height(16.dp))
 
+                    // 4. BOTONES DE ACCIÓN
                     GlobalButton(
-                        "Hacer otro pedido",
-                        16,
-                        50,
-                        350,
-                        MainColor,
-                        MainColor,
-                        TextColorWhite,
-                        {
+                        text = "Hacer otro pedido",
+                        textsize = 16,
+                        alt = 50,
+                        ancho = 350,
+                        bordercolorbutton = MainColor,
+                        colorbutton = MainColor,
+                        colortext = TextColorWhite,
+                        onClick = {
                             cartViewModel.limpiarOrdenActual()
                             navController.navigate("home") {
                                 launchSingleTop = true
                             }
-                        },
-                        Modifier
+                        }
                     )
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Botón secundario
                     GlobalButton(
-                        "Volver a pedidos",
-                        16,
-                        50,
-                        350,
-                        MainColor,
-                        MainColor,
-                        TextColorWhite,
-                        {
+                        text = "Volver a pedidos",
+                        textsize = 16,
+                        alt = 50,
+                        ancho = 350,
+                        bordercolorbutton = MainColor,
+                        colorbutton = Color.Transparent, // Fondo transparente
+                        colortext = MainColor,           // Texto color principal
+                        onClick = {
                             cartViewModel.limpiarOrdenActual()
-                        },
-                        Modifier
+                        }
                     )
                 }
             }
