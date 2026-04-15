@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
-import { MESAS_OPCIONES } from './adminConstants';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
 import { PrimaryButton, SecondaryButton } from '../ui/Button';
-import { Plus, Edit, Save, UserCheck, ChefHat, Shield, Flame, Coffee, Cake, User } from 'lucide-react';
+import { Plus, Edit, Save } from 'lucide-react';
 
-const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
+const UsuarioModal = ({ usuario, mesas = [], onSave, onClose, saving }) => {
     const isNew = !usuario?.id;
 
     const normalizeUsuarioForm = (user) => ({
         nombre: user?.nombre ?? '',
         email: user?.email ?? user?.correo ?? '',
         password: '',
-        rol: user?.rol ?? 'mesero',
-        especialidad: user?.especialidad ?? '',
-        mesaId: user?.mesaId ?? user?.mesa_id ?? null,
+        rol: (user?.rol ?? 'mesero').toLowerCase(),
+        mesaIds: user?.mesaIds ?? [],
     });
 
     const [form, setForm] = useState(normalizeUsuarioForm(usuario));
@@ -24,10 +22,23 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
     }, [usuario]);
 
     const set = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
-
     const rolForm = form.rol?.toLowerCase() || 'mesero';
-    const esCocinero = rolForm === 'cocinero' || rolForm === 'chef';
     const esMesero = rolForm === 'mesero';
+
+    const toggleMesa = (mesaId) => {
+        setForm((prev) => {
+            const actual = prev.mesaIds || [];
+            const existe = actual.includes(mesaId);
+            const next = existe
+                ? actual.filter((id) => id !== mesaId)
+                : [...actual, mesaId];
+
+            return {
+                ...prev,
+                mesaIds: next,
+            };
+        });
+    };
 
     return (
         <Modal
@@ -39,10 +50,10 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
             footerClassName="d-flex gap-3 justify-content-end"
             footer={(
                 <>
-                    <SecondaryButton 
-                        type="button" 
-                        onClick={onClose} 
-                        disabled={saving} 
+                    <SecondaryButton
+                        type="button"
+                        onClick={onClose}
+                        disabled={saving}
                         style={{ borderRadius: '0.75rem', minWidth: '120px' }}
                     >
                         Cancelar
@@ -57,7 +68,8 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
                             !form.nombre?.trim() ||
                             !form.email?.trim() ||
                             !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ||
-                            (isNew && (!form.password || form.password.length < 6))
+                            (isNew && (!form.password || form.password.length < 6)) ||
+                            (esMesero && ((form.mesaIds || []).length < 1 || (form.mesaIds || []).length > 3))
                         }
                     >
                         {saving ? (
@@ -75,12 +87,12 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
                 label="Nombre completo *"
                 value={form.nombre}
                 onChange={(e) => set('nombre', e.target.value)}
-                placeholder="Ej. Juan Pérez"
+                placeholder="Ej. Juan Perez"
             />
 
             <FormInput
                 id="email"
-                label="Correo electrónico *"
+                label="Correo electronico *"
                 type="email"
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
@@ -91,63 +103,62 @@ const UsuarioModal = ({ usuario, onSave, onClose, saving }) => {
                 id="password"
                 label={
                     <>
-                        Contraseña {!isNew && <span className="text-muted">(dejar vacío para no cambiar)</span>}
+                        Contrasena {!isNew && <span className="text-muted">(dejar vacio para no cambiar)</span>}
                     </>
                 }
                 type="password"
                 value={form.password}
                 onChange={(e) => set('password', e.target.value)}
-                placeholder={isNew ? 'Mínimo 6 caracteres' : '••••••'}
+                placeholder={isNew ? 'Minimo 6 caracteres' : '******'}
             />
 
-            <div className="row g-3 mb-3">
-                <div className="col-6">
-                    <FormInput
-                        id="rol"
-                        label="Rol *"
-                        as="select"
-                        value={rolForm}
-                        onChange={(e) => set('rol', e.target.value)}
-                        options={[
-                            { value: 'mesero', label: 'Mesero' },
-                            { value: 'cocinero', label: 'Cocinero' },
-                            { value: 'chef', label: 'Chef' },
-                            { value: 'admin', label: 'Administrador' },
-                        ]}
-                    />
-                </div>
-
-                {esCocinero && (
-                    <div className="col-6">
-                        <FormInput
-                            id="especialidad"
-                            label="Especialidad"
-                            as="select"
-                            value={form.especialidad}
-                            onChange={(e) => set('especialidad', e.target.value)}
-                            options={[
-                                { value: '', label: '— Sin especialidad —' },
-                                { value: 'parrillero', label: 'Parrillero' },
-                                { value: 'barista', label: 'Barista' },
-                                { value: 'repostero', label: 'Repostero' },
-                            ]}
-                        />
-                    </div>
-                )}
-            </div>
+            <FormInput
+                id="rol"
+                label="Rol *"
+                as="select"
+                value={rolForm}
+                onChange={(e) => setForm((prev) => ({
+                    ...prev,
+                    rol: e.target.value,
+                    mesaIds: e.target.value === 'mesero' ? prev.mesaIds : [],
+                }))}
+                options={[
+                    { value: 'mesero', label: 'Mesero' },
+                    { value: 'cocinero', label: 'Cocinero' },
+                    { value: 'chef', label: 'Chef' },
+                    { value: 'admin', label: 'Administrador' },
+                ]}
+            />
 
             {esMesero && (
-                <FormInput
-                    id="mesaId"
-                    label="Mesa asignada"
-                    as="select"
-                    value={form.mesaId || ''}
-                    onChange={(e) => set('mesaId', e.target.value ? Number(e.target.value) : null)}
-                    options={[
-                        { value: '', label: '— Sin mesa —' },
-                        ...MESAS_OPCIONES.map((m) => ({ value: m.id, label: m.nombre })),
-                    ]}
-                />
+                <div className="mb-3">
+                    <div className="form-label fw-semibold small text-secondary">
+                        Mesas asignadas * <span className="text-muted">(elige de 1 a 3)</span>
+                    </div>
+                    <div className="d-flex flex-wrap gap-2">
+                        {mesas.map((mesa) => {
+                            const checked = (form.mesaIds || []).includes(mesa.id);
+                            return (
+                                <button
+                                    key={mesa.id}
+                                    type="button"
+                                    className={`btn btn-sm fw-semibold ${checked ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                    style={{ borderRadius: '999px' }}
+                                    onClick={() => toggleMesa(mesa.id)}
+                                    disabled={!checked && (form.mesaIds || []).length >= 3}
+                                >
+                                    Mesa {mesa.numero}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {mesas.length === 0 && (
+                        <div className="text-muted small mt-2">No hay mesas registradas.</div>
+                    )}
+                    {((form.mesaIds || []).length < 1 || (form.mesaIds || []).length > 3) && (
+                        <div className="text-danger small mt-2">Un mesero debe tener entre 1 y 3 mesas.</div>
+                    )}
+                </div>
             )}
         </Modal>
     );

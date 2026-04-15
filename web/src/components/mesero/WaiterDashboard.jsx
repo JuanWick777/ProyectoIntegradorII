@@ -115,7 +115,7 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
             iconColor: '#0ea5e9',
             emptyText: 'Sin órdenes confirmadas',
             filterFunc: (o) => o.estado === 'confirmada',
-            onAceptar: (orden) => accionEstado(orden.id, 'en_preparacion'),
+            onAceptar: () => {},
             onCancelar: () => {},
         },
         {
@@ -127,7 +127,7 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
             iconColor: '#f1c40f',
             emptyText: 'Sin órdenes en cocina',
             filterFunc: (o) => o.estado === 'en_preparacion',
-            onAceptar: (orden) => accionEstado(orden.id, 'lista'),
+            onAceptar: () => {},
             onCancelar: () => {},
         },
         {

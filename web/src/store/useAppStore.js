@@ -83,7 +83,6 @@ export const useAppStore = create(
             carrito: [],
             products: [],
             categorias: [],
-            cocinas: [],
             loadingProducts: true,
             orders: [],
             ordenActual: null,
@@ -183,20 +182,21 @@ export const useAppStore = create(
             limpiarCarrito: () => set({ carrito: [] }),
 
             addOrder: async () => {
-                const { carrito, numeroMesa, usuario, token } = get();
+                const { carrito, numeroMesa, token } = get();
 
                 if (carrito.length === 0 || !numeroMesa) return;
 
                 const payload = {
-                    mesa_numero: numeroMesa,
-                    items: carrito.map((item) => ({
-                        producto_id: item.id,
+                    mesaId: Number(numeroMesa),
+                    usarPuntos: false,
+                    detalles: carrito.map((item) => ({
+                        platilloId: item.id,
                         cantidad: item.cantidad,
-                        nota_cliente: item.notas || '',
+                        notaCliente: item.notas || '',
                     })),
                 };
 
-                const data = await apiFetch('/ordenes', {
+                const data = await apiFetch('/ordenes/completa', {
                     method: 'POST',
                     body: JSON.stringify(payload),
                     token,
@@ -243,13 +243,6 @@ export const useAppStore = create(
                 return data;
             },
 
-            fetchMeseroHistorial: async () => {
-                const { token } = get();
-                const data = await apiFetch('/ordenes/historial', { token });
-                set({ orders: data });
-                return data;
-            },
-
             cambiarEstadoOrden: async (ordenId, nuevoEstado) => {
                 const { token } = get();
                 await apiFetch(`/ordenes/${ordenId}/estado`, {
@@ -286,6 +279,16 @@ export const useAppStore = create(
                     return data;
                 } catch (e) {
                     console.error('Error cargando tickets de cocina:', e);
+                    return [];
+                }
+            },
+
+            fetchKitchenHistorial: async () => {
+                const { token } = get();
+                try {
+                    return await apiFetch('/cocina/historial', { token });
+                } catch (e) {
+                    console.error('Error cargando historial de cocina:', e);
                     return [];
                 }
             },
@@ -378,19 +381,6 @@ export const useAppStore = create(
                     return data || [];
                 } catch (e) {
                     console.error('Error cargando categorías:', e);
-                    return [];
-                }
-            },
-
-            fetchCocinas: async () => {
-                const { token } = get();
-                try {
-                    const data = await apiFetch('/cocina', { token });
-                    set({ cocinas: data || [] });
-                    return data || [];
-                } catch (e) {
-                    console.error('Error cargando cocinas:', e);
-                    set({ cocinas: [] });
                     return [];
                 }
             },
@@ -519,36 +509,6 @@ export const useAppStore = create(
                 });
             },
 
-            fetchBrigadas: async () => {
-                const { token } = get();
-                return await apiFetch('/admin/brigadas', { token });
-            },
-
-            createBrigada: async (data) => {
-                const { token } = get();
-                return await apiFetch('/admin/brigadas', {
-                    method: 'POST',
-                    body: JSON.stringify(data),
-                    token,
-                });
-            },
-
-            updateBrigada: async (id, data) => {
-                const { token } = get();
-                return await apiFetch(`/admin/brigadas/${id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(data),
-                    token,
-                });
-            },
-
-            deleteBrigada: async (id) => {
-                const { token } = get();
-                await apiFetch(`/admin/brigadas/${id}`, {
-                    method: 'DELETE',
-                    token,
-                });
-            },
         }),
         {
             name: 'restaurant-storage-v2',

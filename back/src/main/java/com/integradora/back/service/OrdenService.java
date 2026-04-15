@@ -14,6 +14,7 @@ import com.integradora.back.model.promocion.Promocion;
 import com.integradora.back.model.usuario.Usuario;
 import com.integradora.back.repository.DetalleOrdenRepository;
 import com.integradora.back.repository.MesaRepository;
+import com.integradora.back.repository.MeseroMesaRepository;
 import com.integradora.back.repository.OrdenRepository;
 import com.integradora.back.repository.PlatilloRepository;
 import com.integradora.back.repository.UsuarioRepository;
@@ -39,6 +40,7 @@ public class OrdenService {
     private final PlatilloRepository platilloRepository;
     private final DetalleOrdenRepository detalleRepository;
     private final PromocionService promocionService;
+    private final MeseroMesaRepository meseroMesaRepository;
 
     @Transactional
     public Orden actualizarEstado(Long ordenId, String estado) {
@@ -50,6 +52,25 @@ public class OrdenService {
             nuevoEstado = EstadoOrden.valueOf(estado.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Estado inválido: " + estado);
+        }
+
+        Authentication authActual = SecurityContextHolder.getContext().getAuthentication();
+        if (authActual != null && authActual.isAuthenticated() && !authActual.getName().equals("anonymousUser")) {
+            Usuario usuarioActual = usuarioRepository.findByCorreo(authActual.getName()).orElse(null);
+            boolean esMesero = usuarioActual != null
+                    && usuarioActual.getRolEspecifico() != null
+                    && usuarioActual.getRolEspecifico().equalsIgnoreCase("MESERO");
+
+            if (esMesero) {
+                if (!List.of(EstadoOrden.CONFIRMADA, EstadoOrden.CANCELADA, EstadoOrden.ENTREGADA).contains(nuevoEstado)) {
+                    throw new RuntimeException("El mesero no puede cambiar la orden a este estado.");
+                }
+
+                Long mesaId = orden.getMesa() != null ? orden.getMesa().getId() : null;
+                if (mesaId == null || !meseroMesaRepository.existsByMeseroIdAndMesaId(usuarioActual.getId(), mesaId)) {
+                    throw new RuntimeException("No puedes modificar pedidos de una mesa que no tienes asignada.");
+                }
+            }
         }
 
         orden.setEstadoPreparacion(nuevoEstado);
@@ -66,15 +87,12 @@ public class OrdenService {
                 Usuario meseroActual = usuarioRepository.findByCorreo(auth.getName())
                         .orElseThrow(() -> new RuntimeException("Mesero no encontrado"));
 
-                if (orden.getMesero() == null || !orden.getMesero().getId().equals(meseroActual.getId())) {
-                    long activas = ordenRepository.countByMeseroIdAndEstadoPreparacionIn(
-                            meseroActual.getId(),
-                            List.of(EstadoOrden.CONFIRMADA, EstadoOrden.EN_PREPARACION, EstadoOrden.LISTA)
-                    );
+                Long mesaId = orden.getMesa() != null ? orden.getMesa().getId() : null;
+                if (mesaId == null || !meseroMesaRepository.existsByMeseroIdAndMesaId(meseroActual.getId(), mesaId)) {
+                    throw new RuntimeException("No puedes tomar pedidos de una mesa que no tienes asignada.");
+                }
 
-                    if (activas >= 3) {
-                        throw new RuntimeException("Límite alcanzado: Ya tienes 3 mesas activas asignadas.");
-                    }
+                if (orden.getMesero() == null || !orden.getMesero().getId().equals(meseroActual.getId())) {
                     orden.setMesero(meseroActual);
                 }
             }

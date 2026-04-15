@@ -38,7 +38,7 @@ export const isUserActive = (u) => {
 export const getProductName = (p) => p?.nombre ?? '';
 export const getProductDesc = (p) => p?.descripcion ?? '';
 export const getProductPrice = (p) => p?.precio ?? 0;
-export const getProductDisponibilidad = (p) => p?.disponibilidad ?? 'DISPONIBLE';
+export const getProductDisponibilidad = (p) => p?.estado ?? p?.disponibilidad ?? 'DISPONIBLE';
 
 export const getProductCategoryName = (p) => {
     const cat = p?.categoria;
@@ -51,13 +51,6 @@ export const getProductCategoryId = (p) => {
     if (p?.categoria?.id) return Number(p.categoria.id);
     if (p?.categoria_id) return Number(p.categoria_id);
     if (p?.categoriaId) return Number(p.categoriaId);
-    return null;
-};
-
-export const getProductKitchenId = (p) => {
-    if (p?.cocina?.id) return Number(p.cocina.id);
-    if (p?.kitchen_id) return Number(p.kitchen_id);
-    if (p?.kitchenId) return Number(p.kitchenId);
     return null;
 };
 
@@ -77,8 +70,6 @@ export const EMPTY_USER = {
     email: '',
     password: '',
     rol: 'mesero',
-    especialidad: '',
-    mesaId: null,
 };
 
 export const EMPTY_NEW = {
@@ -89,6 +80,5 @@ export const EMPTY_NEW = {
     imagenFile: null,
     imagenRemoved: false,
     categoria_id: '',
-    kitchen_id: '',
     disponibilidad: 'DISPONIBLE',
 };

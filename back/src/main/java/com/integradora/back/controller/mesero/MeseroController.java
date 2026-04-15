@@ -6,6 +6,7 @@ import com.integradora.back.model.orden.EstadoOrden;
 import com.integradora.back.model.orden.Orden;
 import com.integradora.back.model.usuario.Usuario;
 import com.integradora.back.repository.DetalleOrdenRepository;
+import com.integradora.back.repository.MeseroMesaRepository;
 import com.integradora.back.repository.OrdenRepository;
 import com.integradora.back.repository.UsuarioRepository;
 import com.integradora.back.service.OrdenService;
@@ -15,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/mesero")
@@ -26,6 +26,7 @@ public class MeseroController {
     private final DetalleOrdenRepository detalleOrdenRepository;
     private final UsuarioRepository usuarioRepository;
     private final OrdenRepository ordenRepository;
+    private final MeseroMesaRepository meseroMesaRepository;
 
     @GetMapping("/ordenes")
     public ResponseEntity<List<OrdenResponseDTO>> listarActivas(Authentication auth) {
@@ -41,19 +42,25 @@ public class MeseroController {
                     ? usuarioRepository.findByCorreo(correo).orElseThrow()
                     : null;
 
-            List<Orden> pendientes = ordenRepository.findByEstadoPreparacion(EstadoOrden.PENDIENTE_CONFIRMACION);
-            List<Orden> asignadas = (mesero == null)
+            List<Long> mesaIds = (mesero == null)
                     ? List.of()
-                    : ordenRepository.findByMeseroIdAndEstadoPreparacionIn(
-                    mesero.getId(),
-                    List.of(EstadoOrden.CONFIRMADA, EstadoOrden.EN_PREPARACION, EstadoOrden.LISTA)
-            );
+                    : meseroMesaRepository.findByMeseroIdOrderByMesaNumeroAsc(mesero.getId())
+                            .stream()
+                            .map(a -> a.getMesa().getId())
+                            .toList();
 
-            // Unir sin duplicar
-            Map<Long, Orden> uniq = new java.util.LinkedHashMap<>();
-            for (Orden o : pendientes) uniq.put(o.getId(), o);
-            for (Orden o : asignadas) uniq.put(o.getId(), o);
-            ordenes = uniq.values().stream().toList();
+            ordenes = mesaIds.isEmpty()
+                    ? List.of()
+                    : ordenRepository.findByMesaIdInAndEstadoPreparacionIn(
+                            mesaIds,
+                            List.of(
+                                    EstadoOrden.PENDIENTE_CONFIRMACION,
+                                    EstadoOrden.CONFIRMADA,
+                                    EstadoOrden.EN_PREPARACION,
+                                    EstadoOrden.LISTA,
+                                    EstadoOrden.ENTREGADA
+                            )
+                    );
         }
 
         List<OrdenResponseDTO> dto = ordenes.stream()

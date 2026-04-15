@@ -3,39 +3,29 @@ import { useAppStore } from '../../store/useAppStore';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { AlertTriangle, UtensilsCrossed, Check } from 'lucide-react';
-import { getProductImage } from '../admin/adminConstants';
+import { getProductDisponibilidad, getProductImage } from '../admin/adminConstants';
 
-/**
- * ProductCard.jsx — Tarjeta de producto para el menú del cliente
- *
- * Props:
- *   product — objeto con { id, nombre, descripcion, alergenos, precio,
- *                          stock_disponible, imagen_url, categoria, cocina }
- */
 const ProductCard = ({ product }) => {
     const { carrito, agregarAlCarrito, decrementarCantidad } = useAppStore();
     const [added, setAdded] = useState(false);
     const imagen = getProductImage(product);
+    const estado = getProductDisponibilidad(product).toUpperCase();
+    const noDisponible = ['AGOTADO', 'INACTIVO'].includes(estado);
 
-    // Buscar si el producto ya está en el carrito
     const itemEnCarrito = carrito.find(i => i.id === product.id);
     const cantidad = itemEnCarrito?.cantidad || 0;
 
     const handleAgregar = () => {
+        if (noDisponible) return;
         agregarAlCarrito(product);
-        // Feedback visual breve
         setAdded(true);
         setTimeout(() => setAdded(false), 800);
     };
 
-    const sinStock = product.stock_disponible === 0;
-    const stockBajo = product.stock_disponible > 0 && product.stock_disponible <= 5;
-
     return (
-        <div className={`card h-100 border-0 shadow-sm kds-ticket ${sinStock ? 'opacity-60' : ''}`}
+        <div className={`card h-100 border-0 shadow-sm kds-ticket ${noDisponible ? 'opacity-60' : ''}`}
             style={{ borderRadius: '1rem', overflow: 'hidden' }}>
 
-            {/* Imagen / Placeholder */}
             <div
                 className="position-relative"
                 style={{
@@ -52,20 +42,13 @@ const ProductCard = ({ product }) => {
                     <UtensilsCrossed size={48} style={{ color: 'rgba(0,0,0,0.2)' }} />
                 )}
 
-                {/* Badge de stock */}
-                {sinStock && (
+                {noDisponible && (
                     <Badge className="position-absolute top-0 end-0 m-2" variant="danger">
-                        Agotado
-                    </Badge>
-                )}
-                {stockBajo && !sinStock && (
-                    <Badge className="position-absolute top-0 end-0 m-2" variant="warning">
-                        ¡Últimos {product.stock_disponible}!
+                        {estado === 'INACTIVO' ? 'Inactivo' : 'Agotado'}
                     </Badge>
                 )}
             </div>
 
-            {/* Contenido */}
             <div className="card-body d-flex flex-column p-2 pb-3">
                 <h6 className="fw-bold mb-1 lh-sm" style={{ fontSize: '0.85rem' }}>
                     {product.nombre}
@@ -79,7 +62,6 @@ const ProductCard = ({ product }) => {
                     </p>
                 )}
 
-                {/* Alérgenos */}
                 {product.alergenos && product.alergenos !== 'ninguno' && (
                     <div className="mb-2">
                         <Badge variant="warning" className="text-dark" pill={false}>
@@ -89,22 +71,20 @@ const ProductCard = ({ product }) => {
                 )}
 
                 <div className="mt-auto">
-                    {/* Precio */}
                     <p className="fw-bold text-primary mb-2" style={{ fontSize: '1rem' }}>
                         ${Number(product.precio).toFixed(2)}
                     </p>
 
-                    {/* Botón / Contador */}
                     {cantidad === 0 ? (
                         <Button
                             onClick={handleAgregar}
                             fullWidth
                             variant={added ? 'success' : 'primary'}
                             size="sm"
-                            disabled={sinStock}
+                            disabled={noDisponible}
                             className="rounded-xl d-flex align-items-center justify-content-center gap-1"
                         >
-                            {added ? <><Check size={16} /> Agregado</> : sinStock ? 'Agotado' : '+ Agregar'}
+                            {added ? <><Check size={16} /> Agregado</> : noDisponible ? 'No disponible' : '+ Agregar'}
                         </Button>
                     ) : (
                         <div className="d-flex align-items-center justify-content-between bg-light rounded-pill px-2">
@@ -113,13 +93,14 @@ const ProductCard = ({ product }) => {
                                 style={{ width: 32, height: 32 }}
                                 onClick={() => decrementarCantidad(product.id)}
                             >
-                                −
+                                -
                             </button>
                             <span className="fw-bold text-primary">{cantidad}</span>
                             <button
                                 className="btn btn-sm p-0 fw-bold fs-5 text-primary border-0 bg-transparent"
                                 style={{ width: 32, height: 32 }}
                                 onClick={handleAgregar}
+                                disabled={noDisponible}
                             >
                                 +
                             </button>

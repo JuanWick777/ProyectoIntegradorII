@@ -4,6 +4,9 @@ import com.integradora.back.model.usuario.Usuario;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 public class UsuarioResponseDTO {
@@ -13,14 +16,26 @@ public class UsuarioResponseDTO {
     private String correo;
     private String rol;
     private String fotoPerfil;
+    private String estado;
+    private LocalDateTime fechaRegistro;
+    private List<Long> mesaIds;
+    private List<Integer> mesasAsignadas;
 
     public static UsuarioResponseDTO from(Usuario u) {
+        return from(u, List.of(), List.of());
+    }
+
+    public static UsuarioResponseDTO from(Usuario u, List<Long> mesaIds, List<Integer> mesasAsignadas) {
         return new UsuarioResponseDTO(
                 u.getId(),
-                u.getNombreCompleto(), // 👈 aquí el fix
+                u.getNombreCompleto(),
                 u.getCorreo(),
-                resolverRol(u), // 👈 aquí el fix
-                u.getFotoPerfil()
+                resolverRol(u),
+                u.getFotoPerfil(),
+                u.getEstado(),
+                u.getFechaRegistro(),
+                mesaIds,
+                mesasAsignadas
         );
     }
 

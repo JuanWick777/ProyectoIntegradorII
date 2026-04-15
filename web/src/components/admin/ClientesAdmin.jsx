@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import SectionHeader from '../ui/SectionHeader';
 import DataTable from '../ui/DataTable';
-import { Heart, Mail, Calendar, MapPin, AlertTriangle, User, Search, SlidersHorizontal, Trash2, Eye } from 'lucide-react';
+import { Mail, Calendar, User, Search, SlidersHorizontal, Trash2, Eye } from 'lucide-react';
 import { getUserEmail, resolveImageUrl, isUserActive } from './adminConstants';
 import { SecondaryButton, DangerButton } from '../ui/Button';
 import ConfirmModal from '../ui/ConfirmModal';
@@ -17,6 +17,20 @@ const ClientesAdmin = ({ mostrarToast }) => {
     const [statusFilter, setStatusFilter] = useState('todos');
     const [sortBy, setSortBy] = useState('nombre');
     const [modalDetalle, setModalDetalle] = useState(null);
+
+    const formatFechaRegistro = (cliente) => {
+        const raw = cliente?.fechaRegistro ?? cliente?.fecha_registro ?? cliente?.createdAt ?? cliente?.fechaCreacion;
+        if (!raw) return 'N/A';
+
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) return 'N/A';
+
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
 
     const cargar = async () => {
         setLoading(true);
@@ -139,9 +153,7 @@ const ClientesAdmin = ({ mostrarToast }) => {
             render: (c) => (
                 <div className="text-muted small d-flex align-items-center gap-2">
                     <Calendar size={14} />
-                    {c.createdAt ? new Date(c.createdAt).toLocaleDateString('es-ES', { 
-                        year: 'numeric', month: 'short', day: 'numeric' 
-                    }) : 'N/A'}
+                    {formatFechaRegistro(c)}
                 </div>
             ),
         },

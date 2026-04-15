@@ -32,6 +32,8 @@ public interface OrdenRepository extends JpaRepository<Orden, Long> {
     List<Orden> findByEstadoPreparacion(EstadoOrden estado);
 
     List<Orden> findByMeseroIdAndEstadoPreparacionIn(Long meseroId, List<EstadoOrden> estados);
+
+    List<Orden> findByMesaIdInAndEstadoPreparacionIn(List<Long> mesaIds, List<EstadoOrden> estados);
     
     long countByMeseroIdAndEstadoPreparacionIn(Long meseroId, List<EstadoOrden> estados);
 

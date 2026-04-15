@@ -19,12 +19,10 @@ const MenuAdmin = () => {
     const {
         products,
         categorias,
-        cocinas,
         updateProduct,
         createProduct,
         fetchAdminProducts,
         fetchCategorias,
-        fetchCocinas,
         fetchUsuarios,
         fetchOrders,
         uploadPlatilloImage,
@@ -68,10 +66,6 @@ const MenuAdmin = () => {
         cargarDatos();
     }, []);
 
-    useEffect(() => {
-        fetchCocinas().catch(() => console.error('Error cargando cocinas'));
-    }, []);
-
     const mostrarToast = (msg) => {
         setToast(msg);
         setTimeout(() => setToast(''), 3000);
@@ -103,9 +97,9 @@ const MenuAdmin = () => {
                 precio: parseFloat(form.precio),
                 descripcion: form.descripcion,
                 disponibilidad: form.disponibilidad || 'DISPONIBLE',
+                estado: form.disponibilidad || 'DISPONIBLE',
                 imagenUrl: imagenUrlFinal,
                 categoriaId: form.categoria_id,
-                kitchenId: form.kitchen_id,
             };
 
             if (form.id) {
@@ -383,7 +377,6 @@ const MenuAdmin = () => {
                         onClose={() => setModalProduct(null)}
                         saving={saving}
                         categorias={categorias}
-                        cocinas={cocinas}
                     />
                 )}
 

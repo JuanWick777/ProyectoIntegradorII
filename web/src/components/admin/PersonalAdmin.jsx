@@ -3,14 +3,15 @@ import { useAppStore } from '../../store/useAppStore';
 import SectionHeader from '../ui/SectionHeader';
 import DataTable from '../ui/DataTable';
 import UsuarioModal from './UsuarioModal';
-import { ForkKnife, Table, PlusCircle, Edit2, Trash2, AlertTriangle, Shield, UserCheck, User, ChefHat, Coffee, Flame, Cake, Search, SlidersHorizontal } from 'lucide-react';
+import { PlusCircle, Edit2, Trash2, AlertTriangle, Shield, UserCheck, User, ChefHat, Search, SlidersHorizontal } from 'lucide-react';
 import { normalizeRole, getUserEmail, getUserRole, ROL_BADGE, isUserActive } from './adminConstants';
 import ConfirmModal from '../ui/ConfirmModal';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 
 const PersonalAdmin = ({ mostrarToast }) => {
-    const { fetchUsuarios, createUsuario, updateUsuario, deleteUsuario } = useAppStore();
+    const { fetchUsuarios, fetchMesas, createUsuario, updateUsuario, deleteUsuario } = useAppStore();
     const [usuarios, setUsuarios] = useState([]);
+    const [mesas, setMesas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -23,10 +24,13 @@ const PersonalAdmin = ({ mostrarToast }) => {
     const cargar = async () => {
         setLoading(true);
         try {
-            const uList = await fetchUsuarios();
-            // Filtrar solo empleados (excluyendo clientes)
-            const empleadosList = uList.filter((u) => u.rol && u.rol.toLowerCase() !== 'cliente');
+            const [uList, mesasList] = await Promise.all([
+                fetchUsuarios(),
+                fetchMesas().catch(() => []),
+            ]);
+            const empleadosList = (uList || []).filter((u) => u.rol && u.rol.toLowerCase() !== 'cliente');
             setUsuarios(empleadosList);
+            setMesas(mesasList || []);
         } finally {
             setLoading(false);
         }
@@ -49,39 +53,28 @@ const PersonalAdmin = ({ mostrarToast }) => {
             const estado = isUserActive(u) ? 'activo' : 'inactivo';
             const query = searchQuery.toLowerCase().trim();
 
-            if (query && !(nombre.includes(query) || email.includes(query))) {
-                return false;
-            }
-            if (roleFilter !== 'todos' && rol !== roleFilter) {
-                return false;
-            }
-            if (statusFilter !== 'todos' && estado !== statusFilter) {
-                return false;
-            }
+            if (query && !(nombre.includes(query) || email.includes(query))) return false;
+            if (roleFilter !== 'todos' && rol !== roleFilter) return false;
+            if (statusFilter !== 'todos' && estado !== statusFilter) return false;
             return true;
         });
 
         return filtered.sort((a, b) => {
             const aValue = (sortBy === 'rol' ? getUserRole(a) : (a.nombre || '')).toString().toLowerCase();
             const bValue = (sortBy === 'rol' ? getUserRole(b) : (b.nombre || '')).toString().toLowerCase();
-            if (aValue < bValue) return -1;
-            if (aValue > bValue) return 1;
-            return 0;
+            return aValue.localeCompare(bValue);
         });
     }, [usuarios, searchQuery, roleFilter, statusFilter, sortBy]);
 
     const handleSave = async (form) => {
         setSaving(true);
         try {
-            const rol = normalizeRole(form.rol);
-
             const payload = {
                 nombre: form.nombre,
                 email: form.email,
                 password: form.password || undefined,
-                rol,
-                especialidad: form.especialidad || null,
-                mesaId: form.mesaId || null,
+                rol: normalizeRole(form.rol),
+                mesaIds: normalizeRole(form.rol) === 'mesero' ? form.mesaIds : [],
             };
 
             if (modal?.id) await updateUsuario(modal.id, payload);
@@ -113,30 +106,24 @@ const PersonalAdmin = ({ mostrarToast }) => {
             key: 'empleado',
             label: 'Empleado',
             className: 'ps-4',
-            render: (u) => {
-                const email = getUserEmail(u);
-                return (
-                    <div>
-                        <div className="fw-semibold">{u.nombre}</div>
-                        <div className="text-muted small">{email}</div>
-                    </div>
-                );
-            },
+            render: (u) => (
+                <div>
+                    <div className="fw-semibold">{u.nombre}</div>
+                    <div className="text-muted small">{getUserEmail(u)}</div>
+                </div>
+            ),
         },
         {
             key: 'rol',
             label: 'Rol',
             render: (u) => {
                 const rol = getUserRole(u);
-                const badge = ROL_BADGE[rol] || { color: '#aaa', label: rol || '—' };
+                const badge = ROL_BADGE[rol] || { color: '#aaa', label: rol || '-' };
                 const ROLE_ICONS = {
                     admin: Shield,
                     mesero: UserCheck,
                     cocinero: ChefHat,
                     chef: ChefHat,
-                    parrillero: Flame,
-                    barista: Coffee,
-                    repostero: Cake,
                     cliente: User,
                 };
                 const IconComponent = ROLE_ICONS[rol] || User;
@@ -150,39 +137,6 @@ const PersonalAdmin = ({ mostrarToast }) => {
                         {badge.label}
                     </span>
                 );
-            },
-        },
-        {
-            key: 'asignacion',
-            label: 'Asignación',
-            render: (u) => {
-                const rol = getUserRole(u);
-                if (['cocinero', 'chef'].includes(rol)) {
-                    return (
-                        <div className="text-muted small">
-                            {u.especialidad ? (
-                                <span>
-                                    <ForkKnife size={16} className="me-1" />
-                                    {u.especialidad.charAt(0).toUpperCase() + u.especialidad.slice(1)}
-                                </span>
-                            ) : (
-                                <em>Sin asignar</em>
-                            )}
-                        </div>
-                    );
-                } else if (rol === 'mesero') {
-                    return (
-                        <div className="text-muted small">
-                            {(u.mesaId ?? u.mesa_id) ? (
-                                <span><Table size={16} className="me-1" />Mesa {u.mesaId ?? u.mesa_id}</span>
-                            ) : (
-                                <em>Sin asignar</em>
-                            )}
-                        </div>
-                    );
-                } else {
-                    return <em>—</em>;
-                }
             },
         },
         {
@@ -202,6 +156,22 @@ const PersonalAdmin = ({ mostrarToast }) => {
                     >
                         {activo ? 'Activo' : 'Inactivo'}
                     </span>
+                );
+            },
+        },
+        {
+            key: 'mesas',
+            label: 'Mesas asignadas',
+            render: (u) => {
+                const rol = getUserRole(u);
+                if (rol !== 'mesero') return <span className="text-muted small">No aplica</span>;
+                const asignadas = u.mesasAsignadas || [];
+                return asignadas.length > 0 ? (
+                    <span className="text-muted small">
+                        {asignadas.map((n) => `Mesa ${n}`).join(', ')}
+                    </span>
+                ) : (
+                    <span className="text-danger small">Sin mesas</span>
                 );
             },
         },
@@ -237,7 +207,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
         <div className="bg-white rounded-4 shadow-sm p-4">
             <SectionHeader
                 title="Personal"
-                subtitle="Administración de empleados y roles"
+                subtitle="Administracion de empleados y roles"
                 badge={usuarios.length}
                 actions={(
                     <PrimaryButton
@@ -282,7 +252,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
                                 </option>
                             ))}
                         </select>
-                        <label htmlFor="roleFilter">Todos los roles</label>
+                        <label htmlFor="roleFilter">Rol</label>
                     </div>
                 </div>
                 <div className="col-12 col-md-2">
@@ -294,7 +264,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
                             onChange={(e) => setStatusFilter(e.target.value)}
                             style={{ borderRadius: '1rem' }}
                         >
-                            <option value="todos">Todos los estados</option>
+                            <option value="todos">Todos</option>
                             <option value="activo">Activo</option>
                             <option value="inactivo">Inactivo</option>
                         </select>
@@ -313,10 +283,10 @@ const PersonalAdmin = ({ mostrarToast }) => {
                             <option value="nombre">Nombre</option>
                             <option value="rol">Rol</option>
                         </select>
-                        <label htmlFor="sortBy">Ordenar por</label>
+                        <label htmlFor="sortBy">Ordenar</label>
                     </div>
                 </div>
-                <div className="col-12 col-md-12 text-muted small">
+                <div className="col-12 text-muted small">
                     <div className="d-flex align-items-center gap-2">
                         <SlidersHorizontal size={16} />
                         <span>{sortedUsuarios.length} resultados</span>
@@ -334,6 +304,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
             {modal !== null && (
                 <UsuarioModal
                     usuario={modal?.id ? modal : null}
+                    mesas={mesas}
                     onSave={handleSave}
                     onClose={() => setModal(null)}
                     saving={saving}
@@ -342,15 +313,15 @@ const PersonalAdmin = ({ mostrarToast }) => {
 
             <ConfirmModal
                 open={!!confirmDel}
-                title="¿Eliminar empleado?"
-                subtitle="Esta acción no se puede deshacer."
+                title="Eliminar empleado?"
+                subtitle="Esta accion no se puede deshacer."
                 description={confirmDel ? (
                     <>
                         <div className="fw-semibold">{confirmDel.nombre}</div>
-                        <div className="text-muted small">Se borrará toda la información del empleado.</div>
+                        <div className="text-muted small">Se borrara toda la informacion del empleado.</div>
                     </>
                 ) : null}
-                confirmText="Sí, eliminar"
+                confirmText="Si, eliminar"
                 cancelText="Cancelar"
                 onClose={() => setConfirmDel(null)}
                 onConfirm={() => handleDelete(confirmDel.id)}

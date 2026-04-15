@@ -9,7 +9,7 @@ import FormInput from '../ui/FormInput';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 import { Plus, Edit, Save } from 'lucide-react';
 
-const ProductModal = ({ product, onSave, onClose, saving, categorias = [], cocinas = [] }) => {
+const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => {
     const isNew = !product?.id;
     const [form, setForm] = useState(
         product
@@ -21,12 +21,10 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [], cocin
                 imagenRemoved: false,
                 disponibilidad: getProductDisponibilidad(product),
                 categoria_id: product.categoria?.id ?? product.categoria_id ?? product.categoriaId ?? EMPTY_NEW.categoria_id,
-                kitchen_id: product.cocina?.id ?? product.kitchen_id ?? product.kitchenId ?? EMPTY_NEW.kitchen_id,
             }
             : {
                 ...EMPTY_NEW,
                 categoria_id: categorias?.[0]?.id ?? '',
-                kitchen_id: cocinas?.[0]?.id ?? '',
             }
     );
 
@@ -39,15 +37,6 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [], cocin
         }
     }, [categorias, product, form.categoria_id]);
 
-    React.useEffect(() => {
-        if (!product?.id && !form.kitchen_id && cocinas.length > 0) {
-            setForm(prev => ({
-                ...prev,
-                kitchen_id: cocinas[0].id
-            }));
-        }
-    }, [cocinas, product, form.kitchen_id]);
-
     const set = (field, val) => setForm((prev) => ({ ...prev, [field]: val }));
     const imgPreview = useMemo(() => {
         if (form.imagenFile instanceof File) {
@@ -57,10 +46,10 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [], cocin
     }, [form.imagenFile, form.imagenUrl]);
 
     const handleCategoriaChange = (e) => {
-        const nuevaCat = Number(e.target.value);
+        const value = e.target.value;
         setForm(prev => ({
             ...prev,
-            categoria_id: nuevaCat
+            categoria_id: value ? Number(value) : '',
         }));
     };
 
@@ -82,7 +71,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [], cocin
                         className="fw-bold"
                         style={{ borderRadius: '0.75rem', minWidth: '120px' }}
                         onClick={() => onSave(form)}
-                        disabled={saving || !form.nombre?.trim() || !form.precio || Number(form.precio) <= 0}
+                        disabled={saving || !form.nombre?.trim() || !form.precio || Number(form.precio) <= 0 || !form.categoria_id}
                     >
                         {saving ? (
                             <>
@@ -123,37 +112,27 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [], cocin
                         options={[
                             { value: 'DISPONIBLE', label: 'Disponible' },
                             { value: 'AGOTADO', label: 'Agotado' },
+                            { value: 'INACTIVO', label: 'Inactivo' },
                         ]}
                     />
                 </div>
             </div>
 
-            <div className="row g-3 mb-3">
-                <div className="col-6">
-                    <FormInput
-                        id="categoria"
-                        label="Categoría"
-                        as="select"
-                        value={form.categoria_id}
-                        onChange={handleCategoriaChange}
-                        options={categorias.map((c) => ({ value: c.id, label: c.nombre }))}
-                    />
-                </div>
-                <div className="col-6">
-                    <FormInput
-                        id="cocina"
-                        label="Cocina"
-                        as="select"
-                        value={form.kitchen_id}
-                        onChange={(e) => set('kitchen_id', Number(e.target.value))}
-                        options={cocinas.map((c) => ({ value: c.id, label: c.nombre }))}
-                    />
-                </div>
-            </div>
+            <FormInput
+                id="categoria"
+                label="Categoria *"
+                as="select"
+                value={form.categoria_id}
+                onChange={handleCategoriaChange}
+                options={[
+                    { value: '', label: 'Selecciona una categoria' },
+                    ...categorias.map((c) => ({ value: c.id, label: c.nombre })),
+                ]}
+            />
 
             <FormInput
                 id="descripcion"
-                label="Descripción"
+                label="Descripcion"
                 as="textarea"
                 rows={2}
                 value={form.descripcion}
@@ -184,7 +163,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [], cocin
                         onClick={() => setForm((prev) => ({ ...prev, imagenFile: null }))}
                         disabled={saving}
                     >
-                        Quitar selección
+                        Quitar seleccion
                     </SecondaryButton>
 
                     <DangerButton

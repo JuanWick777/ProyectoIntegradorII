@@ -17,4 +17,5 @@ public class UsuarioRequestDTO {
     private String especialidad;
     private String fotoPerfil;
     private Long mesaId;
+    private java.util.List<Long> mesaIds;
 }

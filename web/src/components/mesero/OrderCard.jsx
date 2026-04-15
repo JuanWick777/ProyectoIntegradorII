@@ -17,8 +17,6 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
     const badge = ESTADO_BADGE[orden.estado] || { label: orden.estado, color: '#95a5a6' };
 
     const esPendiente = orden.estado === 'pendiente_confirmacion';
-    const esConfirmada = orden.estado === 'confirmada';
-    const esEnPreparacion = orden.estado === 'en_preparacion';
     const esLista = orden.estado === 'lista';
     const esEntregada = orden.estado === 'entregada';
     const esCerrada = ['cerrada', 'cancelada'].includes(orden.estado);
@@ -132,32 +130,6 @@ const OrderCard = ({ orden, onAceptar, onCancelar, onEntregar, onCobrar, loading
                                         : <><Check size={16} /> Aceptar</>}
                                 </PrimaryButton>
                             </>
-                        )}
-
-                        {esConfirmada && (
-                            <PrimaryButton
-                                type="button"
-                                size="sm"
-                                className="fw-semibold d-flex align-items-center justify-content-center gap-1"
-                                onClick={onAceptar}
-                                disabled={loading}
-                                style={{ flex: 1, minWidth: 0, backgroundColor: '#0ea5e9', borderColor: '#0ea5e9' }}
-                            >
-                                <ChefHat size={16} /> En cocina
-                            </PrimaryButton>
-                        )}
-
-                        {esEnPreparacion && (
-                            <PrimaryButton
-                                type="button"
-                                size="sm"
-                                className="fw-semibold d-flex align-items-center justify-content-center gap-1"
-                                onClick={onAceptar}
-                                disabled={loading}
-                                style={{ flex: 1, minWidth: 0, backgroundColor: '#f59e0b', borderColor: '#f59e0b' }}
-                            >
-                                <UtensilsCrossed size={16} /> Marcar lista
-                            </PrimaryButton>
                         )}
 
                         {esLista && (
