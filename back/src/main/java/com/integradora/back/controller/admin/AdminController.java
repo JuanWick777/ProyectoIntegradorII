@@ -13,8 +13,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
 import java.util.List;
 
 @RestController
@@ -31,6 +39,8 @@ public class AdminController {
     public List<UsuarioResponseDTO> listarUsuarios() {
         return usuarioRepository.findAll()
                 .stream()
+                .filter(usuario -> usuario.getEstado() == null || !usuario.getEstado().equalsIgnoreCase("ELIMINADO"))
+                .sorted(Comparator.comparing(Usuario::getFechaRegistro, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(this::toUsuarioResponse)
                 .toList();
     }
@@ -38,12 +48,14 @@ public class AdminController {
     @PostMapping("/usuarios")
     @Transactional
     public ResponseEntity<UsuarioResponseDTO> crearUsuario(@RequestBody UsuarioRequestDTO req) {
+        validarUsuarioRequest(req, null);
+
         Usuario usuario = new Usuario();
-        usuario.setNombreCompleto(req.getNombre());
-        usuario.setCorreo(req.getEmail());
+        usuario.setNombreCompleto(req.getNombre().trim());
+        usuario.setCorreo(req.getEmail().trim());
         usuario.setContrasena(passwordEncoder.encode(req.getPassword()));
-        usuario.setTipoUsuario("Empleado");
-        usuario.setRolEspecifico(req.getRol().toUpperCase());
+        usuario.setTipoUsuario(resolverTipoUsuario(req.getRol()));
+        usuario.setRolEspecifico(req.getRol().trim().toUpperCase());
         usuario.setEstado("ACTIVO");
         usuario.setPuntosLealtad(0);
         usuario.setFotoPerfil(req.getFotoPerfil());
@@ -58,12 +70,15 @@ public class AdminController {
     @PutMapping("/usuarios/{id}")
     @Transactional
     public UsuarioResponseDTO actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioRequestDTO req) {
+        validarUsuarioRequest(req, id);
+
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        usuario.setNombreCompleto(req.getNombre());
-        usuario.setCorreo(req.getEmail());
-        usuario.setRolEspecifico(req.getRol() != null ? req.getRol().toUpperCase() : null);
+        usuario.setNombreCompleto(req.getNombre().trim());
+        usuario.setCorreo(req.getEmail().trim());
+        usuario.setTipoUsuario(resolverTipoUsuario(req.getRol()));
+        usuario.setRolEspecifico(req.getRol() != null ? req.getRol().trim().toUpperCase() : null);
         usuario.setFotoPerfil(req.getFotoPerfil());
 
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
@@ -79,7 +94,7 @@ public class AdminController {
     @Transactional
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
         if (id == 1L) {
-            throw new RuntimeException("Acción denegada: No se puede eliminar al Super Administrador principal.");
+            throw new RuntimeException("Accion denegada: No se puede eliminar al Super Administrador principal.");
         }
         meseroMesaRepository.deleteByMeseroId(id);
         usuarioRepository.deleteById(id);
@@ -123,12 +138,12 @@ public class AdminController {
 
         List<Mesa> mesas = mesaRepository.findAllById(idsUnicos);
         if (mesas.size() != idsUnicos.size()) {
-            throw new RuntimeException("Una o más mesas asignadas no existen.");
+            throw new RuntimeException("Una o mas mesas asignadas no existen.");
         }
 
         for (Long mesaId : idsUnicos) {
             if (meseroMesaRepository.existsByMesaIdAndMeseroIdNot(mesaId, usuario.getId())) {
-                throw new RuntimeException("La mesa " + mesaId + " ya está asignada a otro mesero.");
+                throw new RuntimeException("La mesa " + mesaId + " ya esta asignada a otro mesero.");
             }
         }
 
@@ -140,5 +155,43 @@ public class AdminController {
                 .toList();
 
         meseroMesaRepository.saveAll(asignaciones);
+    }
+
+    private void validarUsuarioRequest(UsuarioRequestDTO req, Long usuarioIdActual) {
+        if (req.getNombre() == null || req.getNombre().isBlank()) {
+            throw new RuntimeException("El nombre es obligatorio");
+        }
+
+        if (req.getEmail() == null || req.getEmail().isBlank()) {
+            throw new RuntimeException("El correo es obligatorio");
+        }
+
+        if (req.getRol() == null || req.getRol().isBlank()) {
+            throw new RuntimeException("El rol es obligatorio");
+        }
+
+        if (usuarioIdActual == null && (req.getPassword() == null || req.getPassword().isBlank())) {
+            throw new RuntimeException("La contrasena es obligatoria");
+        }
+
+        usuarioRepository.findByCorreo(req.getEmail().trim())
+                .ifPresent(existente -> {
+                    if (usuarioIdActual == null || !existente.getId().equals(usuarioIdActual)) {
+                        throw new RuntimeException("Ya existe un usuario con ese correo");
+                    }
+                });
+    }
+
+    private String resolverTipoUsuario(String rol) {
+        if (rol == null) {
+            return "Empleado";
+        }
+
+        String rolNormalizado = rol.trim().toUpperCase();
+        if ("ADMIN".equals(rolNormalizado) || "SUPERUSER".equals(rolNormalizado)) {
+            return "ADMIN";
+        }
+
+        return "Empleado";
     }
 }

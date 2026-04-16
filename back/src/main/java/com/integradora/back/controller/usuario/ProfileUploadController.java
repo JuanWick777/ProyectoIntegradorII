@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -69,14 +70,16 @@ public class ProfileUploadController {
         Path dir = Paths.get("uploads", "perfiles").toAbsolutePath().normalize();
         Files.createDirectories(dir);
 
+        String fotoAnterior = usuario.getFotoPerfil();
         String filename = UUID.randomUUID() + ext;
         Path target = dir.resolve(filename).normalize();
-        Files.copy(file.getInputStream(), target);
+        Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
 
         String publicPath = "/uploads/perfiles/" + filename;
 
         usuario.setFotoPerfil(publicPath);
         usuarioRepository.save(usuario);
+        deleteManagedFile(fotoAnterior, "perfiles");
 
         String publicUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path(publicPath)
@@ -87,5 +90,31 @@ public class ProfileUploadController {
                 "path", publicPath,
                 "filename", filename
         ));
+    }
+
+    private void deleteManagedFile(String pathOrUrl, String folder) {
+        if (pathOrUrl == null || pathOrUrl.isBlank()) {
+            return;
+        }
+
+        String expectedPrefix = "/uploads/" + folder + "/";
+        if (!pathOrUrl.startsWith(expectedPrefix)) {
+            return;
+        }
+
+        String filename = pathOrUrl.substring(expectedPrefix.length());
+        if (filename.isBlank() || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            return;
+        }
+
+        try {
+            Path dir = Paths.get("uploads", folder).toAbsolutePath().normalize();
+            Path target = dir.resolve(filename).normalize();
+            if (target.startsWith(dir)) {
+                Files.deleteIfExists(target);
+            }
+        } catch (IOException ignored) {
+            // Si la limpieza falla, no bloqueamos la actualización del perfil.
+        }
     }
 }

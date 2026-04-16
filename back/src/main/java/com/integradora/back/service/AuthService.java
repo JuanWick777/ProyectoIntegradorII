@@ -9,13 +9,19 @@ import com.integradora.back.repository.OrdenRepository;
 import com.integradora.back.repository.UsuarioRepository;
 import com.integradora.back.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AuthService {
@@ -24,6 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final OrdenRepository ordenRepository;
+    private final JavaMailSender mailSender;
 
     @Transactional
     public Usuario register(RegisterRequest request) {
@@ -200,6 +207,71 @@ public class AuthService {
         usuario.setCorreo("cuenta.eliminada." + usuario.getId() + "@gmail.com");
         usuario.setFotoPerfil(null);
 
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public void generarYEnviarCodigo(String correo) {
+        if (correo == null || correo.isBlank()) {
+            return;
+        }
+
+        usuarioRepository.findByCorreo(correo.trim())
+                .filter(usuario -> usuario.getEstado() == null || !usuario.getEstado().equalsIgnoreCase("ELIMINADO"))
+                .ifPresent(usuario -> {
+                    String codigo = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
+
+                    usuario.setCodigoRecuperacion(codigo);
+                    usuario.setExpiracionCodigo(LocalDateTime.now().plusMinutes(10));
+                    usuarioRepository.save(usuario);
+
+                    SimpleMailMessage message = new SimpleMailMessage();
+                    message.setTo(usuario.getCorreo());
+                    message.setSubject("Codigo de recuperacion - App Restaurante");
+                    message.setText(
+                            "Tu codigo de recuperacion es: " + codigo + "\n" +
+                            "Este codigo expirara en 10 minutos."
+                    );
+                    try {
+                        log.info("Enviando codigo de recuperacion a {}", usuario.getCorreo());
+                        mailSender.send(message);
+                        log.info("Codigo de recuperacion enviado a {}", usuario.getCorreo());
+                    } catch (Exception e) {
+                        log.error("No se pudo enviar el correo de recuperacion a {}", usuario.getCorreo(), e);
+                        throw new RuntimeException("No se pudo enviar el correo de recuperacion. Verifica la configuracion de correo.");
+                    }
+                });
+    }
+
+    @Transactional
+    public void restablecerContrasena(String correo, String codigo, String nuevaContrasena) {
+        if (correo == null || correo.isBlank()) {
+            throw new RuntimeException("El correo es obligatorio");
+        }
+        if (codigo == null || codigo.isBlank()) {
+            throw new RuntimeException("El codigo es obligatorio");
+        }
+        if (nuevaContrasena == null || nuevaContrasena.isBlank()) {
+            throw new RuntimeException("La nueva contrasena es obligatoria");
+        }
+        if (nuevaContrasena.length() < 8) {
+            throw new RuntimeException("La nueva contrasena debe tener al menos 8 caracteres");
+        }
+
+        Usuario usuario = usuarioRepository.findByCorreo(correo.trim())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (usuario.getCodigoRecuperacion() == null || !usuario.getCodigoRecuperacion().equals(codigo.trim())) {
+            throw new RuntimeException("Codigo invalido");
+        }
+
+        if (usuario.getExpiracionCodigo() == null || usuario.getExpiracionCodigo().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("El codigo ha expirado");
+        }
+
+        usuario.setContrasena(passwordEncoder.encode(nuevaContrasena));
+        usuario.setCodigoRecuperacion(null);
+        usuario.setExpiracionCodigo(null);
         usuarioRepository.save(usuario);
     }
 

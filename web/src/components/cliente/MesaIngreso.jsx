@@ -209,7 +209,12 @@ const MesaIngreso = ({ onMesaValida }) => {
                                     fullWidth
                                     className="fw-bold py-3 fs-5"
                                     style={{ borderRadius: '0.75rem' }}
-                                    disabled={loading || (selectMethod === 'dropdown' ? !selectedMesa : !inputNumero) || mesas.length === 0}
+                                    disabled={
+                                        loading ||
+                                        (selectMethod === 'dropdown'
+                                            ? (!selectedMesa || mesas.length === 0)
+                                            : !inputNumero)
+                                    }
                                 >
                                     {loading ? (
                                         <span>

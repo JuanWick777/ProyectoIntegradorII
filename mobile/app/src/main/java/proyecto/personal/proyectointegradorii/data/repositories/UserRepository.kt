@@ -3,17 +3,18 @@ package proyecto.personal.proyectointegradorii.data.repositories
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import org.json.JSONObject
 import proyecto.personal.proyectointegradorii.data.model.usuario.Usuario
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.DeleteAccountRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.ForgotPasswordRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginResponse
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.RegisterRequest
+import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.ResetPasswordRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UpdateProfileRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.UploadResponse
 import proyecto.personal.proyectointegradorii.data.remote.network.RetrofitClient
 import java.io.File
-import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.DeleteAccountRequest
-import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.ForgotPasswordRequest
-import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.ResetPasswordRequest
 
 class UserRepository {
     suspend fun login(email: String, password: String): LoginResponse? {
@@ -48,11 +49,10 @@ class UserRepository {
             val response = RetrofitClient.api.forgotPassword(ForgotPasswordRequest(correo))
             if (response.isSuccessful) {
                 val body = response.body()
-                Result.success(body?.message ?: "Código enviado")
+                Result.success(body?.message ?: "Codigo enviado")
             } else {
-                // Leer el error del body si la respuesta no es 200 OK
                 val errorBody = response.errorBody()?.string()
-                Result.failure(Exception(errorBody ?: "Error al enviar el código"))
+                Result.failure(Exception(extractMessage(errorBody, "Error al enviar el codigo")))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -66,18 +66,16 @@ class UserRepository {
             )
             if (response.isSuccessful) {
                 val body = response.body()
-                Result.success(body?.message ?: "Contraseña actualizada")
+                Result.success(body?.message ?: "Contrasena actualizada")
             } else {
                 val errorBody = response.errorBody()?.string()
-                Result.failure(Exception(errorBody ?: "Error al actualizar la contraseña"))
+                Result.failure(Exception(extractMessage(errorBody, "Error al actualizar la contrasena")))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-
-    // PRUEBAS
     suspend fun getCurrentUser(): LoginResponse? {
         val response = RetrofitClient.api.getCurrentUser()
         return if (response.isSuccessful) {
@@ -114,5 +112,19 @@ class UserRepository {
             DeleteAccountRequest(contrasenaActual = contrasenaActual)
         )
         return true
+    }
+
+    private fun extractMessage(raw: String?, fallback: String): String {
+        if (raw.isNullOrBlank()) return fallback
+
+        return try {
+            val json = JSONObject(raw)
+            json.optString("message")
+                .takeIf { it.isNotBlank() }
+                ?: json.optString("error").takeIf { it.isNotBlank() }
+                ?: fallback
+        } catch (_: Exception) {
+            fallback
+        }
     }
 }

@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -109,17 +110,7 @@ public class OrdenService {
 
     @Transactional
     public OrdenResponseDTO crearOrdenCompleta(OrdenRequestDTO request) {
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        Usuario cliente;
-        if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
-            cliente = usuarioRepository.findByCorreo(auth.getName())
-                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
-        } else {
-            cliente = usuarioRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("No se pudo identificar al cliente invitado"));
-        }
+        Usuario cliente = obtenerClienteActualOpcional();
 
         var mesa = mesaRepository.findByNumero(request.getMesaId().intValue())
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada con el numero: " + request.getMesaId()));
@@ -131,7 +122,7 @@ public class OrdenService {
                 .fechaCreacion(LocalDateTime.now())
                 .build();
 
-        if ("MESERO".equals(cliente.getRolEspecifico())) {
+        if (cliente != null && "MESERO".equals(cliente.getRolEspecifico())) {
             orden.setMesero(cliente);
         }
 
@@ -181,7 +172,7 @@ public class OrdenService {
         BigDecimal subtotalDespuesPromo = subtotalTotal.subtract(descuentoPromo).max(BigDecimal.ZERO);
 
         BigDecimal descuentoPuntos = BigDecimal.ZERO;
-        if (Boolean.TRUE.equals(request.getUsarPuntos())) {
+        if (cliente != null && Boolean.TRUE.equals(request.getUsarPuntos())) {
             int puntosDisponibles = cliente.getPuntosLealtad();
             descuentoPuntos = new BigDecimal(puntosDisponibles);
 
@@ -195,9 +186,11 @@ public class OrdenService {
         BigDecimal descuentoTotal = descuentoPromo.add(descuentoPuntos);
         BigDecimal total = subtotalTotal.subtract(descuentoTotal).max(BigDecimal.ZERO);
 
-        int puntosGanados = total.divide(new BigDecimal(100), RoundingMode.FLOOR).intValue();
-        cliente.setPuntosLealtad(cliente.getPuntosLealtad() + puntosGanados);
-        usuarioRepository.save(cliente);
+        if (cliente != null) {
+            int puntosGanados = total.divide(new BigDecimal(100), RoundingMode.FLOOR).intValue();
+            cliente.setPuntosLealtad(cliente.getPuntosLealtad() + puntosGanados);
+            usuarioRepository.save(cliente);
+        }
 
         orden.setSubtotal(subtotalTotal);
         orden.setMontoDescuento(descuentoTotal);
@@ -210,16 +203,7 @@ public class OrdenService {
 
     @Transactional(readOnly = true)
     public OrdenPreviewDTO previsualizarOrden(OrdenRequestDTO request) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        Usuario cliente;
-        if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
-            cliente = usuarioRepository.findByCorreo(auth.getName())
-                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
-        } else {
-            cliente = usuarioRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("No se pudo identificar al cliente invitado"));
-        }
+        Usuario cliente = obtenerClienteActualOpcional();
 
         BigDecimal subtotalTotal = BigDecimal.ZERO;
 
@@ -251,7 +235,7 @@ public class OrdenService {
         BigDecimal subtotalDespuesPromo = subtotalTotal.subtract(descuentoPromo).max(BigDecimal.ZERO);
 
         BigDecimal descuentoPuntos = BigDecimal.ZERO;
-        if (Boolean.TRUE.equals(request.getUsarPuntos())) {
+        if (cliente != null && Boolean.TRUE.equals(request.getUsarPuntos())) {
             int puntosDisponibles = cliente.getPuntosLealtad();
             descuentoPuntos = new BigDecimal(puntosDisponibles);
 
@@ -291,6 +275,7 @@ public class OrdenService {
     public OrdenResponseDTO obtenerPorId(Long id) {
         Orden orden = ordenRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+        validarAccesoALaOrden(orden);
 
         List<DetalleOrden> detalles = detalleRepository.findByOrdenId(id);
 
@@ -330,5 +315,58 @@ public class OrdenService {
                     return OrdenMapper.toDTO(orden, detalles);
                 })
                 .toList();
+    }
+
+    private Usuario obtenerClienteActualOpcional() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            return null;
+        }
+
+        return usuarioRepository.findByCorreo(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+    }
+
+    private void validarAccesoALaOrden(Orden orden) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            throw new RuntimeException("No autenticado");
+        }
+
+        Usuario usuarioActual = usuarioRepository.findByCorreo(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (tieneAlgunoDeLosRoles(auth, "ROLE_ADMIN", "ROLE_CHEF", "ROLE_COCINERO", "ROLE_PARRILLERO", "ROLE_BARISTA", "ROLE_REPOSTERO")) {
+            return;
+        }
+
+        if (tieneAlgunoDeLosRoles(auth, "ROLE_CLIENTE")) {
+            Long clienteId = orden.getCliente() != null ? orden.getCliente().getId() : null;
+            if (clienteId != null && clienteId.equals(usuarioActual.getId())) {
+                return;
+            }
+            throw new RuntimeException("No puedes ver una orden que no te pertenece");
+        }
+
+        if (tieneAlgunoDeLosRoles(auth, "ROLE_MESERO")) {
+            Long mesaId = orden.getMesa() != null ? orden.getMesa().getId() : null;
+            if (mesaId != null && meseroMesaRepository.existsByMeseroIdAndMesaId(usuarioActual.getId(), mesaId)) {
+                return;
+            }
+            throw new RuntimeException("No puedes ver pedidos de una mesa que no tienes asignada");
+        }
+
+        throw new RuntimeException("No tienes permisos para ver esta orden");
+    }
+
+    private boolean tieneAlgunoDeLosRoles(Authentication auth, String... roles) {
+        Collection<?> authorities = auth.getAuthorities();
+        if (authorities == null) {
+            return false;
+        }
+
+        return auth.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .anyMatch(authority -> List.of(roles).contains(authority));
     }
 }

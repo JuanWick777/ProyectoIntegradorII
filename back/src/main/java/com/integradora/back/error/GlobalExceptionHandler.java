@@ -9,6 +9,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class GlobalExceptionHandler {
         ApiErrorResponse body = ApiErrorResponse.of(
                 HttpStatus.BAD_REQUEST.value(),
                 "VALIDATION_ERROR",
-                "Solicitud inválida",
+                "Solicitud invalida",
                 req.getRequestURI(),
                 details
         );
@@ -50,7 +51,7 @@ public class GlobalExceptionHandler {
         ApiErrorResponse body = ApiErrorResponse.of(
                 HttpStatus.FORBIDDEN.value(),
                 "ACCESS_DENIED",
-                "No tienes permisos para esta acción",
+                "No tienes permisos para esta accion",
                 req.getRequestURI(),
                 null
         );
@@ -81,6 +82,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiErrorResponse> handleResponseStatus(ResponseStatusException ex, HttpServletRequest req) {
+        int status = ex.getStatusCode().value();
+        String message = ex.getReason() != null ? ex.getReason() : "Solicitud invalida";
+
+        ApiErrorResponse body = ApiErrorResponse.of(
+                status,
+                ex.getStatusCode().toString(),
+                message,
+                req.getRequestURI(),
+                null
+        );
+        return ResponseEntity.status(status).body(body);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiErrorResponse> handleRuntime(RuntimeException ex, HttpServletRequest req) {
         ApiErrorResponse body = ApiErrorResponse.of(
@@ -105,4 +121,3 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }
-

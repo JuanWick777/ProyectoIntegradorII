@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,10 +51,9 @@ fun SRecoverPassword(
     val code by viewModel.code.collectAsState()
     val nPassword by viewModel.nPassword.collectAsState()
     val cPassword by viewModel.cPassword.collectAsState()
-
     val isCodeSent by viewModel.codeSent.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-
+    val resetSuccess by viewModel.resetSuccess.collectAsState()
     val emailError by viewModel.emailError.collectAsState()
     val codeError by viewModel.codeError.collectAsState()
     val npasswordError by viewModel.npasswordError.collectAsState()
@@ -63,26 +64,22 @@ fun SRecoverPassword(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundColor)
-            .padding(
-                start = 10.dp,
-                end = 10.dp
-            )
+            .padding(start = 10.dp, end = 10.dp)
     ) {
         HeaderCBack(
-            if (isCodeSent) "Nueva Contraseña" else "Recuperar Contraseña",
+            if (isCodeSent) "Nueva Contrasena" else "Recuperar Contrasena",
             if (isCodeSent) 30 else 27,
             MainColor,
             Modifier,
             navController
         )
         Spacer(modifier = Modifier.padding(vertical = 35.dp))
+
         if (!isCodeSent) {
             GlobalCard(
                 modifier = Modifier,
                 content = {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 15.dp),
-                    ) {
+                    Column(modifier = Modifier.padding(horizontal = 15.dp)) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
@@ -92,22 +89,17 @@ fun SRecoverPassword(
                                 Icons.Default.MailOutline,
                                 MainColor,
                                 CommentContentColor,
-                                "Icono de un correo electrónico"
+                                "Icono de correo"
                             )
                             Spacer(Modifier.padding(vertical = 15.dp))
                             GlobalText(
-                                "Ingresa tu correo electrónico y te enviaremos un código para reestablecer tu contraseña",
+                                "Ingresa tu correo electronico y te enviaremos un codigo para restablecer tu contrasena",
                                 14,
                                 TextColorGray,
                                 Modifier
                             )
                             Spacer(Modifier.padding(vertical = 20.dp))
-                            GlobalText(
-                                "Correo Electrónico",
-                                18,
-                                TextColorDark,
-                                Modifier
-                            )
+                            GlobalText("Correo Electronico", 18, TextColorDark, Modifier)
                             Spacer(Modifier.padding(vertical = 5.dp))
                             GlobalTextInput(
                                 email,
@@ -118,37 +110,31 @@ fun SRecoverPassword(
                                 350,
                                 isError = emailError != null
                             )
-                            ErrorText(
-                                emailError,
-                                14,
-                                Modifier
-                            )
+                            ErrorText(emailError, 14, Modifier)
+                            ErrorText(generalMessage, 14, Modifier)
                             Spacer(Modifier.padding(vertical = 15.dp))
                             GlobalButton(
-                                "Enviar Código",
+                                if (isLoading) "Enviando..." else "Enviar Codigo",
                                 18,
                                 65,
                                 350,
                                 MainColor,
                                 MainColor,
                                 TextColorWhite,
-                                {
-                                    viewModel.sendRecoveryCode()
-                                },
-                                Modifier
+                                { viewModel.sendRecoveryCode() },
+                                Modifier,
+                                enabled = !isLoading
                             )
                             Spacer(Modifier.padding(vertical = 10.dp))
                             GlobalButton(
-                                "Volver al inicio de sesión",
+                                "Volver al inicio de sesion",
                                 18,
                                 65,
                                 350,
                                 Color.White,
                                 Color.White,
                                 TextColorDark,
-                                {
-                                    navController.popBackStack()
-                                }
+                                { navController.popBackStack() }
                             )
                         }
                         Spacer(Modifier.padding(vertical = 18.dp))
@@ -159,11 +145,7 @@ fun SRecoverPassword(
             GlobalCard(
                 content = {
                     Column(
-                        modifier = Modifier
-                            .padding(
-                                vertical = 30.dp,
-                                horizontal = 20.dp
-                            ),
+                        modifier = Modifier.padding(vertical = 30.dp, horizontal = 20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
@@ -179,12 +161,12 @@ fun SRecoverPassword(
                                 Icons.Outlined.Lock,
                                 MainColor,
                                 CommentContentColor,
-                                "Icono de un candado"
+                                "Icono de candado"
                             )
                         }
                         Spacer(modifier = Modifier.height(15.dp))
                         GlobalText(
-                            "Ingresa el código que enviamos a tu correo electrónico y crea una nueva contraseña",
+                            "Ingresa el codigo que enviamos a tu correo electronico y crea una nueva contrasena",
                             15,
                             TextColorGray,
                             Modifier.padding(horizontal = 10.dp),
@@ -192,12 +174,7 @@ fun SRecoverPassword(
                         )
                         Spacer(modifier = Modifier.height(25.dp))
                         Column(horizontalAlignment = Alignment.Start) {
-                            GlobalText(
-                                "Código de Verificación",
-                                18,
-                                TextColorDark,
-                                Modifier.padding(bottom = 8.dp)
-                            )
+                            GlobalText("Codigo de Verificacion", 18, TextColorDark, Modifier.padding(bottom = 8.dp))
                             GlobalTextInput(
                                 value = code,
                                 onValueChange = { viewModel.onCodeChange(it) },
@@ -206,55 +183,34 @@ fun SRecoverPassword(
                                 height = 60,
                                 width = 350
                             )
-                            ErrorText(
-                                codeError,
-                                15,
-                                Modifier
-                            )
+                            ErrorText(codeError, 15, Modifier)
                             Spacer(modifier = Modifier.height(20.dp))
-                            GlobalText(
-                                "Nueva Contraseña",
-                                18,
-                                TextColorDark,
-                                Modifier.padding(bottom = 8.dp)
-                            )
+                            GlobalText("Nueva Contrasena", 18, TextColorDark, Modifier.padding(bottom = 8.dp))
                             PasswordInput(
                                 value = nPassword,
                                 onValueChange = { viewModel.onNPasswordChange(it) },
-                                placeholder = "••••••••",
+                                placeholder = "********",
                                 isError = npasswordError != null,
                                 height = 60,
                                 width = 350
                             )
-                            ErrorText(
-                                npasswordError,
-                                14,
-                                Modifier
-                            )
+                            ErrorText(npasswordError, 14, Modifier)
                             Spacer(modifier = Modifier.height(20.dp))
-                            GlobalText(
-                                "Confirmar Contraseña",
-                                18,
-                                TextColorDark,
-                                Modifier.padding(bottom = 8.dp)
-                            )
+                            GlobalText("Confirmar Contrasena", 18, TextColorDark, Modifier.padding(bottom = 8.dp))
                             PasswordInput(
                                 value = cPassword,
                                 onValueChange = { viewModel.onCPasswordChange(it) },
-                                placeholder = "••••••••",
+                                placeholder = "********",
                                 isError = cpasswordError != null,
                                 height = 60,
                                 width = 350
                             )
-                            ErrorText(
-                                cpasswordError,
-                                14,
-                                Modifier
-                            )
+                            ErrorText(cpasswordError, 14, Modifier)
+                            ErrorText(generalMessage, 14, Modifier)
                         }
                         Spacer(modifier = Modifier.height(35.dp))
                         GlobalButton(
-                            text = if (isLoading) "Cargando..." else "Restablecer Contraseña",
+                            text = if (isLoading) "Cargando..." else "Restablecer Contrasena",
                             textsize = 18,
                             alt = 60,
                             ancho = 350,
@@ -269,5 +225,30 @@ fun SRecoverPassword(
                 }
             )
         }
+    }
+
+    if (resetSuccess) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Contrasena actualizada") },
+            text = {
+                Text(
+                    generalMessage
+                        ?: "Tu contrasena se actualizo correctamente. Ahora puedes iniciar sesion."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.consumeResetSuccess()
+                        navController.navigate("Login") {
+                            popUpTo("Recover") { inclusive = true }
+                        }
+                    }
+                ) {
+                    Text("Aceptar")
+                }
+            }
+        )
     }
 }

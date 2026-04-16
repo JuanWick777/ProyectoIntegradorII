@@ -10,7 +10,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -43,18 +49,15 @@ public class OrdenController {
     @PutMapping("/{id}/estado")
     public OrdenResponseDTO actualizarEstado(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body
+    ) {
         Orden orden = service.actualizarEstado(id, body.get("estado"));
         return OrdenMapper.toDTO(orden, detalleOrdenRepository.findByOrdenId(orden.getId()));
     }
 
     @PostMapping("/completa")
-    public ResponseEntity<?> crearCompleta(@Valid @RequestBody OrdenRequestDTO request) {
-        try {
-            return ResponseEntity.ok(service.crearOrdenCompleta(request));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<OrdenResponseDTO> crearCompleta(@Valid @RequestBody OrdenRequestDTO request) {
+        return ResponseEntity.ok(service.crearOrdenCompleta(request));
     }
 
     @GetMapping("/mis-ordenes")
@@ -63,11 +66,7 @@ public class OrdenController {
     }
 
     @PostMapping("/preview")
-    public ResponseEntity<?> preview(@Valid @RequestBody OrdenRequestDTO request) {
-        try {
-            return ResponseEntity.ok(service.previsualizarOrden(request));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<OrdenPreviewDTO> preview(@Valid @RequestBody OrdenRequestDTO request) {
+        return ResponseEntity.ok(service.previsualizarOrden(request));
     }
 }

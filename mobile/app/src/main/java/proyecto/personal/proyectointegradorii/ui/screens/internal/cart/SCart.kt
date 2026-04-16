@@ -799,7 +799,7 @@ fun SCart(
                     )
 
                     // Botón Secundario: Cancelar
-                    if (items.isNotEmpty() && orden != null) {
+                    if (items.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
                         GlobalButton(
                             text = "Cancelar pedido",

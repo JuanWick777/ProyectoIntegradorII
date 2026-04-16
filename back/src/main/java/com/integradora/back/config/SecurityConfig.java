@@ -41,7 +41,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/mesas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/platillos/**").permitAll()
@@ -49,7 +49,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/promociones").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ordenes/completa").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/mesa/*/activas").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/ordenes/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/mis-ordenes").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/auth/perfil").hasRole("CLIENTE")

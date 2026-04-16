@@ -11,6 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -49,7 +53,11 @@ public class AdminPlatilloController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        repository.deleteById(id);
+        Platillo platillo = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Platillo no encontrado: " + id));
+        String imagenAnterior = platillo.getUrlImagen();
+        repository.delete(platillo);
+        deleteManagedPlatilloImage(imagenAnterior);
         return ResponseEntity.noContent().build();
     }
 
@@ -79,5 +87,31 @@ public class AdminPlatilloController {
         }
 
         return platillo;
+    }
+
+    private void deleteManagedPlatilloImage(String pathOrUrl) {
+        if (pathOrUrl == null || pathOrUrl.isBlank()) {
+            return;
+        }
+
+        String prefix = "/uploads/platillos/";
+        if (!pathOrUrl.startsWith(prefix)) {
+            return;
+        }
+
+        String filename = pathOrUrl.substring(prefix.length());
+        if (filename.isBlank() || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            return;
+        }
+
+        try {
+            Path dir = Paths.get("uploads", "platillos").toAbsolutePath().normalize();
+            Path target = dir.resolve(filename).normalize();
+            if (target.startsWith(dir)) {
+                Files.deleteIfExists(target);
+            }
+        } catch (IOException ignored) {
+            // Si la limpieza falla, no revertimos el borrado del platillo.
+        }
     }
 }
