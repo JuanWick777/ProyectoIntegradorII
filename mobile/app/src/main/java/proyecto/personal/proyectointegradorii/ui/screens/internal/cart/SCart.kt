@@ -11,9 +11,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
@@ -25,13 +31,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import proyecto.personal.proyectointegradorii.ui.components.alerts.successful.SuccessOrderDialog
 import proyecto.personal.proyectointegradorii.ui.components.buttons.GlobalButton
+import proyecto.personal.proyectointegradorii.ui.components.buttons.icons.DishControlIcon
 import proyecto.personal.proyectointegradorii.ui.components.cards.GlobalCard
 import proyecto.personal.proyectointegradorii.ui.components.texts.GlobalText
 import proyecto.personal.proyectointegradorii.ui.components.headers.InternalHeader
@@ -43,6 +53,7 @@ import proyecto.personal.proyectointegradorii.ui.theme.SuccessfulColor
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorDark
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorGray
 import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
+import proyecto.personal.proyectointegradorii.utils.ImageUrlResolver
 import proyecto.personal.proyectointegradorii.viewmodels.cart.CartViewModel
 
 @Composable
@@ -472,48 +483,141 @@ fun SCart(
                     ) {
                         items(items) { item ->
                             GlobalCard(
-                                backgroundColor = BackgroundCardColor,
+                                backgroundColor = BackgroundCardColor, // Mantenemos el color sutil de tu card
                                 modifier = Modifier.padding(bottom = 12.dp),
                                 content = {
-                                    Column(
+                                    Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(16.dp)
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.Start, // Imagen a la izquierda
+                                        verticalAlignment = Alignment.CenterVertically
+                                        // El contenido completo se centra verticalmente dentro de GlobalCard por su definición
                                     ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            GlobalText(
-                                                texto = item.platillo.nombre,
-                                                tamanio = 13,
-                                                color = TextColorDark,
-                                                peso = FontWeight.Bold
-                                            )
-                                            GlobalText(
-                                                texto = "$${item.subtotal()}",
-                                                tamanio = 14,
-                                                color = MainColor,
-                                                peso = FontWeight.Bold
-                                            )
-                                        }
-
-                                        Spacer(modifier = Modifier.height(4.dp))
-
-                                        GlobalText(
-                                            texto = "Cantidad: ${item.cantidad}",
-                                            tamanio = 12,
-                                            color = TextColorGray
+                                        AsyncImage(
+                                            model = ImageUrlResolver.resolve(item.platillo.urlImagen),
+                                            contentDescription = item.platillo.nombre,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(90.dp)
+                                                .clip(RoundedCornerShape(16.dp))
                                         )
 
-                                        if (item.nota.isNotBlank()) {
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            GlobalText(
-                                                texto = "Nota: ${item.nota}",
-                                                tamanio = 14,
-                                                color = Color.Gray
+                                        Spacer(modifier = Modifier.width(16.dp)) // Espaciador entre la imagen y el área de detalles
+
+                                        // Details and Controls Container (toma el resto del espacio a la derecha)
+                                        Box(
+                                            modifier = Modifier.weight(1f) // Fills width of card remaining
+                                        ) {
+                                            // Close button (X) in the top right of this details area Box
+                                            DishControlIcon(
+                                                icon = Icons.Default.Close,
+                                                tint = AlertColor, // Rojo para cerrar
+                                                contentDescription = "Quitar platillo de la lista",
+                                                modifier = Modifier.align(Alignment.TopEnd), // Correct alignment
+                                                size = 28.dp, // Tamaño sutil para la X del detalle de la card
+                                                onClick = {
+                                                    /* Lógica de ViewModel para quitar el platillo completamente de la lista */
+                                                }
                                             )
+
+                                            // Details Column
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(end = 36.dp), // Padding para no pisar el botón de X
+                                                verticalArrangement = Arrangement.Top,
+                                                horizontalAlignment = Alignment.Start
+                                            ) {
+                                                // Fila para Nombre y Subtotal
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    GlobalText(
+                                                        texto = item.platillo.nombre,
+                                                        tamanio = 13,
+                                                        color = TextColorDark,
+                                                        peso = FontWeight.Bold
+                                                    )
+                                                    GlobalText(
+                                                        texto = "$${item.subtotal()}",
+                                                        tamanio = 14,
+                                                        color = MainColor,
+                                                        peso = FontWeight.Bold
+                                                    )
+                                                }
+
+                                                Spacer(modifier = Modifier.height(4.dp))
+
+                                                GlobalText(
+                                                    texto = "Cantidad: ${item.cantidad}",
+                                                    tamanio = 12,
+                                                    color = TextColorGray
+                                                )
+
+                                                Spacer(modifier = Modifier.height(8.dp)) // Espacio antes del selector
+
+                                                // --- Selector de Cantidad Row (- 1 +) ---
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth() // Toma el ancho restante de la card
+                                                        .padding(vertical = 4.dp)
+                                                        .clip(RoundedCornerShape(12.dp))
+                                                        .background(BackgroundCardColor)
+                                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        // "-" Botón (quitar unidad)
+                                                        DishControlIcon(
+                                                            icon = Icons.Default.Remove,
+                                                            tint = AlertColor, // Rojo para el flujo de decrementar
+                                                            contentDescription = "Quitar una unidad de ${item.platillo.nombre}",
+                                                            size = 28.dp, // Tamaño sutil para los botones del selector
+                                                            onClick = {
+                                                                /* Lógica de ViewModel para decrementar cantidad del platillo, asegurar > 0 */
+                                                            }
+                                                        )
+
+                                                        // Cantidad Label (1, 2, 3...)
+                                                        GlobalText(
+                                                            texto = "${item.cantidad}",
+                                                            tamanio = 16, // Tamaño sutil de número, negrita para claridad
+                                                            color = TextColorDark,
+                                                            peso = FontWeight.Bold,
+                                                            textAlign = TextAlign.Center,
+                                                            modifier = Modifier.weight(1f) // Centra el número en el medio
+                                                        )
+
+                                                        // "+" Botón (añadir unidad)
+                                                        DishControlIcon(
+                                                            icon = Icons.Default.Add,
+                                                            tint = MainColor,
+                                                            contentDescription = "Añadir una unidad de ${item.platillo.nombre}",
+                                                            size = 28.dp,
+                                                            onClick = {
+                                                                /* Lógica de ViewModel para incrementar cantidad del platillo, asegurar <= 100 */
+                                                            }
+                                                        )
+                                                    }
+                                                }
+
+                                                // Nota opcional, de tu código original
+                                                if (item.nota.isNotBlank()) {
+                                                    Spacer(modifier = Modifier.height(4.dp)) // Espacio extra tras el selector
+                                                    GlobalText(
+                                                        texto = "Nota: ${item.nota}",
+                                                        tamanio = 14, // Tu tamaño original
+                                                        color = Color.Gray
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -703,7 +807,7 @@ fun SCart(
                             alt = 50,
                             ancho = 350,
                             bordercolorbutton = AlertColor, // Borde rojo
-                            colorbutton = BackgroundColor, // Fondo transparente
+                            colorbutton = BackgroundColor,
                             colortext = AlertColor,          // Letras rojas
                             onClick = {
                                 if (!isSubmittingOrder) {
