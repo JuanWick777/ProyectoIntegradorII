@@ -117,7 +117,7 @@ const MesasAdmin = () => {
     };
 
     const handleEliminarMesa = async (id, numero) => {
-        if (!window.confirm(`Eliminar mesa ${numero}? Esta accion no se puede deshacer.`)) {
+        if (!window.confirm(`Eliminar mesa ${numero}? Esta acción no se puede deshacer.`)) {
             return;
         }
 
@@ -138,7 +138,7 @@ const MesasAdmin = () => {
     return (
         <div className="container-fluid py-4">
             <SectionHeader
-                title="Gestion de Mesas"
+                title="Gestión de Mesas"
                 subtitle={`Total: ${mesas.length} mesa${mesas.length !== 1 ? 's' : ''}`}
             />
 
@@ -269,7 +269,7 @@ const MesasAdmin = () => {
                                 <thead style={{ background: '#f8f9fa' }}>
                                     <tr>
                                         <th className="fw-bold text-secondary">ID</th>
-                                        <th className="fw-bold text-secondary">Numero</th>
+                                        <th className="fw-bold text-secondary">Número</th>
                                         <th className="fw-bold text-secondary">Estado</th>
                                         <th className="fw-bold text-secondary">Cambiar estado</th>
                                         <th className="fw-bold text-secondary text-center">Accion</th>

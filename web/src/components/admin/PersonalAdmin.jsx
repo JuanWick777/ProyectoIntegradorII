@@ -318,7 +318,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
                 description={confirmDel ? (
                     <>
                         <div className="fw-semibold">{confirmDel.nombre}</div>
-                        <div className="text-muted small">Se borrara toda la informacion del empleado.</div>
+                        <div className="text-muted small">Se borrará toda la información del empleado.</div>
                     </>
                 ) : null}
                 confirmText="Si, eliminar"

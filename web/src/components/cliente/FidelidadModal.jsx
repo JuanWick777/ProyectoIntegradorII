@@ -52,8 +52,8 @@ const FidelidadModal = ({ onContinue }) => {
                         <h6 className="fw-bold text-dark mb-3">Con la App obtienes:</h6>
                         <ul className="list-unstyled mb-0">
                             {[
-                                { Icon: Gift, text: '1 punto por cada $10 consumidos' },
-                                { Icon: Pizza, text: 'Platillo gratis al acumular 100 pts' },
+                                { Icon: Gift, text: '1 punto por cada $100 consumidos' },
+                                { Icon: Pizza, text: 'Platillo gratis al acumular 300 pts' },
                                 { Icon: Smartphone, text: 'Ordena desde tu celular' },
                                 { Icon: Bell, text: 'Notificaciones de promociones' },
                             ].map((item, idx) => {

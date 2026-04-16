@@ -14,7 +14,7 @@ const validate = (form) => {
     else if (form.nombre.trim().length < 2) errs.nombre = 'El nombre debe tener al menos 2 caracteres.';
 
     if (!form.precio && form.precio !== 0) errs.precio = 'El precio es obligatorio.';
-    else if (Number.isNaN(Number(form.precio)) || Number(form.precio) <= 0) errs.precio = 'El precio debe ser un numero positivo.';
+    else if (Number.isNaN(Number(form.precio)) || Number(form.precio) <= 0) errs.precio = 'El precio debe ser un número positivo.';
 
     if (!form.categoria_id) errs.categoria_id = 'Selecciona una categoria.';
 
@@ -201,7 +201,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                                     onClick={() => setForm((prev) => ({ ...prev, imagenFile: null }))}
                                     disabled={saving || !(form.imagenFile instanceof File)}
                                 >
-                                    Quitar seleccion
+                                    Quitar selección
                                 </button>
                                 <button
                                     type="button"

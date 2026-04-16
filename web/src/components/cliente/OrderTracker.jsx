@@ -7,7 +7,7 @@ const POLL_INTERVAL_MS = 8000;
 
 const ESTADOS_CONFIG = {
     pendiente_confirmacion: {
-        label: 'Pendiente de confirmacion',
+        label: 'Pendiente de confirmación',
         sublabel: 'Tu pedido esta esperando ser aceptado por el mesero.',
         Icon: Clock,
         color: '#856404',
@@ -15,13 +15,13 @@ const ESTADOS_CONFIG = {
     },
     confirmada: {
         label: 'Pedido confirmado',
-        sublabel: 'El mesero acepto tu pedido, pronto lo prepararemos.',
+        sublabel: 'El mesero aceptó tu pedido, pronto lo prepararemos.',
         Icon: Check,
         color: '#0C5460',
         step: 2,
     },
     en_preparacion: {
-        label: 'En preparacion',
+        label: 'En preparación',
         sublabel: 'Nuestros chefs estan trabajando en tu pedido.',
         Icon: ChefHat,
         color: '#004085',
@@ -254,8 +254,8 @@ const OrderTracker = ({ ordenId, numeroMesa, onNuevoPedido }) => {
                 style={{ background: 'linear-gradient(135deg, #FF7A00, #E06900)' }}
             >
                 <p className="mb-1 opacity-75 small">Mesa #{numeroMesa || '-'}</p>
-                <h1 className="fw-bold fs-4 mb-0">Pedidos en preparacion</h1>
-                {ordenId && <p className="small opacity-75 mb-0 mt-1">Ultimo pedido enviado: #{ordenId}</p>}
+                <h1 className="fw-bold fs-4 mb-0">Pedidos en preparación</h1>
+                {ordenId && <p className="small opacity-75 mb-0 mt-1">Último pedido enviado: #{ordenId}</p>}
             </header>
 
             <div className="container px-3" style={{ marginTop: '-2rem' }}>
@@ -278,7 +278,7 @@ const OrderTracker = ({ ordenId, numeroMesa, onNuevoPedido }) => {
                         <div className="card-body text-center p-4">
                             <PartyPopper size={42} className="text-primary mb-3" />
                             <h2 className="fw-bold fs-5">No hay pedidos activos</h2>
-                            <p className="text-muted small mb-0">Puedes volver al menu para realizar otro pedido.</p>
+                            <p className="text-muted small mb-0">Puedes volver al menú para realizar otro pedido.</p>
                         </div>
                     </div>
                 )}

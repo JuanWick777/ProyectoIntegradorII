@@ -148,7 +148,7 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
 
                 {estado === 'LISTO' && (
                     <div className="text-center fw-semibold d-flex align-items-center justify-content-center gap-2 px-3 py-3 rounded-4" style={{ background: '#ecfdf5', color: '#166534' }}>
-                        <Check size={20} /> Listo para entrega
+                        <Check size={20} /> Listo para entregar
                     </div>
                 )}
             </div>
