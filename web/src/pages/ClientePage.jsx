@@ -29,7 +29,7 @@ const ClientePage = () => {
 
     const validarMesaQR = useCallback(async (mesa) => {
         if (!mesa || Number.isNaN(mesa)) {
-            setMesaError('El codigo QR no contiene una mesa valida.');
+            setMesaError('El código QR no contiene una mesa válida.');
             setVista('ingreso');
             return;
         }
@@ -43,7 +43,7 @@ const ClientePage = () => {
             if (err.status === 404) {
                 setMesaError('La mesa no existe o no esta disponible.');
             } else if (err.status === 409) {
-                setMesaError('Esta mesa esta ocupada. Por favor, llama al mesero.');
+                setMesaError('Esta mesa está ocupada. Por favor, llama al mesero.');
             } else {
                 setMesaError('Error validando la mesa. Intenta de nuevo.');
             }
