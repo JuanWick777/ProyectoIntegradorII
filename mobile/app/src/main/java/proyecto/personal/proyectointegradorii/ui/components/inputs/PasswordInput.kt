@@ -82,7 +82,8 @@ fun PasswordInput(
             unfocusedBorderColor = BorderInputColor,
             errorBorderColor = AlertColor,
             focusedTextColor = TextColorDark,
-            unfocusedTextColor = TextColorGray
+            unfocusedTextColor = TextColorGray,
+            errorTextColor = TextColorDark
         )
     )
 }
