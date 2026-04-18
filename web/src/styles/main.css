@@ -3,6 +3,24 @@
     --bs-primary-rgb: 255, 122, 0;
     --color-primary: #FF7A00;
     --color-primary-dk: #E06900;
+    --status-pendiente-bg: #FEF3C7;
+    --status-pendiente-border: #FCD34D;
+    --status-pendiente-text: #B45309;
+    --status-confirmado-bg: #DBEAFE;
+    --status-confirmado-border: #93C5FD;
+    --status-confirmado-text: #1D4ED8;
+    --status-preparacion-bg: #FEF08A;
+    --status-preparacion-border: #FACC15;
+    --status-preparacion-text: #A16207;
+    --status-listo-bg: #DCFCE7;
+    --status-listo-border: #86EFAC;
+    --status-listo-text: #15803D;
+    --status-entregado-bg: #E5E7EB;
+    --status-entregado-border: #D1D5DB;
+    --status-entregado-text: #4B5563;
+    --status-cancelado-bg: #FEE2E2;
+    --status-cancelado-border: #FCA5A5;
+    --status-cancelado-text: #B91C1C;
 }
 
 .btn-primary {
@@ -80,15 +98,15 @@ body {
 
 /* ── KDS — Kanban ──────────────────────────────────────────────── */
 .kanban-col-pendiente {
-    border-top: 4px solid #DC3545;
+    border-top: 4px solid var(--status-pendiente-text);
 }
 
 .kanban-col-preparacion {
-    border-top: 4px solid #FFC107;
+    border-top: 4px solid var(--status-preparacion-text);
 }
 
 .kanban-col-listo {
-    border-top: 4px solid #28a745;
+    border-top: 4px solid var(--status-listo-text);
 }
 
 .kds-timer {
@@ -149,26 +167,31 @@ body {
 }
 
 .order-status-badge.status-pendiente {
-    background: #FFF3CD;
-    color: #856404;
+    background: var(--status-pendiente-bg);
+    color: var(--status-pendiente-text);
 }
 
 .order-status-badge.status-confirmada {
-    background: #D1ECF1;
-    color: #0C5460;
+    background: var(--status-confirmado-bg);
+    color: var(--status-confirmado-text);
 }
 
 .order-status-badge.status-preparacion {
-    background: #CCE5FF;
-    color: #004085;
+    background: var(--status-preparacion-bg);
+    color: var(--status-preparacion-text);
 }
 
 .order-status-badge.status-lista {
-    background: #D4EDDA;
-    color: #155724;
+    background: var(--status-listo-bg);
+    color: var(--status-listo-text);
 }
 
 .order-status-badge.status-entregada {
-    background: #E2E3E5;
-    color: #383D41;
+    background: var(--status-entregado-bg);
+    color: var(--status-entregado-text);
+}
+
+.order-status-badge.status-cancelada {
+    background: var(--status-cancelado-bg);
+    color: var(--status-cancelado-text);
 }

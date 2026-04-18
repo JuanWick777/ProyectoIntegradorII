@@ -49,6 +49,7 @@ fun SHome(
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val mesaId by cartViewModel.mesaSeleccionada.collectAsState()
+    val cartWarning by cartViewModel.cartWarning.collectAsState()
     val menuEnabled = mesaId != null
 
     var showCategories by remember { mutableStateOf(true) }
@@ -131,6 +132,16 @@ fun SHome(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 color = Color(0xFF2A160E)
             )
+        }
+
+        if (!cartWarning.isNullOrBlank()) {
+            Text(
+                text = cartWarning ?: "",
+                color = Color.Red,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         if (showCategories && menuEnabled) {

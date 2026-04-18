@@ -22,6 +22,10 @@ import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 import retrofit2.HttpException
 
 class CartViewModel : ViewModel() {
+    companion object {
+        private const val MAX_ARTICULOS_POR_PEDIDO = 20
+    }
+
     private val repository = OrdenRepository(RetrofitClient.api)
 
     private var appContext: Context? = null
@@ -89,6 +93,7 @@ class CartViewModel : ViewModel() {
         _cartItems.value = emptyList()
         _usarPuntos.value = false
         _previewOrden.value = null
+        _cartWarning.value = null
         persistState()
     }
 
@@ -168,6 +173,9 @@ class CartViewModel : ViewModel() {
     private val _pedidoError = MutableStateFlow<String?>(null)
     val pedidoError = _pedidoError.asStateFlow()
 
+    private val _cartWarning = MutableStateFlow<String?>(null)
+    val cartWarning = _cartWarning.asStateFlow()
+
     private val _isSubmittingOrder = MutableStateFlow(false)
     val isSubmittingOrder = _isSubmittingOrder.asStateFlow()
 
@@ -204,11 +212,25 @@ class CartViewModel : ViewModel() {
         cargarPreviewOrden()
     }
 
+    fun clearCartWarning() {
+        _cartWarning.value = null
+    }
+
+    fun totalArticulosEnCarrito(): Int {
+        return _cartItems.value.sumOf { it.cantidad }
+    }
+
     fun addToCart(
         platillo: PlatilloDto,
         cantidad: Int,
         nota: String
-    ) {
+    ): Boolean {
+        val totalActual = totalArticulosEnCarrito()
+        if (totalActual + cantidad > MAX_ARTICULOS_POR_PEDIDO) {
+            _cartWarning.value = "No puedes agregar mas de 20 articulos en un mismo pedido."
+            return false
+        }
+
         val currentList = _cartItems.value.toMutableList()
 
         val index = currentList.indexOfFirst {
@@ -231,8 +253,10 @@ class CartViewModel : ViewModel() {
         }
 
         _cartItems.value = currentList
+        _cartWarning.value = null
         persistState()
         cargarPreviewOrden()
+        return true
     }
 
     fun getTotal(): Double {

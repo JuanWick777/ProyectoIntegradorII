@@ -139,7 +139,7 @@ const MenuAdmin = () => {
 
     const handleLogout = async () => {
         await logout();
-        window.location.replace('/admin/login');
+        window.location.replace('/login');
     };
 
     const eliminarPlatillo = async (product) => {
@@ -174,7 +174,7 @@ const MenuAdmin = () => {
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#F5F5F5' }}>
             <AdminSidebar
-                loginPath="/admin/login"
+                loginPath="/login"
                 accentColor="#FF7043"
                 isPinned={isSidebarPinned}
                 setIsPinned={setIsSidebarPinned}

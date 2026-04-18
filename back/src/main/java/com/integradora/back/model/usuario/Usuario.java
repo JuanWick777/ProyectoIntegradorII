@@ -49,4 +49,14 @@ public class Usuario {
 
     @Column(name = "expiracion_codigo")
     private LocalDateTime expiracionCodigo;
+
+    @Builder.Default
+    @Column(name = "intentos_fallidos")
+    private Integer intentosFallidos = 0;
+
+    @Column(name = "bloqueo_hasta")
+    private LocalDateTime bloqueoHasta;
+
+    @Column(name = "ultimo_intento_fallido")
+    private LocalDateTime ultimoIntentoFallido;
 }

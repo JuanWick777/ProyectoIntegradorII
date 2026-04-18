@@ -3,6 +3,7 @@ package com.integradora.back.controller.orden;
 import com.integradora.back.controller.orden.dto.OrdenPreviewDTO;
 import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
 import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
+import com.integradora.back.controller.orden.dto.ActualizarEstadoOrdenRequest;
 import com.integradora.back.model.orden.Orden;
 import com.integradora.back.repository.DetalleOrdenRepository;
 import com.integradora.back.service.OrdenService;
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/ordenes")
 @RequiredArgsConstructor
@@ -49,9 +48,14 @@ public class OrdenController {
     @PutMapping("/{id}/estado")
     public OrdenResponseDTO actualizarEstado(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body
+            @RequestBody ActualizarEstadoOrdenRequest body
     ) {
-        Orden orden = service.actualizarEstado(id, body.get("estado"));
+        Orden orden = service.actualizarEstado(
+                id,
+                body.getEstado(),
+                body.getMotivo(),
+                Boolean.TRUE.equals(body.getConfirmarCancelacionCocina())
+        );
         return OrdenMapper.toDTO(orden, detalleOrdenRepository.findByOrdenId(orden.getId()));
     }
 

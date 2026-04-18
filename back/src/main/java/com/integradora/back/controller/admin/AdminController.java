@@ -93,9 +93,13 @@ public class AdminController {
     @DeleteMapping("/usuarios/{id}")
     @Transactional
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
-        if (id == 1L) {
-            throw new RuntimeException("Accion denegada: No se puede eliminar al Super Administrador principal.");
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (esSuperadmin(usuario)) {
+            throw new RuntimeException("Accion denegada: No se puede eliminar a un SUPERADMIN.");
         }
+
         meseroMesaRepository.deleteByMeseroId(id);
         usuarioRepository.deleteById(id);
         return ResponseEntity.noContent().build();
@@ -193,5 +197,14 @@ public class AdminController {
         }
 
         return "Empleado";
+    }
+
+    private boolean esSuperadmin(Usuario usuario) {
+        if (usuario == null || usuario.getRolEspecifico() == null) {
+            return false;
+        }
+
+        String rol = usuario.getRolEspecifico().trim().toUpperCase();
+        return "SUPERUSER".equals(rol) || "SUPERADMIN".equals(rol);
     }
 }

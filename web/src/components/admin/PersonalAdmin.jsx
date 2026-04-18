@@ -66,6 +66,26 @@ const PersonalAdmin = ({ mostrarToast }) => {
         });
     }, [usuarios, searchQuery, roleFilter, statusFilter, sortBy]);
 
+    const mesasOcupadasMap = useMemo(() => {
+        const ocupadas = new Map();
+
+        usuarios.forEach((usuario) => {
+            const rol = getUserRole(usuario);
+            if (rol !== 'mesero') return;
+
+            const mesaIds = Array.isArray(usuario.mesaIds) ? usuario.mesaIds : [];
+            mesaIds.forEach((mesaId) => {
+                if (!mesaId) return;
+                ocupadas.set(mesaId, {
+                    usuarioId: usuario.id,
+                    nombre: usuario.nombre || 'Mesero asignado',
+                });
+            });
+        });
+
+        return ocupadas;
+    }, [usuarios]);
+
     const handleSave = async (form) => {
         setSaving(true);
         try {
@@ -91,12 +111,20 @@ const PersonalAdmin = ({ mostrarToast }) => {
     };
 
     const handleDelete = async (id) => {
+        const usuario = usuarios.find((item) => item.id === id);
+        const rol = getUserRole(usuario);
+        if (rol === 'superuser' || rol === 'superadmin') {
+            mostrarToast('No se puede eliminar a un SUPERADMIN');
+            setConfirmDel(null);
+            return;
+        }
+
         try {
             await deleteUsuario(id);
             mostrarToast('Empleado eliminado');
             await cargar();
-        } catch {
-            mostrarToast('No se pudo eliminar');
+        } catch (e) {
+            mostrarToast(e?.message || 'No se pudo eliminar');
         }
         setConfirmDel(null);
     };
@@ -121,6 +149,8 @@ const PersonalAdmin = ({ mostrarToast }) => {
                 const badge = ROL_BADGE[rol] || { color: '#aaa', label: rol || '-' };
                 const ROLE_ICONS = {
                     admin: Shield,
+                    superuser: Shield,
+                    superadmin: Shield,
                     mesero: UserCheck,
                     cocinero: ChefHat,
                     chef: ChefHat,
@@ -179,7 +209,11 @@ const PersonalAdmin = ({ mostrarToast }) => {
             key: 'acciones',
             label: 'Acciones',
             className: 'text-end pe-4',
-            render: (u) => (
+            render: (u) => {
+                const rol = getUserRole(u);
+                const esSuperadmin = rol === 'superuser' || rol === 'superadmin';
+
+                return (
                 <div>
                     <SecondaryButton
                         type="button"
@@ -194,12 +228,14 @@ const PersonalAdmin = ({ mostrarToast }) => {
                         type="button"
                         size="sm"
                         style={{ borderRadius: '0.5rem' }}
+                        disabled={esSuperadmin}
+                        title={esSuperadmin ? 'No se puede eliminar a un SUPERADMIN' : 'Eliminar empleado'}
                         onClick={() => setConfirmDel(u)}
                     >
                         <Trash2 size={16} />
                     </DangerButton>
                 </div>
-            ),
+            )},
         },
     ];
 
@@ -305,6 +341,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
                 <UsuarioModal
                     usuario={modal?.id ? modal : null}
                     mesas={mesas}
+                    mesasOcupadasMap={mesasOcupadasMap}
                     onSave={handleSave}
                     onClose={() => setModal(null)}
                     saving={saving}

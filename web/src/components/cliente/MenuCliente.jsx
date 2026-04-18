@@ -15,7 +15,7 @@ import { PrimaryButton, SecondaryButton, OutlineButton } from '../ui/Button';
  *   onVerCarrito — callback para navegar al carrito
  */
 const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
-    const { products, loadingProducts, carrito, fetchPromociones } = useAppStore();
+    const { products, loadingProducts, carrito, fetchPromociones, cartError, clearCartError } = useAppStore();
     const [categoriaActiva, setCategoriaActiva] = useState('todos');
     const [busqueda, setBusqueda] = useState('');
     const [promos, setPromos] = useState([]);
@@ -23,6 +23,12 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
     useEffect(() => {
         fetchPromociones().then(data => setPromos(data || [])).catch(() => {});
     }, []);
+
+    useEffect(() => {
+        if (!cartError) return;
+        const timeout = setTimeout(() => clearCartError(), 3000);
+        return () => clearTimeout(timeout);
+    }, [cartError, clearCartError]);
 
     // Obtener string de categoría de forma segura
     const getCategoriaNombre = (p) => {
@@ -178,6 +184,11 @@ const MenuCliente = ({ numeroMesa, onVerCarrito }) => {
 
             {/* ── Grid de productos ────────────────────────────────────── */}
             <main className="flex-grow-1 p-3">
+                {cartError && (
+                    <div className="alert alert-warning mb-3" role="alert">
+                        {cartError}
+                    </div>
+                )}
                 {productosFiltrados.length === 0 ? (
                     <div className="text-center py-5 text-muted">
                         <Search size={48} style={{ color: '#cbd5e0' }} className="mx-auto d-block mb-3" />

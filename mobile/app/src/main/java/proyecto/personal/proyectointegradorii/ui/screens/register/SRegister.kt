@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -58,6 +59,8 @@ fun ScreenRegister(
     val errorPassword by viewModel.errorPassword.collectAsState()
     val confirmPassword by viewModel.confirmPassword.collectAsState()
     val errorConfirmPassword by viewModel.errorConfirmPassword.collectAsState()
+    val acceptedTerms by viewModel.acceptedTerms.collectAsState()
+    val errorTerms by viewModel.errorTerms.collectAsState()
     val isRegister by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
@@ -154,6 +157,22 @@ fun ScreenRegister(
                             Modifier
                         )
                         ErrorText(errorConfirmPassword, 14, Modifier)
+                        Spacer(Modifier.padding(vertical = 10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = acceptedTerms,
+                                onCheckedChange = { viewModel.onAcceptedTermsChange(it) }
+                            )
+                            Text(
+                                text = "Acepto los terminos y condiciones",
+                                color = TextColorDark,
+                                modifier = Modifier.padding(start = 6.dp)
+                            )
+                        }
+                        ErrorText(errorTerms, 14, Modifier)
                     }
                     Spacer(Modifier.padding(vertical = 20.dp))
                     Column (

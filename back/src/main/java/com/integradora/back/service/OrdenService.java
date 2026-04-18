@@ -7,6 +7,7 @@ import com.integradora.back.controller.orden.dto.OrdenRequestDTO;
 import com.integradora.back.controller.orden.dto.OrdenResponseDTO;
 import com.integradora.back.model.detalleorden.DetalleOrden;
 import com.integradora.back.model.detalleorden.EstadoDetalle;
+import com.integradora.back.model.mesa.Mesa;
 import com.integradora.back.model.orden.EstadoOrden;
 import com.integradora.back.model.orden.Orden;
 import com.integradora.back.model.platillo.Platillo;
@@ -35,6 +36,8 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class OrdenService {
 
+    private static final int MAX_ARTICULOS_POR_PEDIDO = 20;
+
     private final OrdenRepository ordenRepository;
     private final UsuarioRepository usuarioRepository;
     private final MesaRepository mesaRepository;
@@ -42,9 +45,10 @@ public class OrdenService {
     private final DetalleOrdenRepository detalleRepository;
     private final PromocionService promocionService;
     private final MeseroMesaRepository meseroMesaRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional
-    public Orden actualizarEstado(Long ordenId, String estado) {
+    public Orden actualizarEstado(Long ordenId, String estado, String motivo, boolean confirmarCancelacionCocina) {
         Orden orden = ordenRepository.findById(ordenId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
 
@@ -63,13 +67,48 @@ public class OrdenService {
                     && usuarioActual.getRolEspecifico().equalsIgnoreCase("MESERO");
 
             if (esMesero) {
-                if (!List.of(EstadoOrden.CONFIRMADA, EstadoOrden.CANCELADA, EstadoOrden.ENTREGADA).contains(nuevoEstado)) {
+                if (!List.of(EstadoOrden.CONFIRMADA, EstadoOrden.CANCELADA, EstadoOrden.ENTREGADA, EstadoOrden.CERRADA).contains(nuevoEstado)) {
                     throw new RuntimeException("El mesero no puede cambiar la orden a este estado.");
                 }
 
                 Long mesaId = orden.getMesa() != null ? orden.getMesa().getId() : null;
                 if (mesaId == null || !meseroMesaRepository.existsByMeseroIdAndMesaId(usuarioActual.getId(), mesaId)) {
                     throw new RuntimeException("No puedes modificar pedidos de una mesa que no tienes asignada.");
+                }
+
+                if (nuevoEstado == EstadoOrden.CANCELADA) {
+                    if (motivo == null || motivo.isBlank()) {
+                        throw new RuntimeException("Debes escribir un motivo para cancelar la orden.");
+                    }
+
+                    List<DetalleOrden> detalles = detalleRepository.findByOrdenId(ordenId);
+                    boolean requiereConfirmacionCocina = detalles.stream()
+                            .map(DetalleOrden::getEstadoPreparacion)
+                            .anyMatch(estadoDetalle ->
+                                    estadoDetalle == EstadoDetalle.EN_PREPARACION || estadoDetalle == EstadoDetalle.LISTO
+                            );
+
+                    if (requiereConfirmacionCocina && !confirmarCancelacionCocina) {
+                        throw new RuntimeException("Algunos platillos ya estan en preparacion o listos. Confirma con cocina antes de cancelar.");
+                    }
+
+                    orden.setMotivoCancelacion(motivo.trim());
+                    orden.setCanceladaPor(usuarioActual);
+                    orden.setFechaCancelacion(LocalDateTime.now());
+                    auditLogService.registrarCancelacionOrden(orden, usuarioActual, motivo.trim());
+                }
+
+                if (nuevoEstado == EstadoOrden.ENTREGADA && orden.getEstadoPreparacion() != EstadoOrden.LISTA) {
+                    throw new RuntimeException("Solo puedes marcar una orden como entregada si ya esta lista.");
+                }
+
+                if (nuevoEstado == EstadoOrden.CERRADA) {
+                    if (orden.getEstadoPreparacion() != EstadoOrden.ENTREGADA) {
+                        throw new RuntimeException("Solo puedes cerrar una mesa si la orden ya fue entregada.");
+                    }
+
+                    cerrarMesaSiProcede(orden);
+                    return orden;
                 }
             }
         }
@@ -80,6 +119,12 @@ public class OrdenService {
                 || nuevoEstado == EstadoOrden.CANCELADA
                 || nuevoEstado == EstadoOrden.CERRADA) {
             orden.setFechaFinalizacion(LocalDateTime.now());
+        }
+
+        if (nuevoEstado != EstadoOrden.CANCELADA) {
+            orden.setMotivoCancelacion(null);
+            orden.setCanceladaPor(null);
+            orden.setFechaCancelacion(null);
         }
 
         if (estado.equalsIgnoreCase("confirmada")) {
@@ -105,15 +150,30 @@ public class OrdenService {
             detalleRepository.saveAll(detalles);
         }
 
-        return ordenRepository.save(orden);
+        orden = ordenRepository.save(orden);
+
+        if (nuevoEstado == EstadoOrden.CANCELADA) {
+            liberarMesaSiYaNoTieneOrdenesActivas(orden.getMesa());
+        }
+
+        return orden;
     }
 
     @Transactional
     public OrdenResponseDTO crearOrdenCompleta(OrdenRequestDTO request) {
+        validarLimiteArticulos(request);
         Usuario cliente = obtenerClienteActualOpcional();
 
         var mesa = mesaRepository.findByNumero(request.getMesaId().intValue())
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada con el numero: " + request.getMesaId()));
+
+        if (mesa.getQrActivo() != null && mesa.getQrActivo() == 0) {
+            throw new RuntimeException("El QR de esta mesa no esta disponible en este momento.");
+        }
+
+        if ("INACTIVA".equalsIgnoreCase(mesa.getEstado())) {
+            throw new RuntimeException("La mesa no esta disponible en este momento.");
+        }
 
         Orden orden = Orden.builder()
                 .cliente(cliente)
@@ -197,12 +257,14 @@ public class OrdenService {
         orden.setCodigoPromoAplicado(codigoPromoAplicado);
         orden.setTotal(total);
         orden = ordenRepository.save(orden);
+        abrirCuentaMesaSiEsNecesario(mesa, orden);
 
         return OrdenMapper.toDTO(orden, detalles);
     }
 
     @Transactional(readOnly = true)
     public OrdenPreviewDTO previsualizarOrden(OrdenRequestDTO request) {
+        validarLimiteArticulos(request);
         Usuario cliente = obtenerClienteActualOpcional();
 
         BigDecimal subtotalTotal = BigDecimal.ZERO;
@@ -368,5 +430,103 @@ public class OrdenService {
         return auth.getAuthorities().stream()
                 .map(a -> a.getAuthority())
                 .anyMatch(authority -> List.of(roles).contains(authority));
+    }
+
+    private void validarLimiteArticulos(OrdenRequestDTO request) {
+        if (request == null || request.getDetalles() == null || request.getDetalles().isEmpty()) {
+            throw new RuntimeException("Debes agregar al menos un platillo al pedido.");
+        }
+
+        int totalArticulos = request.getDetalles().stream()
+                .mapToInt(detalle -> detalle.getCantidad() != null ? detalle.getCantidad() : 0)
+                .sum();
+
+        if (totalArticulos > MAX_ARTICULOS_POR_PEDIDO) {
+            throw new RuntimeException("El pedido no puede superar 20 articulos en total.");
+        }
+    }
+
+    private void abrirCuentaMesaSiEsNecesario(Mesa mesa, Orden orden) {
+        if (mesa == null) {
+            return;
+        }
+
+        if (mesa.getCuentaAbierta() == null || mesa.getCuentaAbierta() == 0) {
+            mesa.setCuentaAbierta(1);
+            mesa.setFechaAperturaCuenta(LocalDateTime.now());
+        }
+
+        mesa.setFechaCierreCuenta(null);
+        mesa.setEstado("OCUPADA");
+        mesa.setOrdenActiva(orden);
+        mesaRepository.save(mesa);
+    }
+
+    private void cerrarMesaSiProcede(Orden ordenBase) {
+        Mesa mesa = ordenBase.getMesa();
+        if (mesa == null || mesa.getId() == null) {
+            throw new RuntimeException("La orden no tiene una mesa asociada.");
+        }
+
+        List<Orden> ordenesMesa = ordenRepository.findByMesaIdOrderByIdDesc(mesa.getId());
+
+        boolean hayPendientes = ordenesMesa.stream()
+                .anyMatch(orden -> List.of(
+                        EstadoOrden.PENDIENTE_CONFIRMACION,
+                        EstadoOrden.CONFIRMADA,
+                        EstadoOrden.EN_PREPARACION,
+                        EstadoOrden.LISTA
+                ).contains(orden.getEstadoPreparacion()));
+
+        if (hayPendientes) {
+            throw new RuntimeException("No se puede cerrar la mesa porque aun hay pedidos o platillos pendientes.");
+        }
+
+        List<Orden> ordenesEntregadas = ordenesMesa.stream()
+                .filter(orden -> orden.getEstadoPreparacion() == EstadoOrden.ENTREGADA)
+                .toList();
+
+        if (ordenesEntregadas.isEmpty()) {
+            throw new RuntimeException("No hay ordenes entregadas pendientes de cierre en esta mesa.");
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        ordenesEntregadas.forEach(orden -> {
+            orden.setEstadoPreparacion(EstadoOrden.CERRADA);
+            orden.setFechaFinalizacion(ahora);
+        });
+        ordenRepository.saveAll(ordenesEntregadas);
+
+        mesa.setCuentaAbierta(0);
+        mesa.setEstado("LIBRE");
+        mesa.setFechaCierreCuenta(ahora);
+        mesa.setOrdenActiva(null);
+        mesaRepository.save(mesa);
+
+        ordenBase.setEstadoPreparacion(EstadoOrden.CERRADA);
+        ordenBase.setFechaFinalizacion(ahora);
+    }
+
+    private void liberarMesaSiYaNoTieneOrdenesActivas(Mesa mesa) {
+        if (mesa == null || mesa.getId() == null) {
+            return;
+        }
+
+        boolean quedanActivas = ordenRepository.findByMesaIdOrderByIdDesc(mesa.getId()).stream()
+                .anyMatch(orden -> List.of(
+                        EstadoOrden.PENDIENTE_CONFIRMACION,
+                        EstadoOrden.CONFIRMADA,
+                        EstadoOrden.EN_PREPARACION,
+                        EstadoOrden.LISTA,
+                        EstadoOrden.ENTREGADA
+                ).contains(orden.getEstadoPreparacion()));
+
+        if (!quedanActivas) {
+            mesa.setCuentaAbierta(0);
+            mesa.setEstado("LIBRE");
+            mesa.setFechaCierreCuenta(LocalDateTime.now());
+            mesa.setOrdenActiva(null);
+            mesaRepository.save(mesa);
+        }
     }
 }

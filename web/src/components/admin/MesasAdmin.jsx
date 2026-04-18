@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, AlertTriangle, Loader, RefreshCw, Armchair } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, Loader, RefreshCw, Armchair, Users } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Button';
 import AlertMessage from '../ui/AlertMessage';
@@ -33,11 +33,13 @@ const MesasAdmin = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [nuevoNumero, setNuevoNumero] = useState('');
+    const [nuevaCapacidad, setNuevaCapacidad] = useState('4');
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [creando, setCreando] = useState(false);
     const [eliminando, setEliminando] = useState(null);
     const [actualizando, setActualizando] = useState(null);
-    const [campoError, setCampoError] = useState(''); // Error inline del input de mesa
+    const [campoError, setCampoError] = useState('');
+    const [capacidadesEditables, setCapacidadesEditables] = useState({});
 
     const resumen = useMemo(() => {
         return mesas.reduce((acc, mesa) => {
@@ -56,7 +58,11 @@ const MesasAdmin = () => {
             setLoading(true);
             setError('');
             const data = await fetchMesas();
-            setMesas(data || []);
+            const mesasData = data || [];
+            setMesas(mesasData);
+            setCapacidadesEditables(
+                Object.fromEntries(mesasData.map((mesa) => [mesa.id, String(mesa.capacidad || 4)]))
+            );
         } catch (err) {
             setError('Error al cargar las mesas: ' + (err.message || 'Error desconocido'));
         } finally {
@@ -67,17 +73,22 @@ const MesasAdmin = () => {
     const handleCrearMesa = async (e) => {
         e.preventDefault();
         const numero = parseInt(nuevoNumero, 10);
+        const capacidad = parseInt(nuevaCapacidad, 10);
 
         if (!nuevoNumero) {
-            setCampoError('El número de mesa es obligatorio.');
+            setCampoError('El numero de mesa es obligatorio.');
             return;
         }
         if (!numero || numero < 1) {
-            setCampoError('Ingresa un número de mesa válido (mayor a 0).');
+            setCampoError('Ingresa un numero de mesa valido (mayor a 0).');
             return;
         }
         if (numero > 999) {
-            setCampoError('El número de mesa no puede ser mayor a 999.');
+            setCampoError('El numero de mesa no puede ser mayor a 999.');
+            return;
+        }
+        if (!capacidad || capacidad < 1) {
+            setCampoError('Ingresa una capacidad valida para la mesa.');
             return;
         }
 
@@ -86,13 +97,14 @@ const MesasAdmin = () => {
             setCampoError('');
             setSuccess('');
             setCreando(true);
-            await crearMesa(numero);
+            await crearMesa({ numero, capacidad });
             setNuevoNumero('');
+            setNuevaCapacidad('4');
             setSuccess(`Mesa ${numero} creada correctamente`);
             await cargarMesas();
         } catch (err) {
             if (err.status === 409) {
-                setCampoError(`Ya existe una mesa con el número ${numero}.`);
+                setCampoError(`Ya existe una mesa con el numero ${numero}.`);
             } else {
                 setError('Error al crear la mesa: ' + (err.message || 'Error desconocido'));
             }
@@ -106,7 +118,7 @@ const MesasAdmin = () => {
             setError('');
             setSuccess('');
             setActualizando(mesa.id);
-            await actualizarEstadoMesa(mesa.id, estado);
+            await actualizarEstadoMesa(mesa.id, { estado });
             setSuccess(`Mesa ${mesa.numero} actualizada a ${ESTADO_MESA[estado]?.label || estado}`);
             await cargarMesas();
         } catch (err) {
@@ -116,8 +128,29 @@ const MesasAdmin = () => {
         }
     };
 
+    const handleCambiarCapacidad = async (mesa) => {
+        const capacidad = parseInt(capacidadesEditables[mesa.id], 10);
+        if (!capacidad || capacidad < 1) {
+            setError('La capacidad debe ser mayor a 0.');
+            return;
+        }
+
+        try {
+            setError('');
+            setSuccess('');
+            setActualizando(mesa.id);
+            await actualizarEstadoMesa(mesa.id, { capacidad });
+            setSuccess(`Capacidad de mesa ${mesa.numero} actualizada a ${capacidad}`);
+            await cargarMesas();
+        } catch (err) {
+            setError('Error al actualizar la capacidad: ' + (err.message || 'Error desconocido'));
+        } finally {
+            setActualizando(null);
+        }
+    };
+
     const handleEliminarMesa = async (id, numero) => {
-        if (!window.confirm(`Eliminar mesa ${numero}? Esta acción no se puede deshacer.`)) {
+        if (!window.confirm(`Eliminar mesa ${numero}? Esta accion no se puede deshacer.`)) {
             return;
         }
 
@@ -138,7 +171,7 @@ const MesasAdmin = () => {
     return (
         <div className="container-fluid py-4">
             <SectionHeader
-                title="Gestión de Mesas"
+                title="Gestion de Mesas"
                 subtitle={`Total: ${mesas.length} mesa${mesas.length !== 1 ? 's' : ''}`}
             />
 
@@ -147,8 +180,10 @@ const MesasAdmin = () => {
                     <div key={estado} className="col-6 col-md-3">
                         <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '1rem' }}>
                             <div className="card-body d-flex align-items-center gap-3">
-                                <div className={`rounded-circle d-flex align-items-center justify-content-center text-white ${config.className.includes('text-dark') ? 'text-dark' : ''}`}
-                                    style={{ width: 42, height: 42 }}>
+                                <div
+                                    className={`rounded-circle d-flex align-items-center justify-content-center text-white ${config.className.includes('text-dark') ? 'text-dark' : ''}`}
+                                    style={{ width: 42, height: 42 }}
+                                >
                                     <Armchair size={20} />
                                 </div>
                                 <div>
@@ -180,17 +215,17 @@ const MesasAdmin = () => {
                     </SecondaryButton>
                 </div>
 
-                {!showCreateForm ? null : (
-                    <div className="col-md-6">
+                {showCreateForm && (
+                    <div className="col-md-8 col-xl-6">
                         <div className="card border-0 shadow-sm" style={{ borderRadius: '1rem' }}>
                             <div className="card-body">
                                 <h5 className="card-title fw-bold mb-3">Agregar Nueva Mesa</h5>
                                 <form onSubmit={handleCrearMesa} noValidate>
-                                    <div className="mb-3">
-                                        <label className="form-label fw-semibold small text-secondary">
-                                            Número de Mesa <span className="text-danger">*</span>
-                                        </label>
-                                        <div className="input-group">
+                                    <div className="row g-3 align-items-end">
+                                        <div className="col-md-5">
+                                            <label className="form-label fw-semibold small text-secondary">
+                                                Numero de Mesa <span className="text-danger">*</span>
+                                            </label>
                                             <input
                                                 type="number"
                                                 className={`form-control ${campoError ? 'is-invalid' : nuevoNumero && !campoError ? 'is-valid' : ''}`}
@@ -207,9 +242,35 @@ const MesasAdmin = () => {
                                                 }}
                                                 disabled={creando}
                                             />
+                                        </div>
+
+                                        <div className="col-md-4">
+                                            <label className="form-label fw-semibold small text-secondary">
+                                                Capacidad <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                className="form-control"
+                                                placeholder="Ej. 4"
+                                                min="1"
+                                                max="20"
+                                                value={nuevaCapacidad}
+                                                onKeyDown={(e) => {
+                                                    if (['+', '-', 'e', 'E', '.'].includes(e.key)) e.preventDefault();
+                                                }}
+                                                onChange={(e) => {
+                                                    setNuevaCapacidad(e.target.value);
+                                                    setCampoError('');
+                                                }}
+                                                disabled={creando}
+                                            />
+                                        </div>
+
+                                        <div className="col-md-3">
                                             <PrimaryButton
                                                 type="submit"
-                                                disabled={creando || !nuevoNumero}
+                                                disabled={creando || !nuevoNumero || !nuevaCapacidad}
+                                                className="w-100"
                                             >
                                                 {creando ? (
                                                     <>
@@ -224,9 +285,12 @@ const MesasAdmin = () => {
                                                 )}
                                             </PrimaryButton>
                                         </div>
+
                                         {campoError && (
-                                            <div className="invalid-feedback d-flex align-items-center gap-1 mt-1" style={{ display: 'flex !important' }}>
-                                                <span>⚠</span> {campoError}
+                                            <div className="col-12">
+                                                <div className="invalid-feedback d-flex align-items-center gap-1 mt-1" style={{ display: 'flex !important' }}>
+                                                    <span>!</span> {campoError}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -269,9 +333,11 @@ const MesasAdmin = () => {
                                 <thead style={{ background: '#f8f9fa' }}>
                                     <tr>
                                         <th className="fw-bold text-secondary">ID</th>
-                                        <th className="fw-bold text-secondary">Número</th>
+                                        <th className="fw-bold text-secondary">Numero</th>
+                                        <th className="fw-bold text-secondary">Capacidad</th>
                                         <th className="fw-bold text-secondary">Estado</th>
                                         <th className="fw-bold text-secondary">Cambiar estado</th>
+                                        <th className="fw-bold text-secondary">Actualizar capacidad</th>
                                         <th className="fw-bold text-secondary text-center">Accion</th>
                                     </tr>
                                 </thead>
@@ -284,6 +350,12 @@ const MesasAdmin = () => {
                                             <tr key={mesa.id}>
                                                 <td className="text-muted">#{mesa.id}</td>
                                                 <td className="fw-bold fs-5">Mesa {mesa.numero}</td>
+                                                <td>
+                                                    <span className="badge text-bg-light border d-inline-flex align-items-center gap-1" style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
+                                                        <Users size={14} />
+                                                        {mesa.capacidad || 0} personas
+                                                    </span>
+                                                </td>
                                                 <td>
                                                     <span
                                                         className={`badge ${estadoConfig.className}`}
@@ -305,6 +377,34 @@ const MesasAdmin = () => {
                                                             </option>
                                                         ))}
                                                     </select>
+                                                </td>
+                                                <td style={{ minWidth: 220 }}>
+                                                    <div className="d-flex gap-2">
+                                                        <input
+                                                            type="number"
+                                                            className="form-control form-control-sm"
+                                                            min="1"
+                                                            max="20"
+                                                            value={capacidadesEditables[mesa.id] || ''}
+                                                            onKeyDown={(e) => {
+                                                                if (['+', '-', 'e', 'E', '.'].includes(e.key)) e.preventDefault();
+                                                            }}
+                                                            onChange={(e) =>
+                                                                setCapacidadesEditables((prev) => ({
+                                                                    ...prev,
+                                                                    [mesa.id]: e.target.value,
+                                                                }))
+                                                            }
+                                                            disabled={actualizando === mesa.id}
+                                                        />
+                                                        <SecondaryButton
+                                                            size="sm"
+                                                            onClick={() => handleCambiarCapacidad(mesa)}
+                                                            disabled={actualizando === mesa.id}
+                                                        >
+                                                            Guardar
+                                                        </SecondaryButton>
+                                                    </div>
                                                 </td>
                                                 <td className="text-center">
                                                     <DangerButton

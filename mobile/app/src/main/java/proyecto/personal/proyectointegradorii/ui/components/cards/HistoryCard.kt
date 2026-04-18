@@ -34,16 +34,18 @@ import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
 @Composable
 fun HistoryCard(
     orderNumber: String,
-    status: String, // Ej: "Completado"
-    date: String,   // Ej: "10 Feb 2026 • 14:30"
-    items: List<String>, // Ej: listOf("Hamburguesa Gourmet x2", "Pasta Alfredo")
-    total: String,  // Ej: "$427"
+    status: String,
+    date: String,
+    items: List<String>,
+    total: String,
+    cancelReason: String? = null,
+    cancelledBy: String? = null,
     modifier: Modifier = Modifier
-)   {
+) {
     val statusColor = when (status.lowercase()) {
         "completado" -> SuccessfulColor
         "cancelado" -> AlertColor
-        "pendiente", "confirmada", "en preparación", "lista" -> MainColor
+        "pendiente", "confirmada", "en preparacion", "lista" -> MainColor
         else -> MainColor
     }
 
@@ -58,7 +60,6 @@ fun HistoryCard(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                // 1. HEADER: Título y Badge de Estado
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -70,7 +71,7 @@ fun HistoryCard(
                         color = TextColorDark,
                         peso = FontWeight.Bold
                     )
-                    // Badge de "Completado"
+
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
@@ -89,10 +90,7 @@ fun HistoryCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 2. FECHA Y HORA
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Outlined.Schedule,
                         contentDescription = "Fecha del pedido",
@@ -109,18 +107,17 @@ fun HistoryCard(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 3. CAJA GRIS CON LA LISTA DE ARTÍCULOS
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(BorderInputColor.copy(alpha = 0.2f)) // Gris muy clarito de tu paleta
+                        .background(BorderInputColor.copy(alpha = 0.2f))
                         .padding(12.dp)
                 ) {
                     Column {
                         items.forEach { item ->
                             GlobalText(
-                                texto = "• $item",
+                                texto = "- $item",
                                 tamanio = 15,
                                 color = TextColorGray,
                                 modifier = Modifier.padding(vertical = 2.dp)
@@ -129,9 +126,43 @@ fun HistoryCard(
                     }
                 }
 
+                if (!cancelReason.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(AlertColor.copy(alpha = 0.10f))
+                            .padding(12.dp)
+                    ) {
+                        Column {
+                            GlobalText(
+                                texto = "Motivo de cancelacion",
+                                tamanio = 14,
+                                color = AlertColor,
+                                peso = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            GlobalText(
+                                texto = cancelReason,
+                                tamanio = 14,
+                                color = TextColorDark
+                            )
+                            if (!cancelledBy.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                GlobalText(
+                                    texto = "Cancelado por: $cancelledBy",
+                                    tamanio = 13,
+                                    color = TextColorGray
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 4. DIVISOR
                 Divider(
                     color = BorderInputColor.copy(alpha = 0.4f),
                     thickness = 1.dp
@@ -139,7 +170,6 @@ fun HistoryCard(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 5. TOTAL
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,

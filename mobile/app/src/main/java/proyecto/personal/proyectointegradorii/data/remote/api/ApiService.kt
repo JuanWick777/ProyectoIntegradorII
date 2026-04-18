@@ -4,6 +4,7 @@ import okhttp3.MultipartBody
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.LoginRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.RegisterRequest
 import proyecto.personal.proyectointegradorii.data.model.usuario.Usuario
+import proyecto.personal.proyectointegradorii.data.remote.dto.mesa.MesaDto
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenPreviewDTO
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenRequest
 import proyecto.personal.proyectointegradorii.data.remote.dto.orden.OrdenResponseDTO
@@ -66,6 +67,11 @@ interface ApiService {
     // OFERTAS
     @GET("api/promociones")
     suspend fun getPromociones(): List<PromocionDto>
+
+    @GET("api/mesas/{numero}")
+    suspend fun getMesa(
+        @Path("numero") numero: Int
+    ): MesaDto
 
     @POST("api/ordenes/preview")
     suspend fun previewOrden(

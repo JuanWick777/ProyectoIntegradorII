@@ -68,6 +68,8 @@ export const getProductImage = (p) =>
 
 export const ROL_BADGE = {
     admin: { color: '#6f42c1', label: 'Admin' },
+    superuser: { color: '#5b21b6', label: 'Superadmin' },
+    superadmin: { color: '#5b21b6', label: 'Superadmin' },
     cocinero: { color: '#fd7e14', label: 'Cocinero' },
     chef: { color: '#fd7e14', label: 'Chef' },
     mesero: { color: '#0d6efd', label: 'Mesero' },

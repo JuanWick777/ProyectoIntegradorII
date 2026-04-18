@@ -1,12 +1,15 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 const STORAGE_KEY = 'restaurant-storage-v2';
+const CART_MAX_ITEMS = 20;
 
 function getStoredToken() {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const storage = typeof window !== 'undefined' ? window.sessionStorage : null;
+        if (!storage) return null;
+        const raw = storage.getItem(STORAGE_KEY);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         return parsed?.state?.token || null;
@@ -106,8 +109,10 @@ export const useAppStore = create(
             usuario: null,
             token: null,
             pollingInterval: null,
+            cartError: '',
 
             setNumeroMesa: (numero) => set({ numeroMesa: numero }),
+            clearCartError: () => set({ cartError: '' }),
 
             validarMesa: async (numero) => {
                 return await apiFetch(`/mesas/${numero}`);
@@ -117,11 +122,14 @@ export const useAppStore = create(
                 return await apiFetch('/mesas');
             },
 
-            crearMesa: async (numero) => {
+            crearMesa: async (mesaData) => {
                 const { token } = get();
+                const payload = typeof mesaData === 'number'
+                    ? { numero: mesaData, capacidad: 4 }
+                    : mesaData;
                 return await apiFetch('/mesas', {
                     method: 'POST',
-                    body: JSON.stringify({ numero }),
+                    body: JSON.stringify(payload),
                     token,
                 });
             },
@@ -134,11 +142,14 @@ export const useAppStore = create(
                 });
             },
 
-            actualizarEstadoMesa: async (id, estado) => {
+            actualizarEstadoMesa: async (id, estadoOData) => {
                 const { token } = get();
+                const payload = typeof estadoOData === 'string'
+                    ? { estado: estadoOData }
+                    : estadoOData;
                 return await apiFetch(`/mesas/${id}`, {
                     method: 'PUT',
-                    body: JSON.stringify({ estado }),
+                    body: JSON.stringify(payload),
                     token,
                 });
             },
@@ -155,6 +166,13 @@ export const useAppStore = create(
             },
 
             agregarAlCarrito: (producto) => set((state) => {
+                const totalActual = state.carrito.reduce((sum, item) => sum + item.cantidad, 0);
+                if (totalActual >= CART_MAX_ITEMS) {
+                    return {
+                        cartError: 'No puedes agregar mas de 20 articulos en un mismo pedido.',
+                    };
+                }
+
                 const existe = state.carrito.find((item) => item.id === producto.id);
 
                 if (existe) {
@@ -164,16 +182,19 @@ export const useAppStore = create(
                                 ? { ...item, cantidad: item.cantidad + 1 }
                                 : item
                         ),
+                        cartError: '',
                     };
                 }
 
                 return {
                     carrito: [...state.carrito, { ...producto, cantidad: 1, notas: '' }],
+                    cartError: '',
                 };
             }),
 
             eliminarDelCarrito: (productoId) => set((state) => ({
                 carrito: state.carrito.filter((item) => item.id !== productoId),
+                cartError: '',
             })),
 
             actualizarNotaItem: (productoId, nota) => set((state) => ({
@@ -182,11 +203,21 @@ export const useAppStore = create(
                 ),
             })),
 
-            incrementarCantidad: (productoId) => set((state) => ({
-                carrito: state.carrito.map((item) =>
-                    item.id === productoId ? { ...item, cantidad: item.cantidad + 1 } : item
-                ),
-            })),
+            incrementarCantidad: (productoId) => set((state) => {
+                const totalActual = state.carrito.reduce((sum, item) => sum + item.cantidad, 0);
+                if (totalActual >= CART_MAX_ITEMS) {
+                    return {
+                        cartError: 'No puedes agregar mas de 20 articulos en un mismo pedido.',
+                    };
+                }
+
+                return {
+                    carrito: state.carrito.map((item) =>
+                        item.id === productoId ? { ...item, cantidad: item.cantidad + 1 } : item
+                    ),
+                    cartError: '',
+                };
+            }),
 
             decrementarCantidad: (productoId) => set((state) => ({
                 carrito: state.carrito.map((item) =>
@@ -194,9 +225,10 @@ export const useAppStore = create(
                         ? { ...item, cantidad: item.cantidad - 1 }
                         : item
                 ),
+                cartError: '',
             })),
 
-            limpiarCarrito: () => set({ carrito: [] }),
+            limpiarCarrito: () => set({ carrito: [], cartError: '' }),
 
             addOrder: async () => {
                 const { carrito, numeroMesa, token } = get();
@@ -265,12 +297,12 @@ export const useAppStore = create(
                 return data;
             },
 
-            cambiarEstadoOrden: async (ordenId, nuevoEstado) => {
+            cambiarEstadoOrden: async (ordenId, nuevoEstado, extra = {}) => {
                 const { token } = get();
                 await apiFetch(`/ordenes/${ordenId}/estado`, {
                     method: 'PUT',
                     token,
-                    body: JSON.stringify({ estado: nuevoEstado }),
+                    body: JSON.stringify({ estado: nuevoEstado, ...extra }),
                 });
             },
 
@@ -534,6 +566,7 @@ export const useAppStore = create(
         }),
         {
             name: 'restaurant-storage-v2',
+            storage: createJSONStorage(() => sessionStorage),
             partialize: (state) => ({
                 numeroMesa: state.numeroMesa,
                 carrito: state.carrito,

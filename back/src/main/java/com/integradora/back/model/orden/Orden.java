@@ -54,4 +54,14 @@ public class Orden {
 
     @Column(name = "fecha_finalizacion")
     private LocalDateTime fechaFinalizacion;
+
+    @Column(name = "motivo_cancelacion")
+    private String motivoCancelacion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancelada_por")
+    private Usuario canceladaPor;
+
+    @Column(name = "fecha_cancelacion")
+    private LocalDateTime fechaCancelacion;
 }

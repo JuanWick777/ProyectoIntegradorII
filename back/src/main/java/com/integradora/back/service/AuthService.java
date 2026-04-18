@@ -31,11 +31,13 @@ public class AuthService {
     private final JwtService jwtService;
     private final OrdenRepository ordenRepository;
     private final JavaMailSender mailSender;
+    private final LoginAttemptService loginAttemptService;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public Usuario register(RegisterRequest request) {
         if (usuarioRepository.findByCorreo(request.getCorreo()).isPresent()) {
-            throw new RuntimeException("El correo ya está registrado");
+            throw new RuntimeException("El correo ya esta registrado");
         }
 
         Usuario usuario = Usuario.builder()
@@ -54,21 +56,25 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public LoginResponseDTO login(LoginRequest request) {
-
-        Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
+        String correo = request.getCorreo() == null ? "" : request.getCorreo().trim();
+        Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(correo)
                 .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
+
+        loginAttemptService.validarAccesoPermitido(usuario);
 
         if ("ELIMINADO".equalsIgnoreCase(usuario.getEstado()) ||
                 "INACTIVO".equalsIgnoreCase(usuario.getEstado())) {
-            throw new RuntimeException("Esta cuenta ya no está disponible");
+            throw new RuntimeException("Esta cuenta ya no esta disponible");
         }
 
         String raw = request.getContrasena();
         String stored = usuario.getContrasena();
 
         if (!passwordMatches(raw, stored)) {
-            throw new RuntimeException("Credenciales incorrectas");
+            throw new RuntimeException(loginAttemptService.registrarIntentoFallido(usuario));
         }
+
+        loginAttemptService.limpiarIntentos(usuario);
 
         if (!isBcryptHash(stored)) {
             usuario.setContrasena(passwordEncoder.encode(raw));
@@ -135,15 +141,15 @@ public class AuthService {
 
         if (correoCambio) {
             if (contrasenaActual == null || contrasenaActual.isBlank()) {
-                throw new RuntimeException("Debes ingresar tu contraseña actual para cambiar el correo");
+                throw new RuntimeException("Debes ingresar tu contrasena actual para cambiar el correo");
             }
 
             if (!passwordEncoder.matches(contrasenaActual, usuario.getContrasena())) {
-                throw new RuntimeException("La contraseña actual es incorrecta");
+                throw new RuntimeException("La contrasena actual es incorrecta");
             }
 
             if (usuarioRepository.findByCorreo(nuevoCorreo.trim()).isPresent()) {
-                throw new RuntimeException("El correo ya está en uso por otro usuario");
+                throw new RuntimeException("El correo ya esta en uso por otro usuario");
             }
 
             usuario.setCorreo(nuevoCorreo.trim());
@@ -151,9 +157,10 @@ public class AuthService {
 
         if (contrasena != null && !contrasena.isBlank()) {
             if (contrasena.length() < 6) {
-                throw new RuntimeException("La contraseña debe tener al menos 6 caracteres");
+                throw new RuntimeException("La contrasena debe tener al menos 6 caracteres");
             }
             usuario.setContrasena(passwordEncoder.encode(contrasena));
+            auditLogService.registrarCambioPasswordEmpleado(usuario, "ACTUALIZACION_PERFIL");
         }
 
         if (fotoPerfil != null && !fotoPerfil.isBlank()) {
@@ -182,11 +189,11 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         if (contrasenaActual == null || contrasenaActual.isBlank()) {
-            throw new RuntimeException("Debes ingresar tu contraseña actual");
+            throw new RuntimeException("Debes ingresar tu contrasena actual");
         }
 
         if (!passwordEncoder.matches(contrasenaActual, usuario.getContrasena())) {
-            throw new RuntimeException("La contraseña actual es incorrecta");
+            throw new RuntimeException("La contrasena actual es incorrecta");
         }
 
         long ordenesActivas = ordenRepository.countByClienteIdAndEstadoPreparacionIn(
@@ -230,7 +237,7 @@ public class AuthService {
                     message.setSubject("Codigo de recuperacion - App Restaurante");
                     message.setText(
                             "Tu codigo de recuperacion es: " + codigo + "\n" +
-                            "Este codigo expirara en 10 minutos."
+                                    "Este codigo expira en 10 minutos y solo puede usarse una vez."
                     );
                     try {
                         log.info("Enviando codigo de recuperacion a {}", usuario.getCorreo());
@@ -273,6 +280,7 @@ public class AuthService {
         usuario.setCodigoRecuperacion(null);
         usuario.setExpiracionCodigo(null);
         usuarioRepository.save(usuario);
+        auditLogService.registrarCambioPasswordEmpleado(usuario, "RECUPERACION_PASSWORD");
     }
 
     private String normalizarRol(Usuario usuario) {

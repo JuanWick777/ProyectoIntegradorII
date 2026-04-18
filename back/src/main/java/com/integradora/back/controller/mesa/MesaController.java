@@ -31,18 +31,27 @@ public class MesaController {
     @PostMapping
     public ResponseEntity<?> crearMesa(@RequestBody Map<String, Object> body) {
         Integer numero = parseNumero(body.get("numero"));
+        Integer capacidad = parseNumero(body.get("capacidad"));
+
         if (numero == null || numero <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El número de mesa debe ser mayor a 0"));
+            return ResponseEntity.badRequest().body(Map.of("error", "El numero de mesa debe ser mayor a 0"));
+        }
+
+        if (capacidad == null || capacidad <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "La capacidad de la mesa debe ser mayor a 0"));
         }
 
         if (mesaRepository.existsByNumero(numero)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", "Ya existe una mesa con ese número"));
+                    .body(Map.of("error", "Ya existe una mesa con ese numero"));
         }
 
         Mesa creada = mesaRepository.save(Mesa.builder()
                 .numero(numero)
+                .capacidad(capacidad)
                 .estado("LIBRE")
+                .cuentaAbierta(0)
+                .qrActivo(1)
                 .build());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(MesaResponseDTO.from(creada));
@@ -58,15 +67,23 @@ public class MesaController {
                     if (body.containsKey("numero")) {
                         Integer nuevoNumero = parseNumero(body.get("numero"));
                         if (nuevoNumero == null || nuevoNumero <= 0) {
-                            return ResponseEntity.badRequest().body(Map.of("error", "Número de mesa inválido"));
+                            return ResponseEntity.badRequest().body(Map.of("error", "Numero de mesa invalido"));
                         }
 
                         if (!mesa.getNumero().equals(nuevoNumero) && mesaRepository.existsByNumero(nuevoNumero)) {
                             return ResponseEntity.status(HttpStatus.CONFLICT)
-                                    .body(Map.of("error", "Ya existe una mesa con ese número"));
+                                    .body(Map.of("error", "Ya existe una mesa con ese numero"));
                         }
 
                         mesa.setNumero(nuevoNumero);
+                    }
+
+                    if (body.containsKey("capacidad")) {
+                        Integer nuevaCapacidad = parseNumero(body.get("capacidad"));
+                        if (nuevaCapacidad == null || nuevaCapacidad <= 0) {
+                            return ResponseEntity.badRequest().body(Map.of("error", "Capacidad de mesa invalida"));
+                        }
+                        mesa.setCapacidad(nuevaCapacidad);
                     }
 
                     if (body.containsKey("estado") && body.get("estado") != null) {
@@ -74,6 +91,14 @@ public class MesaController {
                         if (!estado.isEmpty()) {
                             mesa.setEstado(estado.toUpperCase());
                         }
+                    }
+
+                    if (body.containsKey("qrActivo") && body.get("qrActivo") != null) {
+                        mesa.setQrActivo(parseBooleanFlag(body.get("qrActivo")) ? 1 : 0);
+                    }
+
+                    if (body.containsKey("cuentaAbierta") && body.get("cuentaAbierta") != null) {
+                        mesa.setCuentaAbierta(parseBooleanFlag(body.get("cuentaAbierta")) ? 1 : 0);
                     }
 
                     Mesa guardada = mesaRepository.save(mesa);
@@ -92,16 +117,24 @@ public class MesaController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Valida que una mesa exista por su número visible.
-     * El front lo llama desde MesaIngreso cuando el cliente escribe su número manualmente.
-     * GET /api/mesas/{numero}
-     */
     @GetMapping("/{numero}")
-    public ResponseEntity<MesaResponseDTO> obtenerPorNumero(@PathVariable Integer numero) {
+    public ResponseEntity<?> obtenerPorNumero(@PathVariable Integer numero) {
         return mesaRepository.findByNumero(numero)
-                .map(MesaResponseDTO::from)
-                .map(ResponseEntity::ok)
+                .map(mesa -> {
+                    if (mesa.getQrActivo() != null && mesa.getQrActivo() == 0) {
+                        return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+                    }
+
+                    if ("INACTIVA".equalsIgnoreCase(mesa.getEstado())) {
+                        return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+                    }
+
+                    if (mesa.getCuentaAbierta() != null && mesa.getCuentaAbierta() == 1) {
+                        return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+                    }
+
+                    return ResponseEntity.ok(MesaResponseDTO.from(mesa));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -117,5 +150,18 @@ public class MesaController {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private boolean parseBooleanFlag(Object rawValue) {
+        if (rawValue instanceof Boolean booleanValue) {
+            return booleanValue;
+        }
+
+        if (rawValue instanceof Number number) {
+            return number.intValue() != 0;
+        }
+
+        String value = String.valueOf(rawValue).trim();
+        return "true".equalsIgnoreCase(value) || "1".equals(value) || "si".equalsIgnoreCase(value);
     }
 }

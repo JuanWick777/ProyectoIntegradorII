@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ClipboardList, Clock, CheckCircle, ChefHat, UtensilsCrossed, Handshake, RefreshCw, User, Check, AlertTriangle, History, LogOut, Ticket } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import OrderCard from './OrderCard';
 import { PrimaryButton } from '../ui/Button';
 import PerfilModal from '../shared/PerfilModal';
+import { getStatusTheme } from '../../utils/statusTheme';
 
 const FILTROS = [
     { key: 'todos', label: 'Todos', Icon: ClipboardList },
@@ -13,6 +14,13 @@ const FILTROS = [
     { key: 'lista', label: 'Listas', Icon: UtensilsCrossed },
     { key: 'entregada', label: 'Entregadas', Icon: Handshake },
 ];
+
+const pendienteTheme = getStatusTheme('pendiente_confirmacion');
+const confirmadoTheme = getStatusTheme('confirmada');
+const preparacionTheme = getStatusTheme('en_preparacion');
+const listoTheme = getStatusTheme('lista');
+const entregadoTheme = getStatusTheme('entregada');
+const canceladoTheme = getStatusTheme('cancelada');
 
 /**
  * WaiterDashboard.jsx — Panel principal del mesero.
@@ -34,6 +42,8 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
     const [promoMsg, setPromoMsg] = useState(null);
     const [vista, setVista] = useState('pedidos');
     const [perfilAbierto, setPerfilAbierto] = useState(false);
+    const [avisoListos, setAvisoListos] = useState('');
+    const prevListasRef = useRef(0);
 
     // ── Detectar sesión expirada (server restart) ────────────
     useEffect(() => {
@@ -72,10 +82,10 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
     }, [cargarOrdenes]);
 
     // ── Acción: cambiar estado ───────────────────────────────
-    const accionEstado = async (ordenId, nuevoEstado) => {
+    const accionEstado = async (ordenId, nuevoEstado, extra = {}) => {
         setLoadingId(ordenId);
         try {
-            await cambiarEstadoOrden(ordenId, nuevoEstado);
+            await cambiarEstadoOrden(ordenId, nuevoEstado, extra);
             await cargarOrdenes(); // Refresh inmediato
         } catch (e) {
             console.error('Error actualizando estado:', e);
@@ -89,6 +99,30 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
         }
     };
 
+    const cancelarOrden = async (orden) => {
+        const motivo = window.prompt('Escribe el motivo de cancelacion:');
+        if (!motivo || !motivo.trim()) return;
+
+        const requiereConfirmacionCocina = (orden.detalles || []).some((detalle) => {
+            const estadoDetalle = (detalle.estadoPreparacion || '').toLowerCase();
+            return estadoDetalle === 'en_preparacion' || estadoDetalle === 'listo';
+        });
+
+        let confirmarCancelacionCocina = false;
+        if (requiereConfirmacionCocina) {
+            confirmarCancelacionCocina = window.confirm(
+                'Hay platillos que ya estan en preparacion o listos. Confirma que ya hablaste con cocina antes de cancelar.'
+            );
+
+            if (!confirmarCancelacionCocina) return;
+        }
+
+        await accionEstado(orden.id, 'cancelada', {
+            motivo: motivo.trim(),
+            confirmarCancelacionCocina,
+        });
+    };
+
     // ── Filtrado ────────────────────────────────────────────
     const ordenesFiltradas = ordenes.filter((orden) => !['cancelada', 'cerrada'].includes(orden.estado));
 
@@ -97,22 +131,22 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
         {
             key: 'pendiente_confirmacion',
             title: 'Pendientes',
-            bg: '#fdecea',
-            border: '#f5b7b1',
-            color: '#c0392b',
-            iconColor: '#e74c3c',
+            bg: pendienteTheme.bg,
+            border: pendienteTheme.border,
+            color: pendienteTheme.text,
+            iconColor: pendienteTheme.solid,
             emptyText: 'Sin órdenes pendientes',
             filterFunc: (o) => o.estado === 'pendiente_confirmacion',
             onAceptar: (orden) => accionEstado(orden.id, 'confirmada'),
-            onCancelar: (orden) => accionEstado(orden.id, 'cancelada'),
+            onCancelar: cancelarOrden,
         },
         {
             key: 'confirmada',
             title: 'Confirmadas',
-            bg: '#f0f9ff',
-            border: '#bae6fd',
-            color: '#0c4a6e',
-            iconColor: '#0ea5e9',
+            bg: confirmadoTheme.bg,
+            border: confirmadoTheme.border,
+            color: confirmadoTheme.text,
+            iconColor: confirmadoTheme.solid,
             emptyText: 'Sin órdenes confirmadas',
             filterFunc: (o) => o.estado === 'confirmada',
             onAceptar: () => {},
@@ -121,10 +155,10 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
         {
             key: 'en_preparacion',
             title: 'En cocina',
-            bg: '#fff9e6',
-            border: '#f9e79f',
-            color: '#b9770e',
-            iconColor: '#f1c40f',
+            bg: preparacionTheme.bg,
+            border: preparacionTheme.border,
+            color: preparacionTheme.text,
+            iconColor: preparacionTheme.solid,
             emptyText: 'Sin órdenes en cocina',
             filterFunc: (o) => o.estado === 'en_preparacion',
             onAceptar: () => {},
@@ -133,10 +167,10 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
         {
             key: 'lista',
             title: 'Listas',
-            bg: '#ecfdf5',
-            border: '#abebc6',
-            color: '#1e8449',
-            iconColor: '#27ae60',
+            bg: listoTheme.bg,
+            border: listoTheme.border,
+            color: listoTheme.text,
+            iconColor: listoTheme.solid,
             emptyText: 'Sin órdenes listas',
             filterFunc: (o) => o.estado === 'lista',
             onAceptar: () => {},
@@ -150,6 +184,31 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
 
     // Contadores por estado (para dropdown, sin filtro aplicado)
     const contar = (estado) => ordenes.filter(o => !['cancelada', 'cerrada'].includes(o.estado) && o.estado === estado).length;
+    const pedidosAtrasados = ordenes.filter((orden) => {
+        if (orden.estado !== 'pendiente_confirmacion') return false;
+        const fechaCreacion = new Date(orden.fechaCreacion);
+        const minutos = Math.floor((Date.now() - fechaCreacion.getTime()) / 60000);
+        return minutos >= 2;
+    });
+    const totalPendientes = contar('pendiente_confirmacion');
+    const totalListas = contar('lista');
+    const totalPorCobrar = contar('entregada');
+
+    useEffect(() => {
+        if (vista !== 'pedidos') return;
+
+        if (prevListasRef.current > 0 && totalListas > prevListasRef.current) {
+            setAvisoListos('Cocina marco nuevos pedidos como listos para entregar.');
+        }
+
+        prevListasRef.current = totalListas;
+    }, [totalListas, vista]);
+
+    useEffect(() => {
+        if (!avisoListos) return;
+        const timeout = setTimeout(() => setAvisoListos(''), 5000);
+        return () => clearTimeout(timeout);
+    }, [avisoListos]);
 
     // Mostrar solo lo útil en la barra
     const filtrosVisibles = FILTROS.filter((f) =>
@@ -306,7 +365,7 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                                                 onAceptar={() => {}}
                                                 onCancelar={() => {}}
                                                 onEntregar={() => {}}
-                                                onCobrar={() => {}}
+                                                onCobrar={() => accionEstado(orden.id, 'cerrada')}
                                             />
                                         </div>
                                     ))}
@@ -397,7 +456,120 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                         <p>Cargando órdenes...</p>
                     </div>
                 ) : (
-                    <div className="row g-3">
+                    <>
+                        {avisoListos && (
+                            <div
+                                className="d-flex align-items-center justify-content-between gap-3 rounded-4 px-4 py-3 mb-3"
+                                style={{
+                                    background: `linear-gradient(135deg, ${listoTheme.bg} 0%, ${confirmadoTheme.bg} 100%)`,
+                                    border: `1px solid ${listoTheme.ring}`,
+                                    color: listoTheme.text,
+                                }}
+                            >
+                                <div className="d-flex align-items-center gap-2 fw-semibold">
+                                    <UtensilsCrossed size={18} /> {avisoListos}
+                                </div>
+                                <span className="small" style={{ color: listoTheme.text }}>
+                                    Revisa la columna de listas
+                                </span>
+                            </div>
+                        )}
+
+                        <div className="row g-3 mb-3">
+                            <div className="col-12 col-md-4">
+                                <div
+                                    className="rounded-4 px-4 py-3 h-100"
+                                    style={{ background: pendienteTheme.bg, border: `1px solid ${pendienteTheme.border}` }}
+                                >
+                                    <div className="small fw-semibold text-uppercase" style={{ color: pendienteTheme.text, letterSpacing: '0.04em' }}>
+                                        Pendientes
+                                    </div>
+                                    <div className="d-flex align-items-end justify-content-between mt-2">
+                                        <div className="fw-bold" style={{ fontSize: '2rem', color: pendienteTheme.text }}>
+                                            {totalPendientes}
+                                        </div>
+                                        <div className="small text-end" style={{ color: pendienteTheme.text }}>
+                                            {pedidosAtrasados.length > 0
+                                                ? `${pedidosAtrasados.length} con prioridad alta`
+                                                : 'Sin atrasos por ahora'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="col-12 col-md-4">
+                                <div
+                                    className="rounded-4 px-4 py-3 h-100"
+                                    style={{ background: listoTheme.bg, border: `1px solid ${listoTheme.border}` }}
+                                >
+                                    <div className="small fw-semibold text-uppercase" style={{ color: listoTheme.text, letterSpacing: '0.04em' }}>
+                                        Listas para entregar
+                                    </div>
+                                    <div className="d-flex align-items-end justify-content-between mt-2">
+                                        <div className="fw-bold" style={{ fontSize: '2rem', color: listoTheme.text }}>
+                                            {totalListas}
+                                        </div>
+                                        <div className="small text-end" style={{ color: listoTheme.text }}>
+                                            Entregalas en cuanto salgan de cocina
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="col-12 col-md-4">
+                                <div
+                                    className="rounded-4 px-4 py-3 h-100"
+                                    style={{ background: entregadoTheme.bg, border: `1px solid ${entregadoTheme.border}` }}
+                                >
+                                    <div className="small fw-semibold text-uppercase" style={{ color: entregadoTheme.text, letterSpacing: '0.04em' }}>
+                                        Listas para cobrar
+                                    </div>
+                                    <div className="d-flex align-items-end justify-content-between mt-2">
+                                        <div className="fw-bold" style={{ fontSize: '2rem', color: entregadoTheme.text }}>
+                                            {totalPorCobrar}
+                                        </div>
+                                        <div className="small text-end" style={{ color: entregadoTheme.text }}>
+                                            Cobralas y cierra la mesa cuando ya se entrego
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {pedidosAtrasados.length > 0 && (
+                            <div
+                                className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 rounded-4 px-4 py-3 mb-3"
+                                style={{
+                                    background: `linear-gradient(135deg, ${canceladoTheme.bg} 0%, ${pendienteTheme.bg} 100%)`,
+                                    border: `1px solid ${canceladoTheme.ring}`,
+                                }}
+                            >
+                                <div className="d-flex align-items-start gap-3">
+                                    <div
+                                        className="rounded-circle d-flex align-items-center justify-content-center"
+                                        style={{ width: 42, height: 42, background: canceladoTheme.solid, color: '#ffffff' }}
+                                    >
+                                        <AlertTriangle size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="fw-bold" style={{ color: '#991b1b' }}>
+                                            Hay {pedidosAtrasados.length} pedido{pedidosAtrasados.length === 1 ? '' : 's'} esperando confirmacion
+                                        </div>
+                                        <div className="small" style={{ color: '#7f1d1d' }}>
+                                            Revisa primero las mesas con mas de 2 minutos pendientes para evitar atrasos en servicio.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    className="px-3 py-2 rounded-pill fw-semibold"
+                                    style={{ background: canceladoTheme.soft, color: canceladoTheme.text }}
+                                >
+                                    Prioridad alta
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="row g-3">
                         {columnasVisibles.map((col) => {
                             const ordenesColumna = ordenesFiltradas.filter(col.filterFunc);
                             return (
@@ -405,6 +577,11 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                                     <div className="rounded-4 p-3 h-100" style={{ background: col.bg, border: `1px solid ${col.border}`, maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
                                         <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: col.color }}>
                                             <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: col.iconColor }} /> {col.title} ({ordenesColumna.length})
+                                            {col.key === 'pendiente_confirmacion' && pedidosAtrasados.length > 0 && (
+                                                <span className="badge rounded-pill bg-danger ms-auto" style={{ fontSize: '0.7rem' }}>
+                                                    {pedidosAtrasados.length} atrasado{pedidosAtrasados.length === 1 ? '' : 's'}
+                                                </span>
+                                            )}
                                         </h5>
                                         {ordenesColumna.length === 0 ? (
                                             <div className="text-center text-muted py-4" style={{ color: col.color }}>
@@ -420,7 +597,7 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                                                         onAceptar={() => col.onAceptar(orden)}
                                                         onCancelar={() => col.onCancelar(orden)}
                                                         onEntregar={() => col.onEntregar ? col.onEntregar(orden) : () => {}}
-                                                        onCobrar={() => {}}
+                                                        onCobrar={() => accionEstado(orden.id, 'cerrada')}
                                                     />
                                                 ))}
                                             </div>
@@ -429,7 +606,8 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                                 </div>
                             );
                         })}
-                    </div>
+                        </div>
+                    </>
                 )}
             </div>
                 </>

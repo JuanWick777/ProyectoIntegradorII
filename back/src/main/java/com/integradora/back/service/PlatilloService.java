@@ -17,6 +17,13 @@ public class PlatilloService {
 
     @Transactional(readOnly = true)
     public List<Platillo> listar() {
-        return platilloRepository.findAll();
+        return platilloRepository.findAll().stream()
+                .filter(this::esVisibleParaCliente)
+                .toList();
+    }
+
+    private boolean esVisibleParaCliente(Platillo platillo) {
+        String estado = platillo.getEstado() == null ? "" : platillo.getEstado().trim().toUpperCase();
+        return "DISPONIBLE".equals(estado) || "ACTIVO".equals(estado);
     }
 }

@@ -103,6 +103,10 @@ fun SCart(
     val descuentoPuntosMostrar = preview?.descuentoPuntos ?: if (usarPuntos) descuentoEstimado else 0.0
     val totalMostrar = preview?.total ?: totalEstimado
     val puntosGanadosMostrar = preview?.puntosGanados ?: puntosGanados
+    val ivaMostrar = totalMostrar * 0.16
+    val propinaSugeridaMostrar = totalMostrar * 0.10
+    val totalFinalMostrar = totalMostrar + ivaMostrar
+    val totalConPropinaMostrar = totalFinalMostrar + propinaSugeridaMostrar
 
     Column(
         modifier = Modifier
@@ -167,6 +171,45 @@ fun SCart(
                                         color = MainColor, // Destacamos el estado
                                         peso = FontWeight.SemiBold
                                     )
+
+                                    if (pedidoActual.estado.lowercase() == "cancelada" && !pedidoActual.motivoCancelacion.isNullOrBlank()) {
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(AlertColor.copy(alpha = 0.10f))
+                                                .padding(12.dp)
+                                        ) {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                GlobalText(
+                                                    texto = "Motivo de cancelacion",
+                                                    tamanio = 14,
+                                                    color = AlertColor,
+                                                    peso = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                GlobalText(
+                                                    texto = pedidoActual.motivoCancelacion ?: "",
+                                                    tamanio = 14,
+                                                    color = TextColorDark,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                                if (!pedidoActual.canceladaPorNombre.isNullOrBlank()) {
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    GlobalText(
+                                                        texto = "Cancelado por: ${pedidoActual.canceladaPorNombre}",
+                                                        tamanio = 12,
+                                                        color = TextColorGray,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
 
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -715,6 +758,34 @@ fun SCart(
                                 HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 1.dp)
                                 Spacer(modifier = Modifier.height(12.dp))
 
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    GlobalText("IVA (16%)", 14, TextColorGray)
+                                    GlobalText(
+                                        "$${"%.2f".format(ivaMostrar)}",
+                                        14,
+                                        TextColorGray
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    GlobalText("Propina sugerida (10%)", 14, TextColorGray)
+                                    GlobalText(
+                                        "$${"%.2f".format(propinaSugeridaMostrar)}",
+                                        14,
+                                        TextColorGray
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
                                 // Total y Mesa
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -722,16 +793,35 @@ fun SCart(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     GlobalText(
-                                        "Total estimado",
+                                        "Total con IVA",
                                         18,
                                         TextColorDark,
                                         peso = FontWeight.Bold
                                     )
                                     GlobalText(
-                                        "$${"%.2f".format(totalMostrar)}",
+                                        "$${"%.2f".format(totalFinalMostrar)}",
                                         20,
                                         MainColor,
                                         peso = FontWeight.Bold
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    GlobalText(
+                                        "Total con propina",
+                                        14,
+                                        TextColorGray
+                                    )
+                                    GlobalText(
+                                        "$${"%.2f".format(totalConPropinaMostrar)}",
+                                        16,
+                                        TextColorDark,
+                                        peso = FontWeight.SemiBold
                                     )
                                 }
 

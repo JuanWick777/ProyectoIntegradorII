@@ -24,6 +24,8 @@ const MesaIngreso = ({ onMesaValida }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const mesasDisponibles = mesas.filter((mesa) => mesa.qrActivo !== false && mesa.cuentaAbierta !== true);
+
     useEffect(() => {
         cargarMesas();
     }, []);
@@ -158,8 +160,8 @@ const MesaIngreso = ({ onMesaValida }) => {
                                             style={{ borderRadius: '0.75rem' }}
                                         >
                                             <option value="">-- Elige una mesa --</option>
-                                            {mesas.length > 0 ? (
-                                                mesas.map((mesa) => (
+                                            {mesasDisponibles.length > 0 ? (
+                                                mesasDisponibles.map((mesa) => (
                                                     <option key={mesa.id} value={mesa.numero}>
                                                         Mesa {mesa.numero}
                                                     </option>
@@ -212,7 +214,7 @@ const MesaIngreso = ({ onMesaValida }) => {
                                     disabled={
                                         loading ||
                                         (selectMethod === 'dropdown'
-                                            ? (!selectedMesa || mesas.length === 0)
+                                            ? (!selectedMesa || mesasDisponibles.length === 0)
                                             : !inputNumero)
                                     }
                                 >

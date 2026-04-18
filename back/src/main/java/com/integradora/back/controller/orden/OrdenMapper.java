@@ -53,7 +53,10 @@ public class OrdenMapper {
                 orden.getMontoDescuento() != null ? orden.getMontoDescuento() : BigDecimal.ZERO,
                 orden.getCodigoPromoAplicado(),
                 orden.getTotal() != null ? orden.getTotal() : BigDecimal.ZERO,
-                orden.getFechaCreacion()
+                orden.getFechaCreacion(),
+                orden.getMotivoCancelacion(),
+                orden.getCanceladaPor() != null ? orden.getCanceladaPor().getNombreCompleto() : null,
+                orden.getFechaCancelacion()
         );
     }
 }

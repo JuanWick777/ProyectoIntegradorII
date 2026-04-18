@@ -2,20 +2,17 @@ package proyecto.personal.proyectointegradorii.viewmodels.register
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import proyecto.personal.proyectointegradorii.data.model.usuario.AppDatabase
 import proyecto.personal.proyectointegradorii.data.model.usuario.Usuario
 import proyecto.personal.proyectointegradorii.data.repositories.UserRepository
 
 class RegisterViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val dao = AppDatabase.getDatabase(application).usuarioDao()
     private val repository = UserRepository()
 
-    // States para los valores
     private val _name = MutableStateFlow("")
     val name = _name.asStateFlow()
 
@@ -28,7 +25,9 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     private val _confirmPassword = MutableStateFlow("")
     val confirmPassword = _confirmPassword.asStateFlow()
 
-    // States para los errores
+    private val _acceptedTerms = MutableStateFlow(false)
+    val acceptedTerms = _acceptedTerms.asStateFlow()
+
     private val _errorName = MutableStateFlow<String?>(null)
     val errorName = _errorName.asStateFlow()
 
@@ -41,6 +40,9 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     private val _errorConfirmPassword = MutableStateFlow<String?>(null)
     val errorConfirmPassword = _errorConfirmPassword.asStateFlow()
 
+    private val _errorTerms = MutableStateFlow<String?>(null)
+    val errorTerms = _errorTerms.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
@@ -49,8 +51,6 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
-
-    // --- FUNCIONES DE CAMBIO (REACCIÓN AL MOMENTO) ---
 
     fun onNameChange(newName: String) {
         _name.value = newName
@@ -65,7 +65,6 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     fun onPasswordChange(newPassword: String) {
         _password.value = newPassword
         validatePassword(newPassword)
-        // Re-validamos confirmación por si ya había escrito algo
         validateConfirmPassword(_confirmPassword.value)
     }
 
@@ -74,46 +73,37 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
         validateConfirmPassword(newConfirmPassword)
     }
 
+    fun onAcceptedTermsChange(accepted: Boolean) {
+        _acceptedTerms.value = accepted
+        validateTerms(accepted)
+    }
+
     private fun validateName(value: String) {
-        // Solo letras (incluyendo acentos y ñ) y espacios sencillos
         val nameRegex = Regex("^[a-zA-ZñÑáéíóúÁÉÍÓÚ\\s]+$")
 
         _errorName.value = when {
             value.isBlank() -> "Este campo es obligatorio."
-            // detectan espacios fantasmas al inicio o final
             value.startsWith(" ") || value.endsWith(" ") -> "No debe tener espacios al inicio ni al final."
-            // busca si el usuario puso dos espacios juntos
-            value.contains("  ") -> "No se permite más de un espacio entre nombres."
-            // comparamos todo el nombre contra el regex
-            !value.matches(nameRegex) -> "No se permiten números, caracteres especiales ni emojis."
-            // blindaje de longitud
+            value.contains("  ") -> "No se permite mas de un espacio entre nombres."
+            !value.matches(nameRegex) -> "No se permiten numeros, caracteres especiales ni emojis."
             value.length !in 2..45 -> "El nombre debe tener entre 2 y 45 caracteres."
             else -> null
         }
     }
 
     private fun validateEmail(value: String) {
-        // 1. Dividimos el texto en dos partes usando el '@' como referencia
         val parts = value.split("@")
-
-        // Si hay una parte antes del '@', la guardamos en 'username', si no, queda vacío
-        val username = if (parts.size >= 1) parts[0] else ""
-
-        // Si hay una parte después del '@', le pegamos el '@' y lo guardamos como 'domain'
+        val username = if (parts.isNotEmpty()) parts[0] else ""
         val domain = if (parts.size >= 2) "@" + parts[1] else ""
-
-        // Regex para el usuario: Letras, números, puntos, guiones y guiones bajos
         val usernameRegex = Regex("^[a-zA-Z0-9._-]+$")
         val isValidDomain = domain == "@gmail.com" || domain == "@utez.edu.mx"
 
         _errorEmail.value = when {
-            value.isBlank() -> "El correo electrónico es obligatorio."
+            value.isBlank() -> "El correo electronico es obligatorio."
             value.contains(" ") -> "El correo no puede contener espacios."
             !value.contains("@") -> "El correo debe incluir un '@'."
-            username.isEmpty() -> "El nombre de usuario no puede estar vacío."
-            // Validamos que el usuario (antes del @) no tenga cosas raras
-            !username.matches(usernameRegex) -> "Solo se admiten letras, números, '.', '_' y '-'."
-            // Aquí está tu blindaje de longitud SIN CONTAR el dominio
+            username.isEmpty() -> "El nombre de usuario no puede estar vacio."
+            !username.matches(usernameRegex) -> "Solo se admiten letras, numeros, '.', '_' y '-'."
             username.length !in 6..30 -> "El correo debe tener entre 6 y 30 caracteres."
             !isValidDomain -> "Solo se admiten @gmail.com o @utez.edu.mx"
             else -> null
@@ -128,39 +118,47 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
         val noSpaces = !value.contains(" ")
 
         _errorPassword.value = when {
-            value.isBlank() -> "La contraseña es obligatoria."
+            value.isBlank() -> "La contrasena es obligatoria."
             value.length !in 8..30 -> "Debe tener entre 8 y 30 caracteres."
             !noSpaces -> "No puede contener espacios."
-            !hasUpperCase -> "Debe incluir al menos una mayúscula."
-            !hasDigit -> "Debe incluir al menos un número."
-            !hasSpecial -> "Debe incluir al menos un carácter especial."
-            !hasLowerCase -> "Debe incluir minúsculas."
+            !hasUpperCase -> "Debe incluir al menos una mayuscula."
+            !hasDigit -> "Debe incluir al menos un numero."
+            !hasSpecial -> "Debe incluir al menos un caracter especial."
+            !hasLowerCase -> "Debe incluir minusculas."
             else -> null
         }
     }
 
     private fun validateConfirmPassword(value: String) {
         _errorConfirmPassword.value = when {
-            value != _password.value -> "Las contraseñas no coinciden."
+            value != _password.value -> "Las contrasenas no coinciden."
             else -> null
         }
     }
 
+    private fun validateTerms(value: Boolean) {
+        _errorTerms.value = if (value) null else "Debes aceptar los terminos para continuar."
+    }
+
     fun registrar() {
-        // Ejecutamos todas las validaciones una última vez
         validateName(_name.value)
         validateEmail(_email.value)
         validatePassword(_password.value)
         validateConfirmPassword(_confirmPassword.value)
+        validateTerms(_acceptedTerms.value)
 
-        // Si hay algún error activo, no procedemos
-        if (_errorName.value != null || _errorEmail.value != null ||
-            _errorPassword.value != null || _errorConfirmPassword.value != null) {
+        if (_errorName.value != null ||
+            _errorEmail.value != null ||
+            _errorPassword.value != null ||
+            _errorConfirmPassword.value != null ||
+            _errorTerms.value != null
+        ) {
             return
         }
 
         viewModelScope.launch {
             _isLoading.value = true
+            _errorMessage.value = null
             try {
                 val successRegister = repository.register(
                     Usuario(
@@ -176,7 +174,7 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
                     _errorMessage.value = "El correo ya existe"
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Error de conexión"
+                _errorMessage.value = e.message ?: "Error de conexion"
             } finally {
                 _isLoading.value = false
             }

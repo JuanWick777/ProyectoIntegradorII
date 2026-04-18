@@ -1,50 +1,49 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAppStore } from './store/useAppStore';
 
-// Páginas
 import ClientePage from './pages/ClientePage';
 import MeseroPage from './pages/MeseroPage';
 import KitchenDashboard from './components/KitchenDashboard';
 import MenuAdmin from './components/MenuAdmin';
-import AdminLogin from './components/AdminLogin';
 import MeseroLogin from './components/mesero/MeseroLogin';
 
-// Componente que interpreta los query params de la raíz "/"
+const ROLES_COCINA = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
+
+function getDashboardPathByRol(rol) {
+  if (rol === 'ADMIN') return '/admin';
+  if (rol === 'MESERO') return '/mesero';
+  if (ROLES_COCINA.includes(rol)) return '/cocina';
+  return '/login';
+}
+
 function RootHandler() {
   const params = new URLSearchParams(window.location.search);
 
-  // QR de mesa  → /?mesa=3       → cliente
-  if (params.get('mesa'))         return <ClientePage />;
+  if (params.get('mesa')) return <ClientePage />;
+  if (params.get('cocina')) return <MeseroLogin />;
+  if (params.get('mesero')) return <MeseroLogin />;
+  if (params.get('admin')) return <Navigate to="/admin" replace />;
 
-  // QR de cocina → /?cocina=true  → login de mesero/cocina
-  if (params.get('cocina'))       return <MeseroLogin />;
-
-  // QR de mesero → /?mesero=true  → login de mesero/cocina
-  if (params.get('mesero'))       return <MeseroLogin />;
-
-  // Panel admin  → /?admin=menu   → manejado por la ruta /admin
-  if (params.get('admin'))        return <Navigate to="/admin" replace />;
-
-  // Sin params → login de ADMIN
-  return <Navigate to="/admin/login" replace />;
+  return <Navigate to="/login" replace />;
 }
 
 function App() {
   const { usuario, token, fetchCurrentUser, logoutLocal } = useAppStore();
   const navigate = useNavigate();
   const rol = (usuario?.rol || '').toUpperCase();
+  const [storeHydrated, setStoreHydrated] = useState(
+    typeof useAppStore.persist?.hasHydrated === 'function'
+      ? useAppStore.persist.hasHydrated()
+      : true
+  );
+  const [authReady, setAuthReady] = useState(!token);
+  const restoringUser = Boolean(token) && !usuario;
 
   const handleSessionExpired = useCallback(() => {
-    const path = window.location.pathname;
     logoutLocal();
-
-    if (path.startsWith('/mesero') || path.startsWith('/cocina') || path.startsWith('/login')) {
-      navigate('/login', { replace: true });
-      return;
-    }
-
-    navigate('/admin/login', { replace: true });
+    setAuthReady(true);
+    navigate('/login', { replace: true });
   }, [logoutLocal, navigate]);
 
   useEffect(() => {
@@ -53,63 +52,120 @@ function App() {
   }, [handleSessionExpired]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!useAppStore.persist) return;
 
-    fetchCurrentUser().catch(() => {
-      handleSessionExpired();
-    });
-  }, [token, fetchCurrentUser, handleSessionExpired]);
+    const finishHydration = () => setStoreHydrated(true);
+    const startHydration = () => setStoreHydrated(false);
+
+    const unsubFinish = useAppStore.persist.onFinishHydration(finishHydration);
+    const unsubStart = useAppStore.persist.onHydrate(startHydration);
+
+    setStoreHydrated(useAppStore.persist.hasHydrated());
+
+    return () => {
+      unsubFinish?.();
+      unsubStart?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!storeHydrated) return;
+
+    if (!token) {
+      setAuthReady(true);
+      return;
+    }
+
+    setAuthReady(false);
+    fetchCurrentUser()
+      .catch(() => {
+        handleSessionExpired();
+      })
+      .finally(() => {
+        setAuthReady(true);
+      });
+  }, [storeHydrated, token, fetchCurrentUser, handleSessionExpired]);
+
+  if (!storeHydrated || !authReady) {
+    return (
+      <div
+        className="min-vh-100 d-flex align-items-center justify-content-center"
+        style={{ background: '#ffffff' }}
+      >
+        <div className="text-center">
+          <div className="spinner-border text-warning mb-3" role="status" />
+          <div className="fw-semibold text-muted">
+            {!storeHydrated ? 'Cargando sesion guardada...' : 'Restaurando sesion...'}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const renderAuthLoader = () => (
+    <div
+      className="min-vh-100 d-flex align-items-center justify-content-center"
+      style={{ background: '#ffffff' }}
+    >
+      <div className="text-center">
+        <div className="spinner-border text-warning mb-3" role="status" />
+        <div className="fw-semibold text-muted">Cargando usuario...</div>
+      </div>
+    </div>
+  );
 
   return (
     <Routes>
-
-      {/* RAÍZ — interpreta query params o redirige a login admin */}
       <Route path="/" element={<RootHandler />} />
 
-      {/* ── ADMIN ──────────────────────────────────────────── */}
       <Route
-        path="/admin/login"
+        path="/login"
         element={
-          rol === 'ADMIN'
-            ? <Navigate to="/admin" replace />
-            : <AdminLogin onLoginExitoso={() => navigate('/admin', { replace: true })} />
+          restoringUser
+            ? renderAuthLoader()
+            : usuario
+            ? <Navigate to={getDashboardPathByRol(rol)} replace />
+            : <MeseroLogin />
         }
       />
+
+      <Route path="/admin/login" element={<Navigate to="/login" replace />} />
+
       <Route
         path="/admin"
         element={
-          rol === 'ADMIN'
+          restoringUser
+            ? renderAuthLoader()
+            : rol === 'ADMIN'
             ? <MenuAdmin />
-            : <Navigate to="/admin/login" replace />
+            : <Navigate to="/login" replace />
         }
       />
-
-      {/* ── PERSONAL (mesero / cocina) ─────────────────────── */}
-      <Route path="/login" element={<MeseroLogin />} />
 
       <Route
         path="/mesero"
         element={
-          rol === 'MESERO'
+          restoringUser
+            ? renderAuthLoader()
+            : rol === 'MESERO'
             ? <MeseroPage />
             : <Navigate to="/login" replace />
         }
       />
+
       <Route
         path="/cocina"
         element={
-          ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'].includes(rol)
+          restoringUser
+            ? renderAuthLoader()
+            : ROLES_COCINA.includes(rol)
             ? <KitchenDashboard />
             : <Navigate to="/login" replace />
         }
       />
 
-      {/* ── CLIENTE ────────────────────────────────────────── */}
       <Route path="/cliente" element={<ClientePage />} />
-
-      {/* DEFAULT */}
-      <Route path="*" element={<Navigate to="/admin/login" replace />} />
-
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

@@ -11,5 +11,8 @@ data class OrdenResponseDTO(
     val montoDescuento: Double,
     val codigoPromoAplicado: String?,
     val total: Double,
-    val fechaCreacion: String?
+    val fechaCreacion: String?,
+    val motivoCancelacion: String?,
+    val canceladaPorNombre: String?,
+    val fechaCancelacion: String?
 )

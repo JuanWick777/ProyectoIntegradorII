@@ -138,6 +138,8 @@ fun HistoryScreen(
                         date = formatearFecha(orden.fechaCreacion),
                         items = itemsResumen,
                         total = totalTexto,
+                        cancelReason = orden.motivoCancelacion,
+                        cancelledBy = orden.canceladaPorNombre,
                         modifier = Modifier
                     )
                 }

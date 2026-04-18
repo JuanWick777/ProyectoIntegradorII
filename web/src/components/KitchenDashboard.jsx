@@ -1,40 +1,88 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { User, FileText, Flame, Check, ChefHat, RefreshCw, AlertTriangle, History, Clock, Edit2 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import MeseroLogin from './mesero/MeseroLogin';
 import PerfilModal from './shared/PerfilModal';
 import { PrimaryButton } from './ui/Button';
+import { getStatusTheme } from '../utils/statusTheme';
 
 const ESTADO_CONFIG = {
     PENDIENTE: {
         label: 'Pendiente',
-        color: '#e74c3c',
-        bg: '#fff5f5',
-        border: '#f5b7b1',
+        color: getStatusTheme('pendiente').text,
+        bg: getStatusTheme('pendiente').bg,
+        border: getStatusTheme('pendiente').border,
         icono: '🔴',
     },
     EN_PREPARACION: {
         label: 'En preparación',
-        color: '#f1c40f',
-        bg: '#fffbea',
-        border: '#f9e79f',
+        color: getStatusTheme('en_preparacion').text,
+        bg: getStatusTheme('en_preparacion').bg,
+        border: getStatusTheme('en_preparacion').border,
         icono: '🟡',
     },
     LISTO: {
         label: 'Listo',
-        color: '#27ae60',
-        bg: '#f0fff4',
-        border: '#abebc6',
+        color: getStatusTheme('lista').text,
+        bg: getStatusTheme('lista').bg,
+        border: getStatusTheme('lista').border,
         icono: '🟢',
     },
 };
 
-const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
+const TIEMPO_OBJETIVO_MINUTOS = {
+    PENDIENTE: 8,
+    EN_PREPARACION: 18,
+    LISTO: 5,
+};
+
+const pendienteTheme = getStatusTheme('pendiente');
+const preparacionTheme = getStatusTheme('en_preparacion');
+const listoTheme = getStatusTheme('lista');
+const confirmadaTheme = getStatusTheme('confirmada');
+const entregadoTheme = getStatusTheme('entregada');
+const canceladoTheme = getStatusTheme('cancelada');
+
+function obtenerFechaDetalle(detalle) {
+    return new Date(detalle.orden?.fechaCreacion || detalle.createdAt || Date.now());
+}
+
+function calcularMinutos(detalle, ahora) {
+    return Math.max(0, Math.floor((ahora - obtenerFechaDetalle(detalle).getTime()) / 60000));
+}
+
+function ordenarTicketsPEPS(items) {
+    return [...items].sort((a, b) => {
+        const fechaA = obtenerFechaDetalle(a).getTime();
+        const fechaB = obtenerFechaDetalle(b).getTime();
+        if (fechaA !== fechaB) return fechaA - fechaB;
+        return (a.id || 0) - (b.id || 0);
+    });
+}
+
+function agruparPlatillos(items) {
+    const grupos = new Map();
+
+    items.forEach((detalle) => {
+        const nombre = detalle.platillo?.nombre || 'Platillo';
+        const actual = grupos.get(nombre) || 0;
+        grupos.set(nombre, actual + Number(detalle.cantidad || 0));
+    });
+
+    return Array.from(grupos.entries())
+        .map(([nombre, cantidad]) => ({ nombre, cantidad }))
+        .sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre))
+        .slice(0, 4);
+}
+
+const KitchenTicket = ({ detalle, onPreparar, onListo, loading, now, posicionCola }) => {
     const estado = (detalle.estadoPreparacion || 'PENDIENTE').toUpperCase();
     const cfg = ESTADO_CONFIG[estado] || ESTADO_CONFIG.PENDIENTE;
+    const tiempoObjetivo = TIEMPO_OBJETIVO_MINUTOS[estado] || 15;
 
-    const createdAt = new Date(detalle.orden?.fechaCreacion || detalle.createdAt || Date.now());
-    const minutosAgo = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 60000));
+    const minutosAgo = calcularMinutos(detalle, now ?? Date.now());
+    const estaAtrasado = minutosAgo >= tiempoObjetivo;
+    const colaLabel = posicionCola ?? '-';
 
     const mesaNumero = detalle.orden?.mesa?.numero ?? detalle.orden?.mesaNumero ?? '-';
     const ordenId = detalle.orden?.id ?? detalle.orden?.ordenId ?? detalle.ordenId ?? '-';
@@ -44,9 +92,12 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
             className="shadow-sm h-100"
             style={{
                 borderRadius: '1.5rem',
-                border: `1px solid ${cfg.border}`,
-                background: '#ffffff',
+                border: `1px solid ${estaAtrasado ? '#ef4444' : cfg.border}`,
+                background: estaAtrasado ? 'linear-gradient(180deg, #fff7f7 0%, #ffffff 42%)' : '#ffffff',
                 overflow: 'hidden',
+                boxShadow: estaAtrasado
+                    ? '0 18px 38px rgba(239, 68, 68, 0.15)'
+                    : undefined,
             }}
         >
             <div
@@ -63,7 +114,12 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
                     <h5 className="fw-bold mb-1" style={{ color: '#222' }}>
                         Orden #{ordenId}
                     </h5>
-                    <div className="text-muted small">Mesa {mesaNumero}</div>
+                    <div className="text-muted small d-flex flex-wrap gap-2">
+                        <span>Mesa {mesaNumero}</span>
+                        <span className="fw-semibold" style={{ color: '#6b7280' }}>
+                            PEPS #{colaLabel}
+                        </span>
+                    </div>
                 </div>
                 <div className="text-end">
                     <span
@@ -76,11 +132,29 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
                     >
                         {cfg.icono}
                     </span>
-                    <div className="mt-2 text-muted small">{minutosAgo} min</div>
+                    <div className="mt-2 small" style={{ color: estaAtrasado ? '#dc2626' : '#6b7280', fontWeight: estaAtrasado ? 700 : 500 }}>
+                        {minutosAgo} min
+                    </div>
                 </div>
             </div>
 
             <div className="p-3">
+                {estaAtrasado && (
+                    <div
+                        className="mb-3 d-flex align-items-center gap-2 px-3 py-2 rounded-4"
+                        style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.18)',
+                            color: '#991b1b',
+                        }}
+                    >
+                        <AlertTriangle size={16} />
+                        <div className="small fw-bold">
+                            Ya supero el tiempo objetivo de {tiempoObjetivo} min
+                        </div>
+                    </div>
+                )}
+
                 <div className="mb-3">
                     <div className="fw-semibold" style={{ color: '#1f2937', fontSize: '1.05rem' }}>
                         {detalle.platillo?.nombre || 'Platillo'}
@@ -147,7 +221,10 @@ const KitchenTicket = ({ detalle, onPreparar, onListo, loading }) => {
                 )}
 
                 {estado === 'LISTO' && (
-                    <div className="text-center fw-semibold d-flex align-items-center justify-content-center gap-2 px-3 py-3 rounded-4" style={{ background: '#ecfdf5', color: '#166534' }}>
+                    <div
+                        className="text-center fw-semibold d-flex align-items-center justify-content-center gap-2 px-3 py-3 rounded-4"
+                        style={{ background: listoTheme.bg, color: listoTheme.text }}
+                    >
                         <Check size={20} /> Listo para entregar
                     </div>
                 )}
@@ -166,6 +243,9 @@ const KitchenDashboard = () => {
     const [ultimaSync, setUltimaSync] = useState(null);
     const [vista, setVista] = useState('dashboard'); // 'dashboard' | 'historial'
     const [perfilAbierto, setPerfilAbierto] = useState(false);
+    const [ahora, setAhora] = useState(Date.now());
+    const [avisoListo, setAvisoListo] = useState('');
+    const prevListosRef = useRef(0);
 
     const cargarTickets = useCallback(async () => {
         try {
@@ -193,6 +273,11 @@ const KitchenDashboard = () => {
     }, [fetchCurrentUser]);
 
     useEffect(() => {
+        const interval = setInterval(() => setAhora(Date.now()), 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
         if (!usuario) return;
 
         if (vista === 'historial') {
@@ -210,11 +295,27 @@ const KitchenDashboard = () => {
         setLoadingId(detalleId);
         try {
             await updateDetalleEstado(detalleId, nuevoEstado);
+            if (nuevoEstado === 'LISTO') {
+                setAvisoListo('Ticket marcado como listo. El mesero lo vera en su panel.');
+            }
             await cargarTickets();
         } finally {
             setLoadingId(null);
         }
     };
+
+    useEffect(() => {
+        if (!usuario) {
+            prevListosRef.current = 0;
+            return;
+        }
+
+        const totalListos = tickets.filter((t) => (t.estadoPreparacion || '').toUpperCase() === 'LISTO').length;
+        if (prevListosRef.current > 0 && totalListos > prevListosRef.current) {
+            setAvisoListo('Hay nuevos platillos listos para entregar al mesero.');
+        }
+        prevListosRef.current = totalListos;
+    }, [tickets, usuario]);
 
     const rolesCocina = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
 
@@ -272,9 +373,20 @@ const KitchenDashboard = () => {
         );
     }
 
-    const pendientes = tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'PENDIENTE');
-    const enPreparacion = tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'EN_PREPARACION');
-    const listos = tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'LISTO');
+    const pendientes = ordenarTicketsPEPS(tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'PENDIENTE'));
+    const enPreparacion = ordenarTicketsPEPS(tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'EN_PREPARACION'));
+    const listos = ordenarTicketsPEPS(tickets.filter(t => (t.estadoPreparacion || '').toUpperCase() === 'LISTO'));
+    const atrasados = tickets.filter((detalle) => {
+        const estado = (detalle.estadoPreparacion || 'PENDIENTE').toUpperCase();
+        const objetivo = TIEMPO_OBJETIVO_MINUTOS[estado] || 15;
+        return calcularMinutos(detalle, ahora) >= objetivo;
+    });
+
+    useEffect(() => {
+        if (!avisoListo) return;
+        const timeout = setTimeout(() => setAvisoListo(''), 5000);
+        return () => clearTimeout(timeout);
+    }, [avisoListo]);
 
     const navItems = [
         { id: 'dashboard', icon: <ChefHat size={18} />, label: 'Dashboard' },
@@ -311,7 +423,7 @@ const KitchenDashboard = () => {
                     <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
                         <span
                             className="rounded-pill px-3 py-2 d-flex align-items-center gap-2"
-                            style={{ background: '#fee2e2', color: '#b91c1c', fontSize: '0.85rem' }}
+                            style={{ background: canceladoTheme.bg, color: canceladoTheme.text, fontSize: '0.85rem' }}
                         >
                             <AlertTriangle size={16} /> Prioridad Alta
                         </span>
@@ -384,6 +496,7 @@ const KitchenDashboard = () => {
                                             <KitchenTicket
                                                 detalle={detalle}
                                                 loading={false}
+                                                now={ahora}
                                                 onPreparar={() => { }}
                                                 onListo={() => { }}
                                             />
@@ -399,23 +512,116 @@ const KitchenDashboard = () => {
                         <p>Cargando tickets...</p>
                     </div>
                 ) : (
+                    <>
+                        <div className="row g-3 mb-3">
+                            <div className="col-12 col-md-4">
+                                <div
+                                    className="rounded-4 px-4 py-3 h-100"
+                                    style={{ background: pendienteTheme.bg, border: `1px solid ${pendienteTheme.border}` }}
+                                >
+                                    <div className="small fw-semibold text-uppercase" style={{ color: pendienteTheme.text, letterSpacing: '0.04em' }}>
+                                        Cola pendiente
+                                    </div>
+                                    <div className="d-flex align-items-end justify-content-between mt-2">
+                                        <div className="fw-bold" style={{ fontSize: '2rem', color: pendienteTheme.text }}>
+                                            {pendientes.length}
+                                        </div>
+                                        <div className="small text-end" style={{ color: pendienteTheme.text }}>
+                                            PEPS activo desde el ticket mas antiguo
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="col-12 col-md-4">
+                                <div
+                                    className="rounded-4 px-4 py-3 h-100"
+                                    style={{ background: canceladoTheme.bg, border: `1px solid ${canceladoTheme.border}` }}
+                                >
+                                    <div className="small fw-semibold text-uppercase" style={{ color: canceladoTheme.text, letterSpacing: '0.04em' }}>
+                                        Tickets atrasados
+                                    </div>
+                                    <div className="d-flex align-items-end justify-content-between mt-2">
+                                        <div className="fw-bold" style={{ fontSize: '2rem', color: canceladoTheme.text }}>
+                                            {atrasados.length}
+                                        </div>
+                                        <div className="small text-end" style={{ color: canceladoTheme.text }}>
+                                            Requieren atencion inmediata
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="col-12 col-md-4">
+                                <div
+                                    className="rounded-4 px-4 py-3 h-100"
+                                    style={{ background: listoTheme.bg, border: `1px solid ${listoTheme.border}` }}
+                                >
+                                    <div className="small fw-semibold text-uppercase" style={{ color: listoTheme.text, letterSpacing: '0.04em' }}>
+                                        Listos para entregar
+                                    </div>
+                                    <div className="d-flex align-items-end justify-content-between mt-2">
+                                        <div className="fw-bold" style={{ fontSize: '2rem', color: listoTheme.text }}>
+                                            {listos.length}
+                                        </div>
+                                        <div className="small text-end" style={{ color: listoTheme.text }}>
+                                            El mesero ya puede pasar por ellos
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {avisoListo && (
+                            <div
+                                className="d-flex align-items-center justify-content-between gap-3 rounded-4 px-4 py-3 mb-3"
+                                style={{
+                                    background: `linear-gradient(135deg, ${listoTheme.bg} 0%, ${confirmadaTheme.bg} 100%)`,
+                                    border: `1px solid ${listoTheme.ring}`,
+                                    color: listoTheme.text,
+                                }}
+                            >
+                                <div className="d-flex align-items-center gap-2 fw-semibold">
+                                    <Check size={18} /> {avisoListo}
+                                </div>
+                                <span className="small" style={{ color: listoTheme.text }}>
+                                    Sincronizado con el panel de mesero
+                                </span>
+                            </div>
+                        )}
+
                     <div className="row g-3">
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#fdecea', border: '1px solid #f5b7b1', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
-                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#c0392b' }}>
-                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#e74c3c' }} /> Pendiente ({pendientes.length})
+                            <div className="rounded-4 p-3 h-100" style={{ background: pendienteTheme.bg, border: `1px solid ${pendienteTheme.border}`, maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
+                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: pendienteTheme.text }}>
+                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: pendienteTheme.solid }} /> Pendiente ({pendientes.length})
                                 </h5>
+                                {agruparPlatillos(pendientes).length > 0 && (
+                                    <div className="d-flex flex-wrap gap-2 mb-3">
+                                        {agruparPlatillos(pendientes).map((grupo) => (
+                                            <span
+                                                key={`pend-${grupo.nombre}`}
+                                                className="badge rounded-pill"
+                                                style={{ background: '#fff', color: pendienteTheme.text, border: `1px solid ${pendienteTheme.border}` }}
+                                            >
+                                                {grupo.cantidad} {grupo.nombre}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                                 {pendientes.length === 0 ? (
-                                    <div className="text-center text-muted py-4" style={{ color: '#c0392b' }}>
+                                    <div className="text-center text-muted py-4" style={{ color: pendienteTheme.text }}>
                                         Sin tickets pendientes
                                     </div>
                                 ) : (
                                     <div className="d-grid gap-3">
-                                        {pendientes.map(detalle => (
+                                        {pendientes.map((detalle, index) => (
                                             <KitchenTicket
                                                 key={detalle.id}
                                                 detalle={detalle}
                                                 loading={loadingId === detalle.id}
+                                                now={ahora}
+                                                posicionCola={index + 1}
                                                 onPreparar={() => accionEstado(detalle.id, 'EN_PREPARACION')}
                                             />
                                         ))}
@@ -425,21 +631,36 @@ const KitchenDashboard = () => {
                         </div>
 
                         <div className="col-12 col-lg-4">
-                            <div className="rounded-4 p-3 h-100" style={{ background: '#fff9e6', border: '1px solid #f9e79f', maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
-                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#b9770e' }}>
+                            <div className="rounded-4 p-3 h-100" style={{ background: preparacionTheme.bg, border: `1px solid ${preparacionTheme.border}`, maxHeight: 'calc(100vh - 110px)', overflowY: 'auto' }}>
+                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: preparacionTheme.text }}>
                                     <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#f1c40f' }} /> En preparación ({enPreparacion.length})
                                 </h5>
+                                {agruparPlatillos(enPreparacion).length > 0 && (
+                                    <div className="d-flex flex-wrap gap-2 mb-3">
+                                        {agruparPlatillos(enPreparacion).map((grupo) => (
+                                            <span
+                                                key={`prep-${grupo.nombre}`}
+                                                className="badge rounded-pill"
+                                                style={{ background: '#fff', color: preparacionTheme.text, border: `1px solid ${preparacionTheme.border}` }}
+                                            >
+                                                {grupo.cantidad} {grupo.nombre}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                                 {enPreparacion.length === 0 ? (
-                                    <div className="text-center text-muted py-4" style={{ color: '#b9770e' }}>
+                                    <div className="text-center text-muted py-4" style={{ color: preparacionTheme.text }}>
                                         Nada en preparación
                                     </div>
                                 ) : (
                                     <div className="d-grid gap-3">
-                                        {enPreparacion.map(detalle => (
+                                        {enPreparacion.map((detalle, index) => (
                                             <KitchenTicket
                                                 key={detalle.id}
                                                 detalle={detalle}
                                                 loading={loadingId === detalle.id}
+                                                now={ahora}
+                                                posicionCola={index + 1}
                                                 onListo={() => accionEstado(detalle.id, 'LISTO')}
                                             />
                                         ))}
@@ -453,26 +674,41 @@ const KitchenDashboard = () => {
                             <div
                                 className="rounded-4 p-3 h-100"
                                 style={{
-                                    background: '#ecfdf5',
-                                    border: '1px solid #abebc6',
+                                    background: listoTheme.bg,
+                                    border: `1px solid ${listoTheme.border}`,
                                     maxHeight: 'calc(100vh - 110px)',
                                     overflowY: 'auto'
                                 }}
                             >
-                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#1e8449' }}>
-                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#27ae60' }} /> Listo ({listos.length})
+                                <h5 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: listoTheme.text }}>
+                                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: listoTheme.solid }} /> Listo ({listos.length})
                                 </h5>
+                                {agruparPlatillos(listos).length > 0 && (
+                                    <div className="d-flex flex-wrap gap-2 mb-3">
+                                        {agruparPlatillos(listos).map((grupo) => (
+                                            <span
+                                                key={`listo-${grupo.nombre}`}
+                                                className="badge rounded-pill"
+                                                style={{ background: '#fff', color: listoTheme.text, border: `1px solid ${listoTheme.border}` }}
+                                            >
+                                                {grupo.cantidad} {grupo.nombre}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                                 {listos.length === 0 ? (
-                                    <div className="text-center text-muted py-4" style={{ color: '#1e8449' }}>
+                                    <div className="text-center text-muted py-4" style={{ color: listoTheme.text }}>
                                         Sin tickets listos
                                     </div>
                                 ) : (
                                     <div className="d-grid gap-3">
-                                        {listos.map(detalle => (
+                                        {listos.map((detalle, index) => (
                                             <KitchenTicket
                                                 key={detalle.id}
                                                 detalle={detalle}
                                                 loading={loadingId === detalle.id}
+                                                now={ahora}
+                                                posicionCola={index + 1}
                                             />
                                         ))}
                                     </div>
@@ -481,6 +717,7 @@ const KitchenDashboard = () => {
                         </div>
 
                     </div>
+                    </>
                 )}
             </div>
             {perfilAbierto && (

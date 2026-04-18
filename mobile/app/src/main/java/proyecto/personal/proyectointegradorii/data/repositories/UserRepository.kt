@@ -3,6 +3,7 @@ package proyecto.personal.proyectointegradorii.data.repositories
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import retrofit2.HttpException
 import org.json.JSONObject
 import proyecto.personal.proyectointegradorii.data.model.usuario.Usuario
 import proyecto.personal.proyectointegradorii.data.remote.dto.usuario.DeleteAccountRequest
@@ -22,9 +23,15 @@ class UserRepository {
             RetrofitClient.api.login(
                 LoginRequest(email, password)
             )
+        } catch (e: HttpException) {
+            val errorBody = try {
+                e.response()?.errorBody()?.string()
+            } catch (_: Exception) {
+                null
+            }
+            throw RuntimeException(extractMessage(errorBody, "Error al iniciar sesion"))
         } catch (e: Exception) {
-            e.message
-            null
+            throw RuntimeException(e.message ?: "Error de conexion")
         }
     }
 

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Check, ChefHat, ClipboardList, Clock, CreditCard, FileText, PartyPopper, UtensilsCrossed, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { PrimaryButton, SecondaryButton } from '../ui/Button';
+import { getStatusTheme } from '../../utils/statusTheme';
 
 const POLL_INTERVAL_MS = 8000;
 
@@ -10,49 +11,49 @@ const ESTADOS_CONFIG = {
         label: 'Pendiente de confirmación',
         sublabel: 'Tu pedido esta esperando ser aceptado por el mesero.',
         Icon: Clock,
-        color: '#856404',
+        color: getStatusTheme('pendiente_confirmacion').text,
         step: 1,
     },
     confirmada: {
         label: 'Pedido confirmado',
         sublabel: 'El mesero aceptó tu pedido, pronto lo prepararemos.',
         Icon: Check,
-        color: '#0C5460',
+        color: getStatusTheme('confirmada').text,
         step: 2,
     },
     en_preparacion: {
         label: 'En preparación',
         sublabel: 'Nuestros chefs estan trabajando en tu pedido.',
         Icon: ChefHat,
-        color: '#004085',
+        color: getStatusTheme('en_preparacion').text,
         step: 3,
     },
     lista: {
         label: 'Listo para servir',
         sublabel: 'Tu pedido esta listo. El mesero lo llevara a tu mesa.',
         Icon: UtensilsCrossed,
-        color: '#155724',
+        color: getStatusTheme('lista').text,
         step: 4,
     },
     entregada: {
         label: 'Orden entregada',
         sublabel: 'Buen provecho.',
         Icon: PartyPopper,
-        color: '#383D41',
+        color: getStatusTheme('entregada').text,
         step: 5,
     },
     cerrada: {
         label: 'Cuenta cerrada',
         sublabel: 'Gracias por tu visita.',
         Icon: CreditCard,
-        color: '#383D41',
+        color: getStatusTheme('cerrada').text,
         step: 5,
     },
     cancelada: {
         label: 'Pedido cancelado',
         sublabel: 'El pedido fue cancelado. Por favor, contacta al mesero.',
         Icon: X,
-        color: '#721C24',
+        color: getStatusTheme('cancelada').text,
         step: 0,
     },
 };
@@ -72,11 +73,11 @@ const getConfig = (estado) => ESTADOS_CONFIG[estado] || ESTADOS_CONFIG.pendiente
 const DetalleOrden = ({ detalle }) => {
     const estadoDet = (detalle?.estadoPreparacion || '').toString().toUpperCase();
     const estadoBadge = {
-        PENDIENTE: { cls: 'bg-warning text-dark', txt: 'Pendiente' },
-        EN_PREPARACION: { cls: 'bg-info', txt: 'Preparando' },
-        LISTO: { cls: 'bg-success', txt: 'Listo' },
-        FINALIZADA: { cls: 'bg-secondary', txt: 'Finalizado' },
-    }[estadoDet] || { cls: 'bg-light text-dark', txt: estadoDet || 'Pendiente' };
+        PENDIENTE: { txt: 'Pendiente', theme: getStatusTheme('pendiente') },
+        EN_PREPARACION: { txt: 'Preparando', theme: getStatusTheme('en_preparacion') },
+        LISTO: { txt: 'Listo', theme: getStatusTheme('lista') },
+        FINALIZADA: { txt: 'Finalizado', theme: getStatusTheme('entregada') },
+    }[estadoDet] || { txt: estadoDet || 'Pendiente', theme: getStatusTheme('pendiente') };
 
     return (
         <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom">
@@ -89,7 +90,15 @@ const DetalleOrden = ({ detalle }) => {
                     </p>
                 )}
             </div>
-            <span className={`badge ${estadoBadge.cls} rounded-pill`} style={{ fontSize: '0.7rem' }}>
+            <span
+                className="badge rounded-pill"
+                style={{
+                    fontSize: '0.7rem',
+                    background: estadoBadge.theme.bg,
+                    color: estadoBadge.theme.text,
+                    border: `1px solid ${estadoBadge.theme.border}`,
+                }}
+            >
                 {estadoBadge.txt}
             </span>
         </div>
@@ -100,9 +109,17 @@ const OrdenActivaCard = ({ orden }) => {
     const estado = orden?.estado || 'pendiente_confirmacion';
     const config = getConfig(estado);
     const IconComponent = config.Icon;
+    const estadoTheme = getStatusTheme(estado);
 
     return (
-        <div className="card border-0 shadow mb-4" style={{ borderRadius: '1.25rem', overflow: 'hidden' }}>
+        <div
+            className="card border-0 shadow mb-4"
+            style={{
+                borderRadius: '1.25rem',
+                overflow: 'hidden',
+                borderLeft: `5px solid ${estadoTheme.solid}`,
+            }}
+        >
             <div className="card-body p-4 text-center">
                 <p className="text-muted small mb-2">Pedido #{orden.id}</p>
                 <IconComponent size={38} style={{ color: config.color }} />
@@ -130,7 +147,7 @@ const OrdenActivaCard = ({ orden }) => {
                             <div
                                 style={{
                                     height: '100%',
-                                    background: '#FF7A00',
+                                    background: estadoTheme.solid,
                                     borderRadius: 2,
                                     width: `${Math.max(0, ((config.step - 1) / (PASOS_BARRA.length - 1)) * 100)}%`,
                                     transition: 'width 0.6s ease',
@@ -148,15 +165,15 @@ const OrdenActivaCard = ({ orden }) => {
                                             width: 28,
                                             height: 28,
                                             borderRadius: '50%',
-                                            background: completado ? '#FF7A00' : '#E9ECEF',
-                                            border: activo ? '3px solid #FF7A00' : 'none',
+                                            background: completado ? estadoTheme.solid : '#E9ECEF',
+                                            border: activo ? `3px solid ${estadoTheme.solid}` : 'none',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             color: completado ? '#fff' : '#adb5bd',
                                             fontWeight: 700,
                                             fontSize: 13,
-                                            boxShadow: activo ? '0 0 0 4px rgba(255,122,0,0.2)' : 'none',
+                                            boxShadow: activo ? `0 0 0 4px ${estadoTheme.soft}` : 'none',
                                             marginBottom: 4,
                                         }}
                                     >
@@ -166,7 +183,7 @@ const OrdenActivaCard = ({ orden }) => {
                                         style={{
                                             fontSize: '0.65rem',
                                             fontWeight: completado ? 700 : 400,
-                                            color: completado ? '#FF7A00' : '#adb5bd',
+                                            color: completado ? estadoTheme.solid : '#adb5bd',
                                         }}
                                     >
                                         {paso.label}

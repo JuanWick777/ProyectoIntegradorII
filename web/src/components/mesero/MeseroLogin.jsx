@@ -9,13 +9,21 @@ import AuthCard from '../auth/AuthCard';
 import { PrimaryButton } from '../ui/Button';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ROLES_COCINA = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
+
+function resolveDestinoPorRol(rol) {
+    if (rol === 'ADMIN') return '/admin';
+    if (rol === 'MESERO') return '/mesero';
+    if (ROLES_COCINA.includes(rol)) return '/cocina';
+    return null;
+}
 
 const MeseroLogin = ({
     onLoginExitoso,
-    titulo = 'Portal de Personal',
+    titulo = 'Acceso al sistema',
     icono = <ChefHat size={32} />,
-    demoEmail = 'mesero@rest.com',
-    rolesPermitidos = ['MESERO', 'COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO']
+    demoEmail = 'admin@rest.com',
+    rolesPermitidos = ['ADMIN', 'MESERO', ...ROLES_COCINA]
 }) => {
     const { login } = useAppStore();
     const navigate = useNavigate();
@@ -35,9 +43,9 @@ const MeseroLogin = ({
     const validate = (f) => {
         const errs = {};
         if (!f.email?.trim()) errs.email = 'El correo es obligatorio.';
-        else if (!EMAIL_REGEX.test(f.email.trim())) errs.email = 'Formato de correo inválido (ej. usuario@rest.com).';
-        if (!f.password) errs.password = 'La contraseña es obligatoria.';
-        else if (f.password.length < 6) errs.password = 'Mínimo 6 caracteres.';
+        else if (!EMAIL_REGEX.test(f.email.trim())) errs.email = 'Formato de correo invalido (ej. usuario@rest.com).';
+        if (!f.password) errs.password = 'La contrasena es obligatoria.';
+        else if (f.password.length < 6) errs.password = 'Minimo 6 caracteres.';
         return errs;
     };
 
@@ -64,15 +72,14 @@ const MeseroLogin = ({
                 throw new Error('No tienes permisos para acceder a este portal');
             }
 
-            if (rol === 'MESERO') {
-                navigate('/mesero');
-            } else if (['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'].includes(rol)) {
-                navigate('/cocina');
-            } else {
+            const destino = resolveDestinoPorRol(rol);
+            if (!destino) {
                 throw new Error('Rol no reconocido en el sistema');
             }
 
-            if (onLoginExitoso) onLoginExitoso();
+            navigate(destino, { replace: true });
+
+            if (onLoginExitoso) onLoginExitoso(user);
         } catch (err) {
             setServerError(err.message || 'Credenciales incorrectas. Verifica e intenta de nuevo.');
         } finally {
@@ -88,13 +95,12 @@ const MeseroLogin = ({
             <AuthCard
                 icon={icono}
                 title={titulo}
-                subtitle="Sistema de Gestión de Restaurante"
+                subtitle="Administrador, mesero y cocina"
             >
                 <form onSubmit={handleSubmit} noValidate>
-                    {/* Email */}
                     <div className="mb-3">
                         <label htmlFor="staff-email" className="form-label fw-semibold small d-flex align-items-center gap-1">
-                            <Mail size={16} /> Correo electrónico <span className="text-danger">*</span>
+                            <Mail size={16} /> Correo electronico <span className="text-danger">*</span>
                         </label>
                         <input
                             id="staff-email"
@@ -110,15 +116,14 @@ const MeseroLogin = ({
                         />
                         {touched.email && errors.email && (
                             <div className="invalid-feedback d-flex align-items-center gap-1">
-                                <span>⚠</span> {errors.email}
+                                <span>!</span> {errors.email}
                             </div>
                         )}
                     </div>
 
-                    {/* Contraseña */}
                     <div className="mb-3">
                         <label htmlFor="staff-password" className="form-label fw-semibold small d-flex align-items-center gap-1">
-                            <Lock size={16} /> Contraseña <span className="text-danger">*</span>
+                            <Lock size={16} /> Contrasena <span className="text-danger">*</span>
                         </label>
                         <div className="input-group">
                             <input
@@ -128,7 +133,7 @@ const MeseroLogin = ({
                                 value={form.password}
                                 onChange={(e) => set('password', e.target.value)}
                                 onBlur={() => handleBlur('password')}
-                                placeholder="••••••"
+                                placeholder="******"
                                 style={{ borderRadius: '0.75rem 0 0 0.75rem', borderRight: 0 }}
                                 autoComplete="current-password"
                             />
@@ -138,14 +143,14 @@ const MeseroLogin = ({
                                 style={{ borderRadius: '0 0.75rem 0.75rem 0', borderLeft: 0 }}
                                 onClick={() => setShowPassword((v) => !v)}
                                 tabIndex={-1}
-                                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
                         {touched.password && errors.password && (
                             <div className="invalid-feedback d-flex align-items-center gap-1" style={{ display: 'flex !important' }}>
-                                <span>⚠</span> {errors.password}
+                                <span>!</span> {errors.password}
                             </div>
                         )}
                     </div>
@@ -160,13 +165,9 @@ const MeseroLogin = ({
                     >
                         {loading
                             ? <><LoadingSpinner size="sm" className="me-2" />Ingresando...</>
-                            : <><LogIn size={18} className="me-2" />Iniciar Sesión</>}
+                            : <><LogIn size={18} className="me-2" />Iniciar sesion</>}
                     </PrimaryButton>
                 </form>
-
-                <p className="text-center text-muted small mt-3 mb-0">
-                    Demo: <code>{demoEmail}</code> / <code>123456</code>
-                </p>
             </AuthCard>
         </AuthLayout>
     );

@@ -40,10 +40,6 @@ public class UsuarioResponseDTO {
     }
 
     private static String resolverRol(Usuario u) {
-        if (u.getTipoUsuario() != null && u.getTipoUsuario().equalsIgnoreCase("ADMIN")) {
-            return "ADMIN";
-        }
-
         if (u.getRolEspecifico() != null) {
             return u.getRolEspecifico().toUpperCase();
         }

@@ -34,12 +34,13 @@ import proyecto.personal.proyectointegradorii.ui.theme.TextColorWhite
 fun PlatilloModal(
     platillo: PlatilloDto,
     onDismiss: () -> Unit,
-    onAddToCart: (PlatilloDto, Int, String) -> Unit
+    onAddToCart: (PlatilloDto, Int, String) -> Boolean
 ) {
 
     var cantidad by remember { mutableStateOf(1) }
     var nota by remember { mutableStateOf("") }
     var especificacionesExpanded by remember { mutableStateOf(false) } // Estado para expandir la nota
+    var errorCantidad by remember { mutableStateOf<String?>(null) }
 
     val total = (platillo.precio * cantidad)
 
@@ -253,10 +254,23 @@ fun PlatilloModal(
                     colortext = TextColorWhite,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        onAddToCart(platillo, cantidad, nota)
-                        onDismiss()
+                        val agregado = onAddToCart(platillo, cantidad, nota)
+                        if (agregado) {
+                            errorCantidad = null
+                            onDismiss()
+                        } else {
+                            errorCantidad = "No puedes superar 20 articulos en el pedido."
+                        }
                     }
                 )
+
+                if (!errorCantidad.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = errorCantidad ?: "",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }

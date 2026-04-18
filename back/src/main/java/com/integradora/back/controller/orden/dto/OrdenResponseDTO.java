@@ -20,4 +20,7 @@ public class OrdenResponseDTO {
     private String codigoPromoAplicado;
     private BigDecimal total;
     private LocalDateTime fechaCreacion;
+    private String motivoCancelacion;
+    private String canceladaPorNombre;
+    private LocalDateTime fechaCancelacion;
 }
