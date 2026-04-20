@@ -35,7 +35,7 @@ class UserRepository {
         }
     }
 
-    suspend fun register(usuario: Usuario): Boolean {
+    suspend fun register(usuario: Usuario): Result<Unit> {
         return try {
             RetrofitClient.api.register(
                 RegisterRequest(
@@ -44,10 +44,16 @@ class UserRepository {
                     contrasena = usuario.contrasena
                 )
             )
-            true
+            Result.success(Unit)
+        } catch (e: HttpException) {
+            val errorBody = try {
+                e.response()?.errorBody()?.string()
+            } catch (_: Exception) {
+                null
+            }
+            Result.failure(Exception(extractMessage(errorBody, "No se pudo completar el registro")))
         } catch (e: Exception) {
-            e.message
-            false
+            Result.failure(Exception(e.message ?: "Error de conexion"))
         }
     }
 

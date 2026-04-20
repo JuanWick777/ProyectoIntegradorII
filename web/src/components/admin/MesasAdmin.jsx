@@ -25,6 +25,8 @@ const ESTADO_MESA = {
 };
 
 const normalizarEstadoMesa = (estado) => String(estado || 'LIBRE').trim().toUpperCase();
+const MAX_MESA_NUMERO = 999;
+const MAX_MESA_CAPACIDAD = 20;
 
 const MesasAdmin = () => {
     const { fetchMesas, crearMesa, eliminarMesa, actualizarEstadoMesa } = useAppStore();
@@ -72,6 +74,7 @@ const MesasAdmin = () => {
 
     const handleCrearMesa = async (e) => {
         e.preventDefault();
+        if (creando) return;
         const numero = parseInt(nuevoNumero, 10);
         const capacidad = parseInt(nuevaCapacidad, 10);
 
@@ -83,12 +86,16 @@ const MesasAdmin = () => {
             setCampoError('Ingresa un numero de mesa valido (mayor a 0).');
             return;
         }
-        if (numero > 999) {
-            setCampoError('El numero de mesa no puede ser mayor a 999.');
+        if (numero > MAX_MESA_NUMERO) {
+            setCampoError(`El numero de mesa no puede ser mayor a ${MAX_MESA_NUMERO}.`);
             return;
         }
         if (!capacidad || capacidad < 1) {
             setCampoError('Ingresa una capacidad valida para la mesa.');
+            return;
+        }
+        if (capacidad > MAX_MESA_CAPACIDAD) {
+            setCampoError(`La capacidad no puede ser mayor a ${MAX_MESA_CAPACIDAD} personas.`);
             return;
         }
 
@@ -114,6 +121,7 @@ const MesasAdmin = () => {
     };
 
     const handleCambiarEstado = async (mesa, estado) => {
+        if (actualizando === mesa.id) return;
         try {
             setError('');
             setSuccess('');
@@ -129,9 +137,14 @@ const MesasAdmin = () => {
     };
 
     const handleCambiarCapacidad = async (mesa) => {
+        if (actualizando === mesa.id) return;
         const capacidad = parseInt(capacidadesEditables[mesa.id], 10);
         if (!capacidad || capacidad < 1) {
             setError('La capacidad debe ser mayor a 0.');
+            return;
+        }
+        if (capacidad > MAX_MESA_CAPACIDAD) {
+            setError(`La capacidad no puede ser mayor a ${MAX_MESA_CAPACIDAD} personas.`);
             return;
         }
 
@@ -150,6 +163,7 @@ const MesasAdmin = () => {
     };
 
     const handleEliminarMesa = async (id, numero) => {
+        if (eliminando === id) return;
         if (!window.confirm(`Eliminar mesa ${numero}? Esta accion no se puede deshacer.`)) {
             return;
         }
@@ -237,7 +251,8 @@ const MesasAdmin = () => {
                                                     if (['+', '-', 'e', 'E', '.'].includes(e.key)) e.preventDefault();
                                                 }}
                                                 onChange={(e) => {
-                                                    setNuevoNumero(e.target.value);
+                                                    const sanitized = e.target.value.replace(/\D/g, '').slice(0, 3);
+                                                    setNuevoNumero(sanitized);
                                                     setCampoError('');
                                                 }}
                                                 disabled={creando}
@@ -259,7 +274,8 @@ const MesasAdmin = () => {
                                                     if (['+', '-', 'e', 'E', '.'].includes(e.key)) e.preventDefault();
                                                 }}
                                                 onChange={(e) => {
-                                                    setNuevaCapacidad(e.target.value);
+                                                    const sanitized = e.target.value.replace(/\D/g, '').slice(0, 2);
+                                                    setNuevaCapacidad(sanitized);
                                                     setCampoError('');
                                                 }}
                                                 disabled={creando}
@@ -392,7 +408,7 @@ const MesasAdmin = () => {
                                                             onChange={(e) =>
                                                                 setCapacidadesEditables((prev) => ({
                                                                     ...prev,
-                                                                    [mesa.id]: e.target.value,
+                                                                    [mesa.id]: e.target.value.replace(/\D/g, '').slice(0, 2),
                                                                 }))
                                                             }
                                                             disabled={actualizando === mesa.id}

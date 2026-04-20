@@ -1,22 +1,42 @@
 import React, { useMemo, useState } from 'react';
 import {
     EMPTY_NEW,
-    getProductImage,
     getProductDisponibilidad,
+    getProductImage,
 } from './adminConstants';
+
+const MAX_NOMBRE_LENGTH = 150;
+const MAX_DESCRIPCION_LENGTH = 500;
+const MAX_PRECIO = 999999.99;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const getStoredImagePath = (p) =>
     p?.urlImagen ?? p?.url_imagen ?? p?.imagen_url ?? p?.imagenUrl ?? '';
 
 const validate = (form) => {
     const errs = {};
+
     if (!form.nombre?.trim()) errs.nombre = 'El nombre del platillo es obligatorio.';
     else if (form.nombre.trim().length < 2) errs.nombre = 'El nombre debe tener al menos 2 caracteres.';
+    else if (form.nombre.trim().length > MAX_NOMBRE_LENGTH) errs.nombre = `El nombre no puede exceder ${MAX_NOMBRE_LENGTH} caracteres.`;
 
     if (!form.precio && form.precio !== 0) errs.precio = 'El precio es obligatorio.';
-    else if (Number.isNaN(Number(form.precio)) || Number(form.precio) <= 0) errs.precio = 'El precio debe ser un número positivo.';
+    else if (Number.isNaN(Number(form.precio)) || Number(form.precio) <= 0) errs.precio = 'El precio debe ser un numero positivo.';
+    else if (Number(form.precio) > MAX_PRECIO) errs.precio = `El precio no puede ser mayor a ${MAX_PRECIO}.`;
 
     if (!form.categoria_id) errs.categoria_id = 'Selecciona una categoria.';
+
+    if ((form.descripcion || '').trim().length > MAX_DESCRIPCION_LENGTH) {
+        errs.descripcion = `La descripcion no puede exceder ${MAX_DESCRIPCION_LENGTH} caracteres.`;
+    }
+
+    if (form.imagenFile instanceof File) {
+        if (!form.imagenFile.type.startsWith('image/')) {
+            errs.imagenFile = 'Selecciona un archivo de imagen valido.';
+        } else if (form.imagenFile.size > MAX_IMAGE_SIZE) {
+            errs.imagenFile = 'La imagen no puede superar 5 MB.';
+        }
+    }
 
     return errs;
 };
@@ -55,11 +75,24 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
     };
 
     const handleSubmit = () => {
-        setTouched({ nombre: true, precio: true, categoria_id: true });
+        if (saving) return;
+        setTouched({
+            nombre: true,
+            precio: true,
+            categoria_id: true,
+            descripcion: true,
+            imagenFile: true,
+        });
         const errs = validate(form);
         setErrors(errs);
         if (Object.keys(errs).length > 0) return;
-        onSave(form);
+
+        onSave({
+            ...form,
+            nombre: form.nombre.trim(),
+            descripcion: (form.descripcion || '').trim(),
+            precio: String(form.precio).trim(),
+        });
     };
 
     const handleCategoriaChange = (e) => {
@@ -78,7 +111,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
     }, [form.imagenFile, form.imagenUrl]);
 
     return (
-        <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={onClose}>
+        <div className="modal show d-block" style={{ background: 'rgba(0,0,0,.55)' }} onClick={saving ? undefined : onClose}>
             <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '1.25rem' }}>
                     <div className="modal-header border-0 pb-0">
@@ -96,7 +129,8 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                             <input
                                 className={fieldClass('nombre')}
                                 value={form.nombre}
-                                onChange={(e) => set('nombre', e.target.value)}
+                                maxLength={MAX_NOMBRE_LENGTH}
+                                onChange={(e) => set('nombre', e.target.value.slice(0, MAX_NOMBRE_LENGTH))}
                                 onBlur={() => handleBlur('nombre')}
                                 placeholder="Ej. Hamburguesa Doble"
                                 disabled={saving}
@@ -168,13 +202,19 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                         <div className="mb-3">
                             <label className="form-label fw-semibold small">Descripcion</label>
                             <textarea
-                                className="form-control"
+                                className={`form-control ${touched.descripcion && errors.descripcion ? 'is-invalid' : ''}`}
                                 rows="2"
                                 value={form.descripcion}
-                                onChange={(e) => set('descripcion', e.target.value)}
+                                maxLength={MAX_DESCRIPCION_LENGTH}
+                                onChange={(e) => set('descripcion', e.target.value.slice(0, MAX_DESCRIPCION_LENGTH))}
+                                onBlur={() => handleBlur('descripcion')}
                                 placeholder="Ingredientes, detalles..."
                                 disabled={saving}
                             />
+                            {touched.descripcion && errors.descripcion && (
+                                <div className="invalid-feedback">{errors.descripcion}</div>
+                            )}
+                            <div className="form-text text-end">{(form.descripcion || '').length}/{MAX_DESCRIPCION_LENGTH}</div>
                         </div>
 
                         <div className="mb-1">
@@ -185,14 +225,21 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                                 accept="image/png,image/jpeg,image/webp,image/gif"
                                 onChange={(e) => {
                                     const file = e.target.files?.[0] || null;
-                                    setForm((prev) => ({
-                                        ...prev,
+                                    const nextForm = {
+                                        ...form,
                                         imagenFile: file,
                                         imagenRemoved: false,
-                                    }));
+                                    };
+                                    setForm(nextForm);
+                                    setTouched((prev) => ({ ...prev, imagenFile: true }));
+                                    const nextErrors = validate(nextForm);
+                                    setErrors((prev) => ({ ...prev, imagenFile: nextErrors.imagenFile }));
                                 }}
                                 disabled={saving}
                             />
+                            {touched.imagenFile && errors.imagenFile && (
+                                <div className="text-danger small mt-2">{errors.imagenFile}</div>
+                            )}
 
                             <div className="d-flex gap-2 mt-2">
                                 <button
@@ -201,7 +248,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                                     onClick={() => setForm((prev) => ({ ...prev, imagenFile: null }))}
                                     disabled={saving || !(form.imagenFile instanceof File)}
                                 >
-                                    Quitar selección
+                                    Quitar seleccion
                                 </button>
                                 <button
                                     type="button"
@@ -223,7 +270,7 @@ const ProductModal = ({ product, onSave, onClose, saving, categorias = [] }) => 
                                     src={imgPreview}
                                     alt="preview"
                                     style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: '0.5rem', marginTop: 8 }}
-                                    onError={e => e.currentTarget.style.display = 'none'}
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                 />
                             )}
                         </div>

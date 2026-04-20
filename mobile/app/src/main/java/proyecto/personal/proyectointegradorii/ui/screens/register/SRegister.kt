@@ -63,6 +63,7 @@ fun ScreenRegister(
     val errorTerms by viewModel.errorTerms.collectAsState()
     val isRegister by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val showPrivacyNotice by viewModel.showPrivacyNotice.collectAsState()
 
     Column(
         modifier = Modifier
@@ -167,9 +168,18 @@ fun ScreenRegister(
                                 onCheckedChange = { viewModel.onAcceptedTermsChange(it) }
                             )
                             Text(
-                                text = "Acepto los terminos y condiciones",
+                                text = "Acepto los terminos y el aviso de privacidad",
                                 color = TextColorDark,
                                 modifier = Modifier.padding(start = 6.dp)
+                            )
+                        }
+                        TextButton(
+                            onClick = { viewModel.showPrivacyNotice() },
+                            modifier = Modifier.align(Alignment.Start)
+                        ) {
+                            Text(
+                                text = "Leer aviso de privacidad",
+                                color = MainColor
                             )
                         }
                         ErrorText(errorTerms, 14, Modifier)
@@ -234,6 +244,29 @@ fun ScreenRegister(
                     }
                 ) {
                     Text("Aceptar")
+                }
+            }
+        )
+    }
+
+    if (showPrivacyNotice) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hidePrivacyNotice() },
+            title = {
+                Text("Aviso de privacidad")
+            },
+            text = {
+                Text(
+                    "Esta aplicacion recopila datos como nombre, correo, credenciales, historial de pedidos, puntos de lealtad y, en su caso, foto de perfil. " +
+                        "La informacion se usa para registro, autenticacion, recuperacion de contrasena, gestion de pedidos, mesas, lealtad y seguridad del sistema. " +
+                        "La persona titular puede solicitar acceso, rectificacion, cancelacion u oposicion al tratamiento de sus datos por los canales oficiales del restaurante o de la administracion del sistema."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.hidePrivacyNotice() }
+                ) {
+                    Text("Entendido")
                 }
             }
         )

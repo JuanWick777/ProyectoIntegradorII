@@ -4,25 +4,19 @@ import { useAppStore } from '../../store/useAppStore';
 import { PrimaryButton } from '../ui/Button';
 import AlertMessage from '../ui/AlertMessage';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import AvisoPrivacidadModal from '../shared/AvisoPrivacidadModal';
 
-/**
- * MesaIngreso.jsx — Pantalla de entrada del cliente
- *
- * Valida el número de mesa contra la API:
- *   - Mesa libre  → llama onMesaValida(mesaId)
- *   - Mesa ocupada (409) → muestra error y bloquea acceso
- *   - Mesa no encontrada (404) → muestra error específico
- */
 const MesaIngreso = ({ onMesaValida }) => {
     const { validarMesa, setNumeroMesa, fetchMesas } = useAppStore();
 
     const [mesas, setMesas] = useState([]);
-    const [selectMethod, setSelectMethod] = useState('dropdown'); // 'dropdown' o 'manual'
+    const [selectMethod, setSelectMethod] = useState('dropdown');
     const [selectedMesa, setSelectedMesa] = useState('');
     const [inputNumero, setInputNumero] = useState('');
     const [loadingMesas, setLoadingMesas] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [avisoAbierto, setAvisoAbierto] = useState(false);
 
     const mesasDisponibles = mesas.filter((mesa) => mesa.qrActivo !== false && mesa.cuentaAbierta !== true);
 
@@ -44,18 +38,23 @@ const MesaIngreso = ({ onMesaValida }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (loading) return;
 
         let numero = null;
         if (selectMethod === 'dropdown') {
             numero = parseInt(selectedMesa, 10);
             if (!numero || numero < 1) {
-                setError('Selecciona una mesa válida.');
+                setError('Selecciona una mesa valida.');
                 return;
             }
         } else {
             numero = parseInt(inputNumero, 10);
             if (!numero || numero < 1) {
-                setError('Ingresa un número de mesa válido.');
+                setError('Ingresa un numero de mesa valido.');
+                return;
+            }
+            if (numero > 999) {
+                setError('El numero de mesa no puede ser mayor a 999.');
                 return;
             }
         }
@@ -69,11 +68,11 @@ const MesaIngreso = ({ onMesaValida }) => {
             onMesaValida(mesa);
         } catch (err) {
             if (err.status === 409) {
-                setError('⛔ Esta mesa está ocupada. Por favor, llama al mesero.');
+                setError('Esta mesa esta ocupada. Por favor, llama al mesero.');
             } else if (err.status === 404) {
-                setError('🔍 Mesa no encontrada. Verifica el número e intenta de nuevo.');
+                setError('Mesa no encontrada. Verifica el numero e intenta de nuevo.');
             } else {
-                setError('Error de conexión. Revisa que el servidor esté disponible.');
+                setError('Error de conexion. Revisa que el servidor este disponible.');
             }
         } finally {
             setLoading(false);
@@ -81,25 +80,50 @@ const MesaIngreso = ({ onMesaValida }) => {
     };
 
     return (
-        <div
-            className="min-vh-100 d-flex align-items-center justify-content-center"
-            style={{ background: 'linear-gradient(135deg, #FF7A00 0%, #E06900 100%)' }}
-        >
-            <div className="container" style={{ maxWidth: 420 }}>
-                {/* Logo / Encabezado */}
+        <div className="min-vh-100" style={{ background: '#ffffff' }}>
+            <header
+                className="sticky-top shadow-sm py-3 px-3"
+                style={{
+                    background: '#ffffff',
+                    borderBottom: '1px solid #e5e7eb',
+                    zIndex: 20,
+                }}
+            >
+                <div className="d-flex align-items-start gap-3">
+                    <div
+                        className="rounded-3 d-flex align-items-center justify-content-center"
+                        style={{ width: 48, height: 48, background: '#f97316', color: '#ffffff' }}
+                    >
+                        <UtensilsCrossed size={24} />
+                    </div>
+                    <div>
+                        <h1 className="fw-bold mb-1" style={{ fontSize: '1.25rem', color: '#111827' }}>
+                            Portal del cliente
+                        </h1>
+                        <div className="text-muted" style={{ fontSize: '0.9rem' }}>
+                            Ingresa tu mesa para comenzar el pedido
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div className="container py-5" style={{ maxWidth: 460 }}>
                 <div className="text-center mb-4">
                     <div
-                        className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                        style={{ width: 80, height: 80, background: 'rgba(255,255,255,0.2)' }}
+                        className="d-inline-flex align-items-center justify-content-center rounded-4 mb-3"
+                        style={{ width: 82, height: 82, background: '#fff7ed', color: '#f97316' }}
                     >
-                        <UtensilsCrossed size={40} className="text-white" />
+                        <UtensilsCrossed size={42} />
                     </div>
-                    <h1 className="text-white fw-bold fs-2 mb-1">Bienvenido</h1>
-                    <p className="text-white-50 mb-0">Ingresa el número de tu mesa para comenzar</p>
+                    <h2 className="fw-bold fs-3 mb-1" style={{ color: '#111827' }}>
+                        Bienvenido
+                    </h2>
+                    <p className="text-muted mb-0">
+                        Selecciona o escribe el numero de tu mesa para ver el menu.
+                    </p>
                 </div>
 
-                {/* Tarjeta de ingreso */}
-                <div className="card border-0 shadow-lg" style={{ borderRadius: '1.25rem' }}>
+                <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', background: '#fffaf5' }}>
                     <div className="card-body p-4">
                         {loadingMesas ? (
                             <div className="text-center py-5">
@@ -108,7 +132,6 @@ const MesaIngreso = ({ onMesaValida }) => {
                             </div>
                         ) : (
                             <form onSubmit={handleSubmit} noValidate>
-                                {/* Selector de método */}
                                 <div className="btn-group w-100 mb-4" role="group">
                                     <input
                                         type="radio"
@@ -123,7 +146,7 @@ const MesaIngreso = ({ onMesaValida }) => {
                                         }}
                                     />
                                     <label className="btn btn-outline-primary" htmlFor="methodDropdown">
-                                        Mesas Disponibles
+                                        Mesas disponibles
                                     </label>
 
                                     <input
@@ -139,18 +162,17 @@ const MesaIngreso = ({ onMesaValida }) => {
                                         }}
                                     />
                                     <label className="btn btn-outline-primary" htmlFor="methodManual">
-                                        Ingreso Manual
+                                        Ingreso manual
                                     </label>
                                 </div>
 
-                                {/* Contenido según método */}
                                 {selectMethod === 'dropdown' ? (
                                     <div className="mb-3">
-                                        <label className="form-label fw-semibold text-secondary small text-uppercase ls-wide">
-                                            Selecciona tu Mesa
+                                        <label className="form-label fw-semibold text-secondary small text-uppercase">
+                                            Selecciona tu mesa
                                         </label>
                                         <select
-                                            className={`form-select form-select-lg bg-light fw-bold text-center ${error ? 'is-invalid' : ''}`}
+                                            className={`form-select form-select-lg bg-white fw-bold text-center ${error ? 'is-invalid' : ''}`}
                                             value={selectedMesa}
                                             onChange={(e) => {
                                                 setSelectedMesa(e.target.value);
@@ -173,22 +195,21 @@ const MesaIngreso = ({ onMesaValida }) => {
                                     </div>
                                 ) : (
                                     <div className="mb-3">
-                                        <label className="form-label fw-semibold text-secondary small text-uppercase ls-wide">
-                                            Número de Mesa
+                                        <label className="form-label fw-semibold text-secondary small text-uppercase">
+                                            Numero de mesa
                                         </label>
                                         <div className="input-group input-group-lg">
-                                            <span className="input-group-text border-end-0 bg-light">
+                                            <span className="input-group-text border-end-0 bg-white">
                                                 <Users size={20} className="text-secondary" />
                                             </span>
                                             <input
-                                                type="number"
-                                                className={`form-control border-start-0 bg-light fs-3 text-center fw-bold ${error ? 'is-invalid' : ''}`}
+                                                type="text"
+                                                inputMode="numeric"
+                                                className={`form-control border-start-0 bg-white fs-3 text-center fw-bold ${error ? 'is-invalid' : ''}`}
                                                 placeholder="1"
-                                                min="1"
-                                                max="99"
                                                 value={inputNumero}
                                                 onChange={(e) => {
-                                                    setInputNumero(e.target.value);
+                                                    setInputNumero(e.target.value.replace(/\D/g, '').slice(0, 3));
                                                     setError('');
                                                 }}
                                                 disabled={loading}
@@ -224,7 +245,7 @@ const MesaIngreso = ({ onMesaValida }) => {
                                             Verificando...
                                         </span>
                                     ) : (
-                                        'Ver Menú →'
+                                        'Ver menu'
                                     )}
                                 </PrimaryButton>
                             </form>
@@ -232,10 +253,21 @@ const MesaIngreso = ({ onMesaValida }) => {
                     </div>
                 </div>
 
-                <p className="text-white-50 text-center mt-3 small">
-                    ¿No encuentras tu número? Pide ayuda al mesero.
+                <p className="text-muted text-center mt-3 small">
+                    Si no encuentras tu numero, pide ayuda al mesero.
                 </p>
+                <div className="text-center">
+                    <button
+                        type="button"
+                        className="btn btn-link p-0 small text-decoration-none"
+                        onClick={() => setAvisoAbierto(true)}
+                        style={{ color: '#f97316' }}
+                    >
+                        Aviso de privacidad
+                    </button>
+                </div>
             </div>
+            <AvisoPrivacidadModal abierto={avisoAbierto} onClose={() => setAvisoAbierto(false)} />
         </div>
     );
 };

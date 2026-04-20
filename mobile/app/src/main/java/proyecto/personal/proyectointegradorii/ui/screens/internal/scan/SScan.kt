@@ -48,6 +48,7 @@ fun SScan(
     val scope = rememberCoroutineScope()
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var manualMesa by remember { mutableStateOf("") }
+    var isValidating by remember { mutableStateOf(false) }
 
     val options = GmsBarcodeScannerOptions.Builder()
         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -72,8 +73,10 @@ fun SScan(
     }
 
     fun confirmarMesa(mesaId: Long?) {
+        if (isValidating) return
         if (mesaId != null && mesaId > 0) {
             scope.launch {
+                isValidating = true
                 try {
                     val mesa = RetrofitClient.api.getMesa(mesaId.toInt())
                     errorMessage = null
@@ -92,6 +95,8 @@ fun SScan(
                     }
                 } catch (_: Exception) {
                     errorMessage = "No se pudo validar la mesa."
+                } finally {
+                    isValidating = false
                 }
             }
         } else {
@@ -174,7 +179,8 @@ fun SScan(
                             errorMessage = null
                             confirmarMesa(manualMesa.toLongOrNull())
                         },
-                        Modifier
+                        Modifier,
+                        enabled = manualMesa.isNotBlank() && !isValidating
                     )
                 }
             },
@@ -190,7 +196,7 @@ fun SScan(
         }
 
         GlobalButton(
-            "Escanear codigo QR",
+            if (isValidating) "Validando..." else "Escanear codigo QR",
             16,
             50,
             280,
@@ -198,6 +204,7 @@ fun SScan(
             MainColor,
             TextColorWhite,
             {
+                if (isValidating) return@GlobalButton
                 errorMessage = null
 
                 scanner.startScan()
@@ -215,7 +222,8 @@ fun SScan(
                         }
                     }
             },
-            Modifier
+            Modifier,
+            enabled = !isValidating
         )
     }
 }

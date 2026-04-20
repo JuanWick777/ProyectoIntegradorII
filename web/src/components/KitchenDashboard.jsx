@@ -513,65 +513,6 @@ const KitchenDashboard = () => {
                     </div>
                 ) : (
                     <>
-                        <div className="row g-3 mb-3">
-                            <div className="col-12 col-md-4">
-                                <div
-                                    className="rounded-4 px-4 py-3 h-100"
-                                    style={{ background: pendienteTheme.bg, border: `1px solid ${pendienteTheme.border}` }}
-                                >
-                                    <div className="small fw-semibold text-uppercase" style={{ color: pendienteTheme.text, letterSpacing: '0.04em' }}>
-                                        Cola pendiente
-                                    </div>
-                                    <div className="d-flex align-items-end justify-content-between mt-2">
-                                        <div className="fw-bold" style={{ fontSize: '2rem', color: pendienteTheme.text }}>
-                                            {pendientes.length}
-                                        </div>
-                                        <div className="small text-end" style={{ color: pendienteTheme.text }}>
-                                            PEPS activo desde el ticket mas antiguo
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="col-12 col-md-4">
-                                <div
-                                    className="rounded-4 px-4 py-3 h-100"
-                                    style={{ background: canceladoTheme.bg, border: `1px solid ${canceladoTheme.border}` }}
-                                >
-                                    <div className="small fw-semibold text-uppercase" style={{ color: canceladoTheme.text, letterSpacing: '0.04em' }}>
-                                        Tickets atrasados
-                                    </div>
-                                    <div className="d-flex align-items-end justify-content-between mt-2">
-                                        <div className="fw-bold" style={{ fontSize: '2rem', color: canceladoTheme.text }}>
-                                            {atrasados.length}
-                                        </div>
-                                        <div className="small text-end" style={{ color: canceladoTheme.text }}>
-                                            Requieren atencion inmediata
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="col-12 col-md-4">
-                                <div
-                                    className="rounded-4 px-4 py-3 h-100"
-                                    style={{ background: listoTheme.bg, border: `1px solid ${listoTheme.border}` }}
-                                >
-                                    <div className="small fw-semibold text-uppercase" style={{ color: listoTheme.text, letterSpacing: '0.04em' }}>
-                                        Listos para entregar
-                                    </div>
-                                    <div className="d-flex align-items-end justify-content-between mt-2">
-                                        <div className="fw-bold" style={{ fontSize: '2rem', color: listoTheme.text }}>
-                                            {listos.length}
-                                        </div>
-                                        <div className="small text-end" style={{ color: listoTheme.text }}>
-                                            El mesero ya puede pasar por ellos
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         {avisoListo && (
                             <div
                                 className="d-flex align-items-center justify-content-between gap-3 rounded-4 px-4 py-3 mb-3"
@@ -586,6 +527,29 @@ const KitchenDashboard = () => {
                                 </div>
                                 <span className="small" style={{ color: listoTheme.text }}>
                                     Sincronizado con el panel de mesero
+                                </span>
+                            </div>
+                        )}
+
+                        {(pendientes.length > 0 || atrasados.length > 0 || listos.length > 0) && (
+                            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                <span
+                                    className="px-3 py-2 rounded-pill fw-semibold"
+                                    style={{ background: pendienteTheme.bg, color: pendienteTheme.text, border: `1px solid ${pendienteTheme.border}` }}
+                                >
+                                    Cola pendiente: {pendientes.length}
+                                </span>
+                                <span
+                                    className="px-3 py-2 rounded-pill fw-semibold"
+                                    style={{ background: canceladoTheme.bg, color: canceladoTheme.text, border: `1px solid ${canceladoTheme.border}` }}
+                                >
+                                    Atrasados: {atrasados.length}
+                                </span>
+                                <span
+                                    className="px-3 py-2 rounded-pill fw-semibold"
+                                    style={{ background: listoTheme.bg, color: listoTheme.text, border: `1px solid ${listoTheme.border}` }}
+                                >
+                                    Listos: {listos.length}
                                 </span>
                             </div>
                         )}

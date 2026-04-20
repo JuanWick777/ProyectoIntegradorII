@@ -110,6 +110,7 @@ export const useAppStore = create(
             token: null,
             pollingInterval: null,
             cartError: '',
+            isCreatingOrder: false,
 
             setNumeroMesa: (numero) => set({ numeroMesa: numero }),
             clearCartError: () => set({ cartError: '' }),
@@ -231,9 +232,9 @@ export const useAppStore = create(
             limpiarCarrito: () => set({ carrito: [], cartError: '' }),
 
             addOrder: async () => {
-                const { carrito, numeroMesa, token } = get();
+                const { carrito, numeroMesa, token, isCreatingOrder } = get();
 
-                if (carrito.length === 0 || !numeroMesa) return;
+                if (isCreatingOrder || carrito.length === 0 || !numeroMesa) return null;
 
                 const payload = {
                     mesaId: Number(numeroMesa),
@@ -245,14 +246,19 @@ export const useAppStore = create(
                     })),
                 };
 
-                const data = await apiFetch('/ordenes/completa', {
-                    method: 'POST',
-                    body: JSON.stringify(payload),
-                    token,
-                });
+                set({ isCreatingOrder: true });
+                try {
+                    const data = await apiFetch('/ordenes/completa', {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                        token,
+                    });
 
-                set({ ordenActual: data });
-                return data;
+                    set({ ordenActual: data });
+                    return data;
+                } finally {
+                    set({ isCreatingOrder: false });
+                }
             },
 
             startOrderPolling: (ordenId) => {
@@ -378,11 +384,11 @@ export const useAppStore = create(
             },
 
             logout: async () => {
-                set({ usuario: null, token: null, ordenActual: null, carrito: [] });
+                set({ usuario: null, token: null, ordenActual: null, carrito: [], isCreatingOrder: false });
             },
 
             logoutLocal: () => {
-                set({ usuario: null, token: null, ordenActual: null, carrito: [] });
+                set({ usuario: null, token: null, ordenActual: null, carrito: [], isCreatingOrder: false });
             },
 
             actualizarPerfil: async ({ nombre, correo, contrasena }) => {

@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, ChefHat, ClipboardList, Clock, CreditCard, FileText, PartyPopper, UtensilsCrossed, X } from 'lucide-react';
+import {
+    Check,
+    ChefHat,
+    ClipboardList,
+    Clock,
+    CreditCard,
+    FileText,
+    PartyPopper,
+    UtensilsCrossed,
+    X,
+} from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { PrimaryButton, SecondaryButton } from '../ui/Button';
 import { getStatusTheme } from '../../utils/statusTheme';
@@ -8,7 +18,7 @@ const POLL_INTERVAL_MS = 8000;
 
 const ESTADOS_CONFIG = {
     pendiente_confirmacion: {
-        label: 'Pendiente de confirmación',
+        label: 'Pendiente de confirmacion',
         sublabel: 'Tu pedido esta esperando ser aceptado por el mesero.',
         Icon: Clock,
         color: getStatusTheme('pendiente_confirmacion').text,
@@ -16,13 +26,13 @@ const ESTADOS_CONFIG = {
     },
     confirmada: {
         label: 'Pedido confirmado',
-        sublabel: 'El mesero aceptó tu pedido, pronto lo prepararemos.',
+        sublabel: 'El mesero acepto tu pedido, pronto lo prepararemos.',
         Icon: Check,
         color: getStatusTheme('confirmada').text,
         step: 2,
     },
     en_preparacion: {
-        label: 'En preparación',
+        label: 'En preparacion',
         sublabel: 'Nuestros chefs estan trabajando en tu pedido.',
         Icon: ChefHat,
         color: getStatusTheme('en_preparacion').text,
@@ -113,11 +123,12 @@ const OrdenActivaCard = ({ orden }) => {
 
     return (
         <div
-            className="card border-0 shadow mb-4"
+            className="card border-0 shadow-sm mb-4"
             style={{
                 borderRadius: '1.25rem',
                 overflow: 'hidden',
                 borderLeft: `5px solid ${estadoTheme.solid}`,
+                background: '#fffaf5',
             }}
         >
             <div className="card-body p-4 text-center">
@@ -255,7 +266,6 @@ const OrderTracker = ({ ordenId, numeroMesa, onNuevoPedido }) => {
         cargarOrdenesActivas();
         const interval = setInterval(cargarOrdenesActivas, POLL_INTERVAL_MS);
         return () => clearInterval(interval);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [numeroMesa]);
 
     const ordenesOrdenadas = useMemo(() => {
@@ -265,19 +275,29 @@ const OrderTracker = ({ ordenId, numeroMesa, onNuevoPedido }) => {
     }, [ordenesActivas]);
 
     return (
-        <div className="d-flex flex-column min-vh-100" style={{ background: '#F4F5F7' }}>
+        <div className="d-flex flex-column min-vh-100" style={{ background: '#ffffff' }}>
             <header
-                className="text-white px-4 pt-4 pb-5"
-                style={{ background: 'linear-gradient(135deg, #FF7A00, #E06900)' }}
+                className="sticky-top shadow-sm px-4 py-3"
+                style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb', zIndex: 20 }}
             >
-                <p className="mb-1 opacity-75 small">Mesa #{numeroMesa || '-'}</p>
-                <h1 className="fw-bold fs-4 mb-0">Pedidos en preparación</h1>
-                {ordenId && <p className="small opacity-75 mb-0 mt-1">Último pedido enviado: #{ordenId}</p>}
+                <div className="d-flex align-items-start gap-3">
+                    <div
+                        className="rounded-3 d-flex align-items-center justify-content-center"
+                        style={{ width: 48, height: 48, background: '#f97316', color: '#ffffff' }}
+                    >
+                        <ClipboardList size={24} />
+                    </div>
+                    <div>
+                        <p className="mb-1 text-muted small">Mesa #{numeroMesa || '-'}</p>
+                        <h1 className="fw-bold fs-5 mb-0" style={{ color: '#111827' }}>Pedidos en preparacion</h1>
+                        {ordenId && <p className="small text-muted mb-0 mt-1">Ultimo pedido enviado: #{ordenId}</p>}
+                    </div>
+                </div>
             </header>
 
-            <div className="container px-3" style={{ marginTop: '-2rem' }}>
+            <div className="container px-3 py-4">
                 {loading && (
-                    <div className="card border-0 shadow mb-4" style={{ borderRadius: '1.25rem' }}>
+                    <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '1.25rem' }}>
                         <div className="card-body text-center p-4 text-muted">
                             Cargando pedidos...
                         </div>
@@ -291,11 +311,11 @@ const OrderTracker = ({ ordenId, numeroMesa, onNuevoPedido }) => {
                 )}
 
                 {!loading && !error && ordenesOrdenadas.length === 0 && (
-                    <div className="card border-0 shadow mb-4" style={{ borderRadius: '1.25rem' }}>
+                    <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '1.25rem', background: '#fffaf5' }}>
                         <div className="card-body text-center p-4">
                             <PartyPopper size={42} className="text-primary mb-3" />
                             <h2 className="fw-bold fs-5">No hay pedidos activos</h2>
-                            <p className="text-muted small mb-0">Puedes volver al menú para realizar otro pedido.</p>
+                            <p className="text-muted small mb-0">Puedes volver al menu para realizar otro pedido.</p>
                         </div>
                     </div>
                 )}

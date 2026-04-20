@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { Trash2, FileText, AlertTriangle, Users } from 'lucide-react';
+import { Trash2, FileText, AlertTriangle, Users, ArrowLeft } from 'lucide-react';
 import AlertMessage from '../ui/AlertMessage';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import { PrimaryButton, SecondaryButton } from '../ui/Button';
@@ -20,6 +20,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
         addOrder,
         cartError,
         clearCartError,
+        isCreatingOrder,
     } = useAppStore();
 
     const [loading, setLoading] = useState(false);
@@ -33,7 +34,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
     const totalConPropina = total + propinaSugerida;
 
     const handleConfirmar = async () => {
-        if (loading || carrito.length === 0) return;
+        if (loading || isCreatingOrder || carrito.length === 0) return;
         setLoading(true);
         setError('');
         clearCartError();
@@ -55,8 +56,11 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
 
     if (carrito.length === 0) {
         return (
-            <div className="min-vh-100 d-flex flex-column">
-                <header className="bg-white px-3 py-3 border-bottom d-flex align-items-center gap-3 sticky-top">
+            <div className="min-vh-100 d-flex flex-column" style={{ background: '#ffffff' }}>
+                <header
+                    className="sticky-top shadow-sm px-3 py-3 d-flex align-items-center gap-3"
+                    style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb', zIndex: 20 }}
+                >
                     <SecondaryButton
                         type="button"
                         size="sm"
@@ -64,9 +68,12 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                         style={{ minWidth: 0, width: 36, height: 36 }}
                         onClick={onBack}
                     >
-                        ←
+                        <ArrowLeft size={16} />
                     </SecondaryButton>
-                    <h1 className="fs-5 fw-bold mb-0">Mi Pedido</h1>
+                    <div>
+                        <h1 className="fw-bold mb-0" style={{ fontSize: '1.1rem' }}>Mi pedido</h1>
+                        <div className="text-muted small">Carrito actual de la mesa #{numeroMesa}</div>
+                    </div>
                 </header>
                 <div className="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted p-4">
                     <p style={{ fontSize: 64 }}>🛒</p>
@@ -75,10 +82,10 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                         type="button"
                         className="mt-2"
                         fullWidth
-                        style={{ borderRadius: '0.75rem' }}
+                        style={{ borderRadius: '0.75rem', maxWidth: 320 }}
                         onClick={onBack}
                     >
-                        Ver el Menu
+                        Ver el menu
                     </PrimaryButton>
                 </div>
             </div>
@@ -86,10 +93,24 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
     }
 
     return (
-        <div className="d-flex flex-column min-vh-100" style={{ paddingBottom: 200 }}>
-            <header className="bg-white px-3 py-3 border-bottom d-flex align-items-center gap-3 sticky-top" style={{ zIndex: 50 }}>
-                <button className="btn btn-light rounded-circle p-2 lh-1" onClick={onBack}>←</button>
-                <h1 className="fs-5 fw-bold mb-0 flex-grow-1">Mi Pedido</h1>
+        <div className="d-flex flex-column min-vh-100" style={{ background: '#ffffff', paddingBottom: 200 }}>
+            <header
+                className="sticky-top shadow-sm px-3 py-3 d-flex align-items-center gap-3"
+                style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb', zIndex: 20 }}
+            >
+                <SecondaryButton
+                    type="button"
+                    size="sm"
+                    className="rounded-circle p-2"
+                    style={{ minWidth: 0, width: 36, height: 36 }}
+                    onClick={onBack}
+                >
+                    <ArrowLeft size={16} />
+                </SecondaryButton>
+                <div className="flex-grow-1">
+                    <h1 className="fw-bold mb-0" style={{ fontSize: '1.1rem' }}>Mi pedido</h1>
+                    <div className="text-muted small">Revisa tus productos antes de confirmar</div>
+                </div>
                 <span className="badge bg-primary rounded-pill">{carrito.length} platillos</span>
             </header>
 
@@ -109,7 +130,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                 )}
 
                 {carrito.map((item) => (
-                    <div key={item.id} className="card border-0 shadow-sm" style={{ borderRadius: '1rem' }}>
+                    <div key={item.id} className="card border-0 shadow-sm" style={{ borderRadius: '1rem', background: '#fffaf5' }}>
                         <div className="card-body p-3">
                             <div className="d-flex align-items-start justify-content-between mb-2">
                                 <div className="flex-grow-1">
@@ -135,7 +156,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
 
                             <div className="d-flex align-items-center gap-3 mb-3">
                                 <span className="text-muted small">Cantidad:</span>
-                                <div className="d-flex align-items-center bg-light rounded-pill px-2 gap-2">
+                                <div className="d-flex align-items-center bg-white rounded-pill px-2 gap-2 border">
                                     <button
                                         className="btn btn-sm p-0 fw-bold fs-5 text-danger border-0 bg-transparent"
                                         style={{ width: 28 }}
@@ -162,7 +183,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                                 Instrucciones especiales
                             </label>
                             <textarea
-                                className="form-control form-control-sm"
+                                className="form-control form-control-sm bg-white"
                                 rows={2}
                                 placeholder="ej. sin cebolla, termino medio, alergico a nueces..."
                                 value={item.notas || ''}
@@ -206,7 +227,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                     fullWidth
                     style={{ borderRadius: '0.75rem' }}
                     onClick={handleConfirmar}
-                    disabled={loading || carrito.length === 0}
+                    disabled={loading || isCreatingOrder || carrito.length === 0}
                 >
                     {loading ? (
                         <span>
@@ -214,7 +235,7 @@ const Carrito = ({ onBack, onPedidoEnviado }) => {
                             Enviando pedido...
                         </span>
                     ) : (
-                        `✓ Confirmar Pedido · $${total.toFixed(2)}`
+                        `Confirmar pedido · $${total.toFixed(2)}`
                     )}
                 </PrimaryButton>
             </div>

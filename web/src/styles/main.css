@@ -3,24 +3,24 @@
     --bs-primary-rgb: 255, 122, 0;
     --color-primary: #FF7A00;
     --color-primary-dk: #E06900;
-    --status-pendiente-bg: #FEF3C7;
-    --status-pendiente-border: #FCD34D;
-    --status-pendiente-text: #B45309;
-    --status-confirmado-bg: #DBEAFE;
-    --status-confirmado-border: #93C5FD;
-    --status-confirmado-text: #1D4ED8;
-    --status-preparacion-bg: #FEF08A;
-    --status-preparacion-border: #FACC15;
-    --status-preparacion-text: #A16207;
-    --status-listo-bg: #DCFCE7;
-    --status-listo-border: #86EFAC;
-    --status-listo-text: #15803D;
-    --status-entregado-bg: #E5E7EB;
-    --status-entregado-border: #D1D5DB;
-    --status-entregado-text: #4B5563;
-    --status-cancelado-bg: #FEE2E2;
-    --status-cancelado-border: #FCA5A5;
-    --status-cancelado-text: #B91C1C;
+    --status-pendiente-bg: #FDECEA;
+    --status-pendiente-border: #F5B7B1;
+    --status-pendiente-text: #C0392B;
+    --status-confirmado-bg: #F0F9FF;
+    --status-confirmado-border: #BAE6FD;
+    --status-confirmado-text: #0C4A6E;
+    --status-preparacion-bg: #FFF9E6;
+    --status-preparacion-border: #F9E79F;
+    --status-preparacion-text: #B9770E;
+    --status-listo-bg: #ECFDF5;
+    --status-listo-border: #ABEBC6;
+    --status-listo-text: #1E8449;
+    --status-entregado-bg: #E2E8F0;
+    --status-entregado-border: #CBD5E1;
+    --status-entregado-text: #475569;
+    --status-cancelado-bg: #FFE4D6;
+    --status-cancelado-border: #F5B7B1;
+    --status-cancelado-text: #C0392B;
 }
 
 .btn-primary {

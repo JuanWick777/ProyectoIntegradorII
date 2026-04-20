@@ -52,6 +52,9 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
 
+    private val _showPrivacyNotice = MutableStateFlow(false)
+    val showPrivacyNotice = _showPrivacyNotice.asStateFlow()
+
     fun onNameChange(newName: String) {
         _name.value = newName
         validateName(newName)
@@ -76,6 +79,14 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     fun onAcceptedTermsChange(accepted: Boolean) {
         _acceptedTerms.value = accepted
         validateTerms(accepted)
+    }
+
+    fun showPrivacyNotice() {
+        _showPrivacyNotice.value = true
+    }
+
+    fun hidePrivacyNotice() {
+        _showPrivacyNotice.value = false
     }
 
     private fun validateName(value: String) {
@@ -160,7 +171,7 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
             _isLoading.value = true
             _errorMessage.value = null
             try {
-                val successRegister = repository.register(
+                val result = repository.register(
                     Usuario(
                         nombre_completo = _name.value.trim(),
                         correo_electronico = _email.value.trim(),
@@ -168,10 +179,15 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
                     )
                 )
 
-                if (successRegister) {
+                if (result.isSuccess) {
                     _success.value = true
                 } else {
-                    _errorMessage.value = "El correo ya existe"
+                    val message = result.exceptionOrNull()?.message ?: "No se pudo completar el registro"
+                    _errorMessage.value = when {
+                        message.contains("exist", ignoreCase = true) || message.contains("duplic", ignoreCase = true) ->
+                            "Ese correo ya esta registrado."
+                        else -> message
+                    }
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Error de conexion"

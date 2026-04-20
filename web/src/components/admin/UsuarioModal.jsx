@@ -10,19 +10,26 @@ const validate = (form, isNew) => {
 
     if (!form.nombre?.trim()) errs.nombre = 'El nombre es obligatorio.';
     else if (form.nombre.trim().length < 2) errs.nombre = 'El nombre debe tener al menos 2 caracteres.';
+    else if (form.nombre.trim().length > 200) errs.nombre = 'El nombre no puede exceder 200 caracteres.';
 
     if (isNew) {
         if (!form.email?.trim()) errs.email = 'El correo es obligatorio.';
         else if (!EMAIL_REGEX.test(form.email.trim())) errs.email = 'Formato de correo invalido.';
+        else if (form.email.trim().length > 150) errs.email = 'El correo no puede exceder 150 caracteres.';
     } else if (form.email?.trim() && !EMAIL_REGEX.test(form.email.trim())) {
         errs.email = 'Formato de correo invalido.';
+    } else if (form.email?.trim() && form.email.trim().length > 150) {
+        errs.email = 'El correo no puede exceder 150 caracteres.';
     }
 
     if (isNew) {
         if (!form.password) errs.password = 'La contrasena es obligatoria para nuevos empleados.';
         else if (form.password.length < 6) errs.password = 'La contrasena debe tener al menos 6 caracteres.';
+        else if (form.password.length > 255) errs.password = 'La contrasena no puede exceder 255 caracteres.';
     } else if (form.password && form.password.length < 6) {
         errs.password = 'La contrasena debe tener al menos 6 caracteres.';
+    } else if (form.password && form.password.length > 255) {
+        errs.password = 'La contrasena no puede exceder 255 caracteres.';
     }
 
     if (!form.rol) errs.rol = 'Selecciona un rol.';
@@ -90,6 +97,7 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
     };
 
     const handleSubmit = () => {
+        if (saving) return;
         setTouched({
             nombre: true,
             email: true,
@@ -100,7 +108,12 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
         const errs = validate(form, isNew);
         setErrors(errs);
         if (Object.keys(errs).length > 0) return;
-        onSave(form);
+        onSave({
+            ...form,
+            nombre: form.nombre.trim(),
+            email: form.email.trim().toLowerCase(),
+            password: form.password,
+        });
     };
 
     const rolFormRaw = normalizeRole(form.rol) || 'mesero';
@@ -122,7 +135,7 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
                         <h5 className="modal-title fw-bold">
                             {isNew ? 'Nuevo Empleado' : 'Editar Empleado'}
                         </h5>
-                        <button type="button" className="btn-close" onClick={onClose} />
+                        <button type="button" className="btn-close" onClick={onClose} disabled={saving} />
                     </div>
 
                     <div className="modal-body pt-2 d-flex flex-column" style={{ minHeight: 500 }}>
@@ -134,12 +147,13 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
                                 className={fieldClass('nombre')}
                                 value={form.nombre}
                                 onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (/[0-9@#$%^&*()_+=[\]{};:'",<>?/\\|`~]/.test(val.slice(-1))) return;
+                                    const val = e.target.value.slice(0, 200);
+                                    if (/[^A-Za-zÀ-ÿ\s.'-]/.test(val.slice(-1))) return;
                                     set('nombre', val);
                                 }}
                                 onBlur={() => handleBlur('nombre')}
                                 placeholder="Ej. Juan Perez"
+                                disabled={saving}
                             />
                             {touched.nombre && errors.nombre && (
                                 <div className="invalid-feedback d-flex align-items-center gap-1">
@@ -156,9 +170,11 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
                                 className={fieldClass('email')}
                                 type="email"
                                 value={form.email}
-                                onChange={(e) => set('email', e.target.value)}
+                                maxLength={150}
+                                onChange={(e) => set('email', e.target.value.slice(0, 150))}
                                 onBlur={() => handleBlur('email')}
                                 placeholder="empleado@rest.com"
+                                disabled={saving}
                             />
                             {touched.email && errors.email && (
                                 <div className="invalid-feedback d-flex align-items-center gap-1">
@@ -180,9 +196,11 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
                                     type={showPassword ? 'text' : 'password'}
                                     style={{ borderRight: 0 }}
                                     value={form.password}
-                                    onChange={(e) => set('password', e.target.value)}
+                                    maxLength={255}
+                                    onChange={(e) => set('password', e.target.value.slice(0, 255))}
                                     onBlur={() => handleBlur('password')}
                                     placeholder={isNew ? 'Minimo 6 caracteres' : '******'}
+                                    disabled={saving}
                                 />
                                 <button
                                     type="button"
@@ -191,6 +209,7 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
                                     onClick={() => setShowPassword((v) => !v)}
                                     tabIndex={-1}
                                     aria-label={showPassword ? 'Ocultar' : 'Mostrar'}
+                                    disabled={saving}
                                 >
                                     {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                                 </button>
@@ -218,6 +237,7 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
                                         }
                                         setTouched((p) => ({ ...p, rol: true }));
                                     }}
+                                    disabled={saving}
                                 >
                                     <option value="mesero">Mesero</option>
                                     <option value="chef">Chef</option>
@@ -251,7 +271,7 @@ const UsuarioModal = ({ usuario, mesas = [], mesasOcupadasMap = new Map(), onSav
                                                     type="checkbox"
                                                     id={`mesa-${mesa.id}`}
                                                     checked={checked}
-                                                    disabled={disabled}
+                                                    disabled={disabled || saving}
                                                     onChange={() => handleMesaToggle(mesa.id)}
                                                 />
                                                 <label className="form-check-label" htmlFor={`mesa-${mesa.id}`}>

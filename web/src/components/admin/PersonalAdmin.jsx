@@ -87,6 +87,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
     }, [usuarios]);
 
     const handleSave = async (form) => {
+        if (saving) return;
         setSaving(true);
         try {
             const payload = {
@@ -104,7 +105,12 @@ const PersonalAdmin = ({ mostrarToast }) => {
             await cargar();
             setModal(null);
         } catch (e) {
-            mostrarToast(e.message ? `Error al guardar: ${e.message}` : 'Error al guardar');
+            const message = e?.message || '';
+            if (message.includes('correo') || message.includes('email') || message.includes('duplicate') || message.includes('duplicado')) {
+                mostrarToast('Ese correo ya esta registrado para otro empleado.');
+            } else {
+                mostrarToast(message ? `No se pudo guardar el empleado: ${message}` : 'No se pudo guardar el empleado.');
+            }
         } finally {
             setSaving(false);
         }
@@ -124,7 +130,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
             mostrarToast('Empleado eliminado');
             await cargar();
         } catch (e) {
-            mostrarToast(e?.message || 'No se pudo eliminar');
+            mostrarToast(e?.message ? `No se pudo eliminar el empleado: ${e.message}` : 'No se pudo eliminar el empleado.');
         }
         setConfirmDel(null);
     };
@@ -269,7 +275,7 @@ const PersonalAdmin = ({ mostrarToast }) => {
                             style={{ borderRadius: '0 1rem 1rem 0' }}
                             placeholder="Buscar personal por nombre o email..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => setSearchQuery(e.target.value.slice(0, 80))}
                         />
                     </div>
                 </div>

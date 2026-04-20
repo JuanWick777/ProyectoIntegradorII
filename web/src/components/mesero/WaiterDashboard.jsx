@@ -5,6 +5,7 @@ import OrderCard from './OrderCard';
 import { PrimaryButton } from '../ui/Button';
 import PerfilModal from '../shared/PerfilModal';
 import { getStatusTheme } from '../../utils/statusTheme';
+import AlertMessage from '../ui/AlertMessage';
 
 const FILTROS = [
     { key: 'todos', label: 'Todos', Icon: ClipboardList },
@@ -43,6 +44,7 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
     const [vista, setVista] = useState('pedidos');
     const [perfilAbierto, setPerfilAbierto] = useState(false);
     const [avisoListos, setAvisoListos] = useState('');
+    const [actionFeedback, setActionFeedback] = useState(null);
     const prevListasRef = useRef(0);
 
     // ── Detectar sesión expirada (server restart) ────────────
@@ -475,67 +477,6 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                             </div>
                         )}
 
-                        <div className="row g-3 mb-3">
-                            <div className="col-12 col-md-4">
-                                <div
-                                    className="rounded-4 px-4 py-3 h-100"
-                                    style={{ background: pendienteTheme.bg, border: `1px solid ${pendienteTheme.border}` }}
-                                >
-                                    <div className="small fw-semibold text-uppercase" style={{ color: pendienteTheme.text, letterSpacing: '0.04em' }}>
-                                        Pendientes
-                                    </div>
-                                    <div className="d-flex align-items-end justify-content-between mt-2">
-                                        <div className="fw-bold" style={{ fontSize: '2rem', color: pendienteTheme.text }}>
-                                            {totalPendientes}
-                                        </div>
-                                        <div className="small text-end" style={{ color: pendienteTheme.text }}>
-                                            {pedidosAtrasados.length > 0
-                                                ? `${pedidosAtrasados.length} con prioridad alta`
-                                                : 'Sin atrasos por ahora'}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="col-12 col-md-4">
-                                <div
-                                    className="rounded-4 px-4 py-3 h-100"
-                                    style={{ background: listoTheme.bg, border: `1px solid ${listoTheme.border}` }}
-                                >
-                                    <div className="small fw-semibold text-uppercase" style={{ color: listoTheme.text, letterSpacing: '0.04em' }}>
-                                        Listas para entregar
-                                    </div>
-                                    <div className="d-flex align-items-end justify-content-between mt-2">
-                                        <div className="fw-bold" style={{ fontSize: '2rem', color: listoTheme.text }}>
-                                            {totalListas}
-                                        </div>
-                                        <div className="small text-end" style={{ color: listoTheme.text }}>
-                                            Entregalas en cuanto salgan de cocina
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="col-12 col-md-4">
-                                <div
-                                    className="rounded-4 px-4 py-3 h-100"
-                                    style={{ background: entregadoTheme.bg, border: `1px solid ${entregadoTheme.border}` }}
-                                >
-                                    <div className="small fw-semibold text-uppercase" style={{ color: entregadoTheme.text, letterSpacing: '0.04em' }}>
-                                        Listas para cobrar
-                                    </div>
-                                    <div className="d-flex align-items-end justify-content-between mt-2">
-                                        <div className="fw-bold" style={{ fontSize: '2rem', color: entregadoTheme.text }}>
-                                            {totalPorCobrar}
-                                        </div>
-                                        <div className="small text-end" style={{ color: entregadoTheme.text }}>
-                                            Cobralas y cierra la mesa cuando ya se entrego
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         {pedidosAtrasados.length > 0 && (
                             <div
                                 className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 rounded-4 px-4 py-3 mb-3"
@@ -566,6 +507,32 @@ const WaiterDashboard = ({ usuario, onLogout }) => {
                                 >
                                     Prioridad alta
                                 </div>
+                            </div>
+                        )}
+
+                        {(totalPendientes > 0 || totalListas > 0 || totalPorCobrar > 0) && (
+                            <div
+                                className="d-flex flex-wrap align-items-center gap-2 mb-3"
+                                style={{ color: '#6b7280' }}
+                            >
+                                <span
+                                    className="px-3 py-2 rounded-pill fw-semibold"
+                                    style={{ background: pendienteTheme.bg, color: pendienteTheme.text, border: `1px solid ${pendienteTheme.border}` }}
+                                >
+                                    Pendientes: {totalPendientes}
+                                </span>
+                                <span
+                                    className="px-3 py-2 rounded-pill fw-semibold"
+                                    style={{ background: listoTheme.bg, color: listoTheme.text, border: `1px solid ${listoTheme.border}` }}
+                                >
+                                    Listas: {totalListas}
+                                </span>
+                                <span
+                                    className="px-3 py-2 rounded-pill fw-semibold"
+                                    style={{ background: entregadoTheme.bg, color: entregadoTheme.text, border: `1px solid ${entregadoTheme.border}` }}
+                                >
+                                    Por cobrar: {totalPorCobrar}
+                                </span>
                             </div>
                         )}
 

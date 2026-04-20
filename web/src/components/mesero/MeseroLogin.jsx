@@ -7,6 +7,7 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import AuthLayout from '../auth/AuthLayout';
 import AuthCard from '../auth/AuthCard';
 import { PrimaryButton } from '../ui/Button';
+import AvisoPrivacidadModal from '../shared/AvisoPrivacidadModal';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ROLES_COCINA = ['COCINERO', 'CHEF', 'PARRILLERO', 'BARISTA', 'REPOSTERO'];
@@ -34,6 +35,7 @@ const MeseroLogin = ({
     const [touched, setTouched] = useState({});
     const [serverError, setServerError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [avisoAbierto, setAvisoAbierto] = useState(false);
 
     const set = (field, value) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -57,6 +59,7 @@ const MeseroLogin = ({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (loading) return;
         setTouched({ email: true, password: true });
         const errs = validate(form);
         setErrors(errs);
@@ -65,7 +68,7 @@ const MeseroLogin = ({
         setServerError('');
         setLoading(true);
         try {
-            const user = await login(form.email, form.password);
+            const user = await login(form.email.trim().toLowerCase(), form.password);
             const rol = (user?.rol || '').toUpperCase();
 
             if (!rolesPermitidos.includes(rol)) {
@@ -107,12 +110,14 @@ const MeseroLogin = ({
                             type="email"
                             className={fc('email')}
                             value={form.email}
-                            onChange={(e) => set('email', e.target.value)}
+                            maxLength={150}
+                            onChange={(e) => set('email', e.target.value.slice(0, 150))}
                             onBlur={() => handleBlur('email')}
                             placeholder={demoEmail}
                             style={{ borderRadius: '0.75rem' }}
                             autoFocus
                             autoComplete="email"
+                            disabled={loading}
                         />
                         {touched.email && errors.email && (
                             <div className="invalid-feedback d-flex align-items-center gap-1">
@@ -131,11 +136,13 @@ const MeseroLogin = ({
                                 type={showPassword ? 'text' : 'password'}
                                 className={fc('password')}
                                 value={form.password}
-                                onChange={(e) => set('password', e.target.value)}
+                                maxLength={255}
+                                onChange={(e) => set('password', e.target.value.slice(0, 255))}
                                 onBlur={() => handleBlur('password')}
                                 placeholder="******"
                                 style={{ borderRadius: '0.75rem 0 0 0.75rem', borderRight: 0 }}
                                 autoComplete="current-password"
+                                disabled={loading}
                             />
                             <button
                                 type="button"
@@ -144,6 +151,7 @@ const MeseroLogin = ({
                                 onClick={() => setShowPassword((v) => !v)}
                                 tabIndex={-1}
                                 aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                                disabled={loading}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
@@ -167,8 +175,20 @@ const MeseroLogin = ({
                             ? <><LoadingSpinner size="sm" className="me-2" />Ingresando...</>
                             : <><LogIn size={18} className="me-2" />Iniciar sesion</>}
                     </PrimaryButton>
+
+                    <div className="text-center mt-3">
+                        <button
+                            type="button"
+                            className="btn btn-link p-0 small text-decoration-none"
+                            onClick={() => setAvisoAbierto(true)}
+                            style={{ color: '#f97316' }}
+                        >
+                            Aviso de privacidad
+                        </button>
+                    </div>
                 </form>
             </AuthCard>
+            <AvisoPrivacidadModal abierto={avisoAbierto} onClose={() => setAvisoAbierto(false)} />
         </AuthLayout>
     );
 };
